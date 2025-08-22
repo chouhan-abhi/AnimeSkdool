@@ -165,6 +165,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
                         )}
                         {trailer?.embed_url && (
                             <div className="my-6">
+                                <h4 className="font-semibold text-lg mb-2">Trailer</h4>
                                 <iframe
                                     src={`${trailer.embed_url}&mute=1`}
                                     title="Anime Trailer"
