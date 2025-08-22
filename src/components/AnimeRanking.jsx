@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import PageLoader from "./PageLoader";
 import { useAnimeRanking } from "../queries/useAnimeRank";
+import AnimeDetailsPanel from "./AnimeDetailsPanel";
 
 const AnimeRanking = () => {
   const [type, setType] = useState("");
@@ -9,23 +10,17 @@ const AnimeRanking = () => {
   const [sfw, setSfw] = useState(true);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
+  const [selectedAnime, setSelectedAnime] = useState(null);
 
   const queryParams = useMemo(
-    () => ({
-      type,
-      filter,
-      rating,
-      sfw,
-      page,
-    }),
+    () => ({ type, filter, rating, sfw, page }),
     [type, filter, rating, sfw, page]
   );
 
   // Fetch rankings
-  const response =
-    useAnimeRanking(new URLSearchParams(queryParams).toString());
+  const response = useAnimeRanking(new URLSearchParams(queryParams).toString());
   const { data: animeList = [], loading, pagination } = response?.data || {};
-console.log({animeList, pagination})
+
   const nextPage = () => {
     if (pagination?.has_next_page) setPage(page + 1);
   };
@@ -43,10 +38,7 @@ console.log({animeList, pagination})
           {/* Type Filter */}
           <select
             value={type}
-            onChange={(e) => {
-              setType(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => { setType(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
           >
             <option value="">All Types</option>
@@ -61,10 +53,7 @@ console.log({animeList, pagination})
           {/* Filter */}
           <select
             value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => { setFilter(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
           >
             <option value="airing">Airing</option>
@@ -76,10 +65,7 @@ console.log({animeList, pagination})
           {/* Rating */}
           <select
             value={rating}
-            onChange={(e) => {
-              setRating(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => { setRating(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
           >
             <option value="">All Ratings</option>
@@ -93,14 +79,9 @@ console.log({animeList, pagination})
 
           {/* Toggle SFW */}
           <button
-            onClick={() => {
-              setSfw((prev) => !prev);
-              setPage(1);
-            }}
+            onClick={() => { setSfw((prev) => !prev); setPage(1); }}
             className={`px-4 py-2 text-sm font-semibold rounded transition ${
-              sfw
-                ? "bg-green-500 text-black hover:bg-green-400"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+              sfw ? "bg-green-500 text-black hover:bg-green-400" : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
           >
             {sfw ? "SFW: ON" : "SFW: OFF"}
@@ -110,9 +91,7 @@ console.log({animeList, pagination})
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-600 text-white px-4 py-2 rounded mb-4">
-          {error}
-        </div>
+        <div className="bg-red-600 text-white px-4 py-2 rounded mb-4">{error}</div>
       )}
 
       {/* Rankings */}
@@ -125,17 +104,14 @@ console.log({animeList, pagination})
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {animeList?.map?.((anime) => (
+            {animeList.map((anime) => (
               <div
                 key={anime.mal_id}
                 className="relative rounded-lg overflow-hidden h-52 group cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"
+                onClick={() => setSelectedAnime(anime)}
               >
                 <img
-                  src={
-                    anime.images?.webp?.large_image_url ||
-                    anime.images?.jpg?.large_image_url ||
-                    "/placeholder.jpg"
-                  }
+                  src={anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || "/placeholder.jpg"}
                   alt={anime.title || "Anime"}
                   className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-300"
                 />
@@ -144,12 +120,9 @@ console.log({animeList, pagination})
                   <span className="text-xs text-gray-300">
                     Rank #{anime.rank || "?"} | Score: {anime.score || "N/A"}
                   </span>
-                  <span className="text-lg font-bold truncate">
-                    {anime.title || "Unknown"}
-                  </span>
+                  <span className="text-lg font-bold truncate">{anime.title || "Unknown"}</span>
                   <div className="text-xs text-gray-400 mt-1">
-                    [Type: {type || "All"}] [Filter: {filter}] [Rating:{" "}
-                    {rating || "All"}] [SFW: {sfw ? "Yes" : "No"}]
+                    [Type: {type || "All"}] [Filter: {filter}] [Rating: {rating || "All"}] [SFW: {sfw ? "Yes" : "No"}]
                   </div>
                 </div>
               </div>
@@ -161,11 +134,7 @@ console.log({animeList, pagination})
             <button
               onClick={prevPage}
               disabled={page === 1}
-              className={`px-4 py-2 rounded ${
-                page === 1
-                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
-              }`}
+              className={`px-4 py-2 rounded ${page === 1 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
             >
               Prev
             </button>
@@ -175,16 +144,20 @@ console.log({animeList, pagination})
             <button
               onClick={nextPage}
               disabled={!pagination?.has_next_page}
-              className={`px-4 py-2 rounded ${
-                !pagination?.has_next_page
-                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
-              }`}
+              className={`px-4 py-2 rounded ${!pagination?.has_next_page ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
             >
               Next
             </button>
           </div>
         </>
+      )}
+
+      {/* Anime Details Panel */}
+      {selectedAnime && (
+        <AnimeDetailsPanel
+          anime={selectedAnime}
+          onClose={() => setSelectedAnime(null)}
+        />
       )}
     </div>
   );
