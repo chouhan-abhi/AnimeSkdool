@@ -20,7 +20,7 @@ const AnimeCard = ({ anime }) => {
     <>
       <div
         className="relative h-[280px] w-full rounded-xl bg-cover bg-center overflow-hidden shadow-lg flex items-end cursor-pointer text-white"
-        style={{ backgroundImage: `url(${images?.jpg?.large_image_url})` }}
+        style={{ backgroundImage: `url(${images?.jpg?.image_url})` }}
         onClick={() => setExpanded(true)}
       >
         <div className="bg-gradient-to-t from-black/85 to-black/10 w-full p-4 flex flex-col justify-between">

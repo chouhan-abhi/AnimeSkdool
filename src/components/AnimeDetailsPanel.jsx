@@ -25,10 +25,12 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         season,
         trailer,
         url,
+        status,
+        airing
     } = anime;
 
     const Badge = ({ children, className = "" }) => (
-        <span className={`bg-gray-700 text-gray-200 px-2 py-1 rounded-full text-xs mr-2 ${className}`}>
+        <span className={`bg-gray-700 text-gray-200 px-2 py-1 rounded-full text-xs ${className}`}>
             {children}
         </span>
     );
@@ -36,113 +38,160 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     return (
         <div className="fixed inset-0 w-screen h-screen bg-black/70 backdrop-blur-sm z-[9999] flex justify-end">
             <div
-                className="relative h-full w-full max-w-[700px] bg-[#1e1e1e] text-white overflow-y-auto animate-slideIn"
+                className="relative h-full w-full max-w-[700px] bg-[#1e1e1e] text-white animate-slideIn"
                 style={{
                     backgroundImage: `url(${images?.jpg?.large_image_url})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                 }}
             >
-                <div className="bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                <div className="bg-gradient-to-t from-black/90 via-black/60 to-transparent h-full w-full overflow-y-auto">
                     {/* Close Button */}
-                    <div className="fixed right-4 top-4 text-3xl bg-transparent flex justify-end">
+                    <div className="fixed right-4 top-4 bg-transparent flex justify-end">
                         <button
-                            className="cursor-pointer aspect-square z-9 rounded-full h-5 w-5 hover:bg-white/20 transition"
+                            className="flex justify-center cursor-pointer aspect-square z-9 p-2 rounded-full hover:bg-white/20 transition"
                             onClick={onClose}
-                            style={{ backdropFilter: 'blur(4px)' }}
+                            style={{ backdropFilter: "blur(4px)", fontSize: 'x-large' }}
                         >
                             ×
                         </button>
                     </div>
 
-                    <div className="inset-0 p-6 z-[99999] text-base leading-relaxed mt-80 text-white z-10">
-                        <div className="p-6 rounded-lg mb-8">
-                            <h2 className="text-3xl font-bold mb-1">{title}</h2>
-                            {title_english && <p className="text-sm italic mb-1">{title_english}</p>}
-                            {title_japanese && <p className="text-sm italic mb-2">{title_japanese}</p>}
-                            <div className="flex items-center gap-2 my-2">
-                                {score && (
-                                    <span className="bg-yellow-500 text-black font-semibold px-2 py-1 rounded-full shadow-md">
-                                        ⭐ {score} <span className="text-xs text-gray-800">({scored_by || 0} users)</span>
-                                    </span>
-                                )}
-                                {rank && (
-                                    <span className="bg-indigo-600 text-white font-semibold px-2 py-1 rounded-full shadow-md">
-                                        #{rank}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Basic Info */}
-                            <p className="text-sm mb-2">
-                                {type} | {episodes || "TBA"} episodes | {duration}
-                            </p>
-
-                            {/* Genre & Studios */}
-                            <div className="mb-4 flex flex-wrap gap-2">
-                                {genres?.map((g) => (
-                                    <Badge key={g.mal_id}>{g.name}</Badge>
-                                ))}
-                                {studios?.map((s) => (
-                                    <Badge key={s.mal_id} className="bg-purple-700">{s.name}</Badge>
-                                ))}
-                            </div>
-
-                            {/* Synopsis */}
-                            <p className="mb-4">{synopsis || "No synopsis available."}</p>
-
-                            {/* Extended Info */}
-                            <div className="text-sm space-y-1 mb-4">
-                                <p>Season: {season} {year}</p>
-                                <p>Broadcast: {broadcast?.string || "Unknown"}</p>
-                                <p>Rating: {rating || "N/A"}</p>
-                                <p>Popularity: #{popularity || "N/A"} | Members: {members?.toLocaleString() || 0} | Favorites: {favorites || 0}</p>
-                            </div>
-
-                            {/* Producers */}
-                            {producers?.length > 0 && (
-                                <div className="mb-4">
-                                    <h4 className=" font-semibold mb-1">Producers:</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {producers.map((p) => (
-                                            <Badge key={p.mal_id} className="bg-blue-700">{p.name}</Badge>
-                                        ))}
-                                    </div>
-                                </div>
+                    {/* Content */}
+                    <div className="p-6 mt-80 z-10">
+                        {/* Title Section */}
+                        <h2 className="text-3xl font-bold mb-1">{title}</h2>
+                        {title_english && <p className="text-sm italic mb-1">{title_english}</p>}
+                        {title_japanese && <p className="text-sm italic mb-2">{title_japanese}</p>}
+                        <div className="flex flex-wrap gap-3 my-4">
+                            {airing && (
+                                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-semibold mb-2 inline-block">
+                                    ✅ Currently Airing
+                                </span>
                             )}
+                            {score && (
+                                <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold mb-2 inline-block">
+                                    ⭐ {score} <span className="text-xs">({scored_by || 0} users)</span>
+                                </span>
+                            )}
+                            {rank && (
+                                <span className="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-semibold mb-2 inline-block">
+                                    Rank #{rank}
+                                </span>
+                            )}
+                        </div>
 
-                            {/* External Links */}
-                            <div className="mt-4">
-                                {url && (
-                                    <a
-                                        href={url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-sky-400 underline font-medium mr-4"
-                                    >
-                                        View on MAL →
-                                    </a>
-                                )}
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-4 gap-3 rounded-lg mb-6">
+                            <div className="text-center border border-gray-600 p-3 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <p className="text-xs text-gray-400">Popularity</p>
+                                <p className="font-semibold">#{popularity}</p>
                             </div>
+                            <div className="text-center border border-gray-600 p-3 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <p className="text-xs text-gray-400">Members</p>
+                                <p className="font-semibold">{members?.toLocaleString()}</p>
+                            </div>
+                            <div className="text-center border border-gray-600 p-3 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <p className="text-xs text-gray-400">Favorites</p>
+                                <p className="font-semibold">{favorites}</p>
+                            </div>
+                            <div className="text-center border border-gray-600 p-3 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <p className="text-xs text-gray-400">Episodes</p>
+                                <p className="font-semibold">{episodes || "TBA"}</p>
+                            </div>
+                        </div>
 
-                            {/* Trailer */}
-                            {trailer?.embed_url && (
-                                <div className="my-4">
-                                    <iframe
-                                        src={trailer.embed_url}
-                                        title="Anime Trailer"
-                                        width="100%"
-                                        height="315"
-                                        allow="encrypted-media"
-                                        allowFullScreen
-                                        className="rounded-lg shadow-lg"
-                                    />
+                        {/* Synopsis */}
+                        <p className="mb-4">{synopsis || "No synopsis available."}</p>
+
+                        {/* Season & Schedule Section */}
+                        <div className="mb-6">
+                            <h4 className="font-semibold text-lg mb-2">Season & Schedule</h4>
+                            <p className="text-sm">Season: {season} {year}</p>
+                            <p className="text-sm">Broadcast: {broadcast?.string || "Unknown"}</p>
+                            <p className="text-sm">Rating: {rating || "N/A"}</p>
+                            <p className="text-sm">Duration: {duration}</p>
+                        </div>
+
+                        {/* Genres */}
+                        {genres?.length > 0 && (
+                            <div className="mb-6">
+                                <h4 className="font-semibold text-lg mb-2">Genres</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {genres.map((g) => (
+                                        <Badge key={g.mal_id} className="cursor-pointer hover:bg-gray-600">{g.name}</Badge>
+                                    ))}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Studios */}
+                        {studios?.length > 0 && (
+                            <div className="mb-6 p-2 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <h4 className="font-semibold text-lg mb-2">Studio</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {studios.map((studio) => (
+                                        <a
+                                            key={studio.mal_id}
+                                            href={studio.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="border border-gray-600 text-center p-3 rounded-lg transition hover:bg-gray-600"
+                                        >
+                                            {studio.name}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {producers?.length > 0 && (
+                            <div className="mb-6 p-2 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                                <h4 className="font-semibold text-lg mb-2">Producers</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {producers.map((producer) => (
+                                        <a
+                                            key={producer.mal_id}
+                                            href={producer.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="border border-gray-600 text-center p-3 rounded-lg transition hover:bg-gray-600"
+                                        >
+                                            {producer.name}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {trailer?.embed_url && (
+                            <div className="my-6">
+                                <iframe
+                                    src={`${trailer.embed_url}&mute=1`}
+                                    title="Anime Trailer"
+                                    width="100%"
+                                    height="315"
+                                    allow="encrypted-media"
+                                    allowFullScreen
+                                    className="rounded-lg"
+                                />
+                            </div>
+                        )}
+
+                        <div className="mt-4 flex justify-end">
+                            {url && (
+                                <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline font-medium mr-4 bg-black/2 border border-gray-600 rounded-lg transition hover:bg-gray-600 px-4 py-2" style={{ backdropFilter: "blur(4px)" }}
+                                >
+                                    View on MAL →
+                                </a>
                             )}
                         </div>
                     </div>
-
                 </div>
+
                 <style>
                     {`
             @keyframes slideIn {
