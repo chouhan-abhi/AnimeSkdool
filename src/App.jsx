@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import AnimeCard from './components/AnimeCard';
 import { useAnimeSchedule } from './queries/useAnimeSchedule';
 import AnimeDayTimeline from './components/AnimeDayTimeLine';
+import PageLoader from './components/PageLoader';
 
 // Get current weekday
 const getCurrentDay = () =>
@@ -131,8 +132,7 @@ const AnimeGrid = ({ animeList, isLoading }) => (
   <>
     {isLoading ? (
       <div className="text-center py-5">
-        <div className="loader mx-auto mb-2" />
-        <p>Loading anime schedule...</p>
+        <PageLoader />
       </div>
     ) : (
       <>
