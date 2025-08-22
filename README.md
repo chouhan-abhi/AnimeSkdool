@@ -50,7 +50,6 @@ A modern web tool to track, organize, and plan your next Anime Adventure 🚀
 We welcome contributions!  
 - Open issues for bugs or feature requests  
 - Submit pull requests to help improve AnimeSkdool  
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 ---
 
@@ -63,4 +62,4 @@ This project is licensed under the [MIT License](LICENSE).
 ## 💬 Contact
 
 Questions or feedback?  
-Reach out via [GitHub Issues](https://github.com/yourusername/AnimeSkdool/issues) or email: your.email@example.com
+Reach out via [GitHub Issues](https://github.com/yourusername/AnimeSkdool/issues)
