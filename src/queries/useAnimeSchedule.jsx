@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 const fetchSchedule = async (query) => {
-  const response = await fetch(`https://api.jikan.moe/v4/schedules${query}`, {
+  const response = await fetch(`https://api.jikan.moe/v4/schedules${query || ''}`, {
     method: "GET",
     redirect: "follow"
   });
