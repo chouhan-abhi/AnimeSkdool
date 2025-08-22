@@ -26,7 +26,7 @@ const App = () => {
     return `?${params.toString()}`;
   }, [day, isKids, isSFW]);
 
-  const { data } = useAnimeSchedule(query);
+  const { data, isLoading } = useAnimeSchedule(query); // Add isLoading from your hook
   const animeData = data || [];
 
   useEffect(() => {
@@ -36,231 +36,117 @@ const App = () => {
   }, []);
 
   return (
-    <div style={styles.app}>
-      {/* Hamburger for Mobile */}
-      {isMobile && (
-        <button onClick={() => setIsSidebarOpen(true)} style={styles.hamburger}>
-          ☰
-        </button>
-      )}
-
-      {/* Sidebar */}
-      {(isSidebarOpen || !isMobile) && (
-        <>
-          <div style={{ ...styles.sidebar, ...(isMobile ? styles.sidebarMobile : {}) }}>
-            {isMobile && (
-              <button onClick={() => setIsSidebarOpen(false)} style={styles.closeButton}>
-                ✕
-              </button>
-            )}
-            <h2 style={styles.sidebarTitle}>Filters</h2>
-
-            {/* Day Buttons */}
-            <div style={styles.dayList}>
-              {daysOfWeek.map(d => (
+    <div className='bg-[#121212] text-white font-sans min-h-screen '>
+      <h2 className='text-4xl font-bold pl-4'>Skdool</h2>
+      <div className="flex relative">
+        {isMobile && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="absolute top-3 right-3 bg-transparent text-white border-none text-2xl cursor-pointer z-50"
+            aria-label="Open sidebar"
+          >
+            ☰
+          </button>
+        )}
+        {(isSidebarOpen || !isMobile) && (
+          <>
+            <aside
+              className={`z-40 bg-[#1e1e1e] border-r border-[#333] p-6 w-[250px] ${isMobile ? 'fixed top-0 left-0 h-full max-w-[80vw] shadow-lg' : ''}`}
+            >
+              {isMobile && (
                 <button
-                  key={d}
-                  onClick={() => {
-                    setDay(d);
-                    if (isMobile) setIsSidebarOpen(false);
-                  }}
-                  style={{
-                    ...styles.dayButton,
-                    ...(day === d ? styles.dayButtonActive : {})
-                  }}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="absolute top-2 right-4 text-2xl bg-transparent border-none text-white cursor-pointer"
+                  aria-label="Close sidebar"
                 >
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                  ✕
                 </button>
-              ))}
-            </div>
+              )}
+              <h2 className="text-lg mb-4 text-[#eee] font-semibold">Filters</h2>
 
-            {/* Filters */}
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>Kids</label>
-              <select
-                value={isKids}
-                onChange={(e) => setIsKids(e.target.value === 'true')}
-                style={styles.select}
-              >
-                <option value="false">False</option>
-                <option value="true">True</option>
-              </select>
-            </div>
+              {/* Day Buttons */}
+              <div className="flex flex-col gap-2 mb-6">
+                {daysOfWeek.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      setDay(d);
+                      if (isMobile) setIsSidebarOpen(false);
+                    }}
+                    className={`py-2 px-4 rounded-md bg-[#2c2c2c] text-[#ccc] border border-[#333] text-left text-base transition-all duration-200 ${day === d ? 'bg-[#3f51b5] text-white border-[#3f51b5]' : ''}`}
+                  >
+                    {d.charAt(0).toUpperCase() + d.slice(1)}
+                  </button>
+                ))}
+              </div>
 
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>SFW</label>
-              <select
-                value={isSFW}
-                onChange={(e) => setIsSFW(e.target.value === 'true')}
-                style={styles.select}
-              >
-                <option value="true">True</option>
-                <option value="false">False</option>
-              </select>
-            </div>
-          </div>
+              {/* Filters */}
+              <div className="mb-4">
+                <label className="block mb-2 font-medium text-base text-[#aaa]">Kids</label>
+                <select
+                  value={isKids}
+                  onChange={(e) => setIsKids(e.target.value === 'true')}
+                  className="w-full p-2 rounded bg-[#2c2c2c] border border-[#444] text-[#eee] text-base"
+                >
+                  <option value="false">False</option>
+                  <option value="true">True</option>
+                </select>
+              </div>
 
-          {/* Overlay */}
-          {isMobile && (
-            <div style={styles.overlay} onClick={() => setIsSidebarOpen(false)} />
-          )}
-        </>
-      )}
+              <div className="mb-4">
+                <label className="block mb-2 font-medium text-base text-[#aaa]">SFW</label>
+                <select
+                  value={isSFW}
+                  onChange={(e) => setIsSFW(e.target.value === 'true')}
+                  className="w-full p-2 rounded bg-[#2c2c2c] border border-[#444] text-[#eee] text-base"
+                >
+                  <option value="true">True</option>
+                  <option value="false">False</option>
+                </select>
+              </div>
+            </aside>
 
-      {/* Main Content */}
-      <div style={styles.main}>
-        <h1 style={styles.header}>📅 Anime Schedule — {day.charAt(0).toUpperCase() + day.slice(1)}</h1>
-        <AnimeGrid animeList={animeData} />
+            {/* Overlay */}
+            {isMobile && (
+              <div
+                className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-50 z-30"
+                onClick={() => setIsSidebarOpen(false)}
+                aria-label="Close sidebar overlay"
+              />
+            )}
+          </>
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 overflow-y-auto">
+          <h1 className="text-2xl mb-4 font-bold">📅 Anime Schedule — {day.charAt(0).toUpperCase() + day.slice(1)}</h1>
+          <AnimeGrid animeList={animeData} isLoading={isLoading} />
+        </main>
       </div>
     </div>
   );
 };
 
-const AnimeGrid = ({ animeList }) => (
+const AnimeGrid = ({ animeList, isLoading }) => (
   <>
-    {animeList?.length ? <AnimeDayTimeline animeList={animeList} /> : null}
-    <div style={styles.grid}>
-      {animeList?.length > 0
-        ? animeList.map(anime => <AnimeCard key={anime.mal_id} anime={anime} />)
-        : <div style={styles.noData}>😴 No anime found</div>}
-    </div>
+    {isLoading ? (
+      <div className="text-center py-5">
+        <div className="loader mx-auto mb-2" />
+        <p>Loading anime schedule...</p>
+      </div>
+    ) : (
+      <>
+        {animeList?.length ? <AnimeDayTimeline animeList={animeList} /> : null}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
+          {animeList?.length > 0 ? (
+            animeList.map(anime => <AnimeCard key={anime.mal_id} anime={anime} />)
+          ) : (
+            <div className="text-center text-lg text-[#888] py-8">😴 No anime found</div>
+          )}
+        </div>
+      </>
+    )}
   </>
 );
 
 export default App;
-
-const styles = {
-  app: {
-    display: 'flex',
-    background: '#121212',
-    color: '#fff',
-    minHeight: '100vh',
-    fontFamily: `'Segoe UI', Roboto, sans-serif`,
-    position: 'relative',
-  },
-
-  // Sidebar
-  sidebar: {
-    width: '250px',
-    padding: '1.5rem',
-    backgroundColor: '#1e1e1e',
-    borderRight: '1px solid #333',
-    zIndex: 1001,
-  },
-  sidebarMobile: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    height: '100%',
-    maxWidth: '80%',
-    backgroundColor: '#1e1e1e',
-    boxShadow: '2px 0 8px rgba(0,0,0,0.6)',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: '10px',
-    right: '15px',
-    fontSize: '1.5rem',
-    background: 'transparent',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  sidebarTitle: {
-    fontSize: '1.2rem',
-    marginBottom: '1rem',
-    color: '#eee',
-  },
-  dayList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-    marginBottom: '1.5rem',
-  },
-  dayButton: {
-    padding: '0.6rem 1rem',
-    borderRadius: '6px',
-    background: '#2c2c2c',
-    color: '#ccc',
-    border: '1px solid #333',
-    cursor: 'pointer',
-    textAlign: 'left',
-    fontSize: '0.95rem',
-    transition: 'all 0.2s ease',
-  },
-  dayButtonActive: {
-    background: '#3f51b5',
-    color: '#fff',
-    borderColor: '#3f51b5',
-  },
-  filterGroup: {
-    marginBottom: '1rem',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '0.4rem',
-    fontWeight: 500,
-    fontSize: '0.95rem',
-    color: '#aaa',
-  },
-  select: {
-    width: '100%',
-    padding: '0.5rem',
-    borderRadius: '5px',
-    border: '1px solid #444',
-    background: '#2c2c2c',
-    color: '#eee',
-    fontSize: '0.95rem',
-  },
-
-  // Hamburger
-  hamburger: {
-    display: 'none',
-    position: 'absolute',
-    top: '1rem',
-    left: '1rem',
-    zIndex: 1100,
-    background: 'transparent',
-    border: 'none',
-    color: '#fff',
-    fontSize: '2rem',
-    cursor: 'pointer',
-  },
-
-  // Overlay
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    zIndex: 1000,
-  },
-
-  // Main content
-  main: {
-    flex: 1,
-    padding: '2rem',
-    paddingLeft: 'clamp(2rem, 4vw, 4rem)',
-    overflowY: 'auto',
-    position: 'relative',
-  },
-  header: {
-    fontSize: '1.8rem',
-    marginBottom: '1.5rem',
-    textShadow: '0 0 4px rgba(0,255,255,0.2)',
-  },
-
-  // Anime grid
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: '1.5rem',
-  },
-  noData: {
-    textAlign: 'center',
-    color: '#888',
-    padding: '2rem',
-  },
-};

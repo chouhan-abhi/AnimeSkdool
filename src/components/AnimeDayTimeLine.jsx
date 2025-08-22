@@ -21,6 +21,7 @@ const segments = [
 
 const AnimeDayTimeline = ({ animeList }) => {
   const currentHour = new Date().getHours();
+  const currentMinute = new Date().getMinutes();
   const defaultSegmentIndex = Math.floor(currentHour / 6);
 
   const [activeSegment, setActiveSegment] = useState(defaultSegmentIndex);
@@ -29,7 +30,7 @@ const AnimeDayTimeline = ({ animeList }) => {
 
   const filteredAnime = useMemo(() => {
     return animeList
-      .map(anime => {
+      .map((anime, i) => {
         const timeStr = anime.broadcast?.time;
         const durationStr = anime.duration;
         if (!timeStr) return null;
@@ -37,13 +38,12 @@ const AnimeDayTimeline = ({ animeList }) => {
         const start = getTimeInHours(timeStr);
         const duration = getDurationInMin(durationStr || '24 min');
         const end = start + duration / 60;
-
         return {
-          title: anime.title,
           start,
           end,
           duration,
-          color: anime.color || '#3f51b5',
+          title: anime.title,
+          backgroundURL: anime.images.webp.small_image_url || anime.images.jpg.small_image_url || '',
         };
       })
       .filter(a => a && a.start < visibleSegment.end && a.end > visibleSegment.start)
@@ -64,43 +64,63 @@ const AnimeDayTimeline = ({ animeList }) => {
     if (!placed) rows.push([item]);
   }
 
+  // Calculate current time marker position if in segment
+  const currentTimeInHours = currentHour + currentMinute / 60;
+  const isCurrentInSegment =
+    currentTimeInHours >= visibleSegment.start && currentTimeInHours < visibleSegment.end;
+  const markerLeft = isCurrentInSegment
+    ? ((currentTimeInHours - visibleSegment.start) / 6) * 100
+    : null;
+
   return (
-    <div style={timelineStyles.wrapper}>
-      <div style={timelineStyles.navRow}>
+    <div className="my-8 p-6 bg-gray-900 rounded-xl text-gray-200 shadow-lg overflow-x-auto">
+      <div className="flex justify-between items-center mb-4 gap-2">
         <button
           onClick={() => setActiveSegment((prev) => Math.max(prev - 1, 0))}
           disabled={activeSegment === 0}
-          style={timelineStyles.navButton}
+          className={`px-3 py-1 text-xl rounded bg-gray-800 border border-gray-700 transition hover:bg-gray-700 disabled:opacity-40`}
         >
           ◀
         </button>
-
-        <span style={timelineStyles.segmentLabel}>
+        <span className="text-base font-semibold tracking-wide text-center">
           {visibleSegment.label}
         </span>
-
         <button
           onClick={() => setActiveSegment((prev) => Math.min(prev + 1, segments.length - 1))}
           disabled={activeSegment === segments.length - 1}
-          style={timelineStyles.navButton}
+          className={`px-3 py-1 text-xl rounded bg-gray-800 border border-gray-700 transition hover:bg-gray-700 disabled:opacity-40`}
         >
           ▶
         </button>
       </div>
 
-      <div style={timelineStyles.timeLabels}>
+      <div className="flex justify-between text-xs mb-2 font-mono">
         {Array.from({ length: visibleSegment.end - visibleSegment.start + 1 }, (_, i) => {
           const h = visibleSegment.start + i;
           return (
-            <span key={h} style={timelineStyles.label}>
+            <span key={h} className="flex-1 text-center text-gray-500">
               {h}:00
             </span>
           );
         })}
       </div>
 
+      <div className="relative w-full h-[2px] bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 mb-2">
+        {isCurrentInSegment && (
+          <div
+            className="absolute top-[-6px] h-[18px] w-[2px] bg-red-500 z-50 transition-all duration-200"
+            style={{ left: `${markerLeft}%` }}
+            title={`Now: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`}
+          >
+            <div className="absolute left-1/2 -translate-x-1/2 top-[-18px] text-xs text-red-500 font-bold drop-shadow">
+              {currentHour}:{currentMinute.toString().padStart(2, '0')}
+            </div>
+          </div>
+        )}
+      </div>
+
       {rows.map((row, rowIndex) => (
-        <div key={rowIndex} style={timelineStyles.track}>
+        <div key={rowIndex} className="relative h-16 bg-gray-800 rounded mb-2 overflow-visible">
           {row.map((item, index) => {
             const visibleStart = visibleSegment.start;
             const visibleEnd = visibleSegment.end;
@@ -115,14 +135,21 @@ const AnimeDayTimeline = ({ animeList }) => {
               <div
                 key={index}
                 title={`${item.title} — ${item.duration} min`}
+                className={`absolute h-full rounded shadow-md flex items-center px-2 text-xs font-semibold whitespace-nowrap overflow-hidden text-white transition-all duration-200`}
                 style={{
-                  ...timelineStyles.segment,
                   left: `${left}%`,
                   width: `${width}%`,
-                  backgroundColor: item.color,
+                  minWidth: '2.5rem',
+                  border: '2px solid rgba(255,255,255,0.08)',
+                  zIndex: 10 + rowIndex,
+                  backgroundImage: item.backgroundURL
+                    ? `linear-gradient(to right, rgba(30,30,30,0.7), rgba(30,30,30,0.5)), url(${item.backgroundURL})`
+                    : undefined,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                 }}
               >
-                <span style={timelineStyles.segmentLabelInner}>
+                <span className="overflow-hidden text-ellipsis drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
                   {item.title.length > 16 ? item.title.slice(0, 14) + '…' : item.title}
                 </span>
               </div>
@@ -130,75 +157,16 @@ const AnimeDayTimeline = ({ animeList }) => {
           })}
         </div>
       ))}
+
+      <div className="flex justify-end text-[0.7rem] mt-2 text-gray-400 font-mono">
+        <span>
+          {filteredAnime.length === 0
+            ? "No anime airing in this segment"
+            : `${filteredAnime.length} anime airing`}
+        </span>
+      </div>
     </div>
   );
 };
 
 export default AnimeDayTimeline;
-
-const timelineStyles = {
-  wrapper: {
-    margin: '2rem 0',
-    padding: '1rem',
-    background: '#121212',
-    borderRadius: '8px',
-    color: '#ccc',
-    overflowX: 'auto',
-  },
-  navRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-  },
-  navButton: {
-    padding: '0.3rem 0.75rem',
-    fontSize: '1.2rem',
-    background: '#1e1e1e',
-    color: '#ccc',
-    border: '1px solid #333',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  segmentLabel: {
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  timeLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '0.7rem',
-    marginBottom: '0.5rem',
-  },
-  label: {
-    width: '100%',
-    textAlign: 'center',
-    color: '#666',
-  },
-  track: {
-    position: 'relative',
-    height: '32px',
-    background: '#2b2b2b',
-    borderRadius: '4px',
-    marginBottom: '6px',
-  },
-  segment: {
-    position: 'absolute',
-    height: '100%',
-    borderRadius: '4px',
-    padding: '0 6px',
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '0.7rem',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    color: '#fff',
-    boxShadow: '0 0 4px rgba(0,0,0,0.3)',
-  },
-  segmentLabelInner: {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-};

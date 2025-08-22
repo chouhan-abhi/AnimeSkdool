@@ -12,4 +12,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --primary-color: #ff6b6b;
+  margin: 0;
+  padding: 0;
 }
+
+@import "tailwindcss";
