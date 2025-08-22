@@ -1,5 +1,15 @@
 import React from "react";
 
+const contentProvider = [
+    {
+        url: 'https://anikoto.tv/filter?keyword=',
+        name: 'Anikoto'
+    }, {
+        url: 'https://9anime.org.lv/?s=',
+        name: '9Anime',
+    }
+];
+
 const AnimeDetailsPanel = ({ anime, onClose }) => {
     const {
         title,
@@ -177,6 +187,23 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
                                 />
                             </div>
                         )}
+
+                        <div className="mb-6 p-2 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+                            <h4 className="font-semibold text-lg mb-2">Watch it on</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                {contentProvider.map((provider) => (
+                                    <a
+                                        key={provider.name}
+                                        href={`${provider.url}${encodeURIComponent(title_english)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="border border-gray-600 text-center p-3 rounded-lg transition hover:bg-gray-600"
+                                    >
+                                        <span className="mr-2">▶</span>{provider.name}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
 
                         <div className="mt-4 flex justify-end">
                             {url && (

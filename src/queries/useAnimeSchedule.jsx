@@ -18,6 +18,5 @@ const fetchSchedule = async (query) => {
 export const useAnimeSchedule = (query) =>
   useQuery({
     queryKey: ['anime-schedule', query],
-    queryFn: () => fetchSchedule(query), // ✅ Wrap it in a function
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryFn: () => fetchSchedule(query),
   });
