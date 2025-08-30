@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import EpisodesList from "./EpisodeList";
 import { contentProvider, formatNumber } from "./utils";
 import { Badge } from "./HelperComponents";
+import { Bookmark } from "lucide-react";
+
+const WATCHLIST_KEY = "watchlist";
 
 const AnimeDetailsPanel = ({ anime, onClose }) => {
   const {
@@ -35,6 +38,36 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
   const transparentPanel = "p-2 rounded-lg bg-black/30 backdrop-blur";
 
+  // Watchlist state
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+    setIsInWatchlist(saved.some((item) => item.mal_id === mal_id));
+  }, [mal_id]);
+
+  const toggleWatchlist = () => {
+    const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+    if (isInWatchlist) {
+      const updated = saved.filter((item) => item.mal_id !== mal_id);
+      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated));
+      setIsInWatchlist(false);
+    } else {
+      saved.push({
+        mal_id,
+        title,
+        title_english,
+        status,
+        airDate: aired?.from || broadcast?.start_time,
+        isKids: anime.isKids || false,
+        isSFW: anime.isSFW !== false,
+        isBookmarked: true,
+      });
+      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(saved));
+      setIsInWatchlist(true);
+    }
+  };
+
   return (
     <div className="fixed inset-0 w-screen h-screen bg-black/70 backdrop-blur-sm z-[9999] flex justify-end">
       <div
@@ -49,7 +82,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           {/* Close Button */}
           <div className="fixed right-4 top-4 flex justify-end">
             <button
-              className="flex justify-center cursor-pointer aspect-square z-10 p-2 rounded-full hover:bg-white/20 transition"
+              className="flex justify-center items-center w-10 h-10 cursor-pointer z-10 p-2 rounded-full hover:bg-white/20 transition"
               onClick={onClose}
               style={{ backdropFilter: "blur(4px)", fontSize: "x-large" }}
             >
@@ -58,8 +91,18 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           </div>
 
           <div className="p-6 mt-80 z-10">
-            {/* Titles */}
-            <h2 className="text-3xl font-bold mb-1">{title}</h2>
+            {/* Titles with Bookmark */}
+            <div className="flex items-center gap-3 mb-1">
+              <h2 className="text-3xl font-bold">{title}</h2>
+              <button
+                onClick={toggleWatchlist}
+                className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-white/20 transition"
+                style={{ backdropFilter: "blur(4px)" }}
+              >
+                <Bookmark className={`text-white ${isInWatchlist ? "bg-[var(--primary-color)] rounded-full p-[4px]" : ""}`} />
+              </button>
+            </div>
+
             {title_english && <p className="text-sm italic mb-1">{title_english}</p>}
             {title_japanese && <p className="text-sm italic mb-2">{title_japanese}</p>}
 

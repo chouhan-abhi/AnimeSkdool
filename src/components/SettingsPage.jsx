@@ -1,9 +1,28 @@
 import { useEffect, useState } from "react";
 
-const SettingsPage = () => {
-  const [theme, setTheme] = useState("theme-light");
-  const [font, setFont] = useState("font-basic");
+const SETTINGS_KEY = "appSettings";
 
+const SettingsPage = () => {
+  // Initialize state from localStorage
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      return saved?.theme || "theme-light";
+    } catch {
+      return "theme-light";
+    }
+  });
+
+  const [font, setFont] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      return saved?.font || "font-basic";
+    } catch {
+      return "font-basic";
+    }
+  });
+
+  // Apply theme and font, and persist to localStorage
   useEffect(() => {
     // Remove old theme classes
     document.documentElement.classList.remove("theme-light", "theme-dark", "theme-saint");
@@ -12,6 +31,9 @@ const SettingsPage = () => {
     // Remove old font classes
     document.documentElement.classList.remove("font-basic", "font-funky", "font-techy", "font-cute", "font-retro");
     document.documentElement.classList.add(font);
+
+    // Persist settings
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme, font }));
   }, [theme, font]);
 
   const resetSettings = () => {
@@ -20,13 +42,13 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="h-full bg-gray-950 text-white flex flex-col">
+    <div className="h-full bg-[var(--bg-color)] text-[var(--text-color)] flex flex-col">
       {/* Header */}
-      <header className="px-4 py-4 border-b border-gray-800 bg-gray-900 sticky top-0 z-50 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-indigo-400">⚙️ Settings</h1>
+      <header className="px-4 py-4 border-b border-gray-800 sticky top-0 z-50 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-[var(--primary-color)]">⚙️ Settings</h1>
         <button
           onClick={resetSettings}
-          className="px-3 py-1 text-sm rounded bg-indigo-600 hover:bg-indigo-500 transition"
+          className="px-3 py-1 text-sm rounded bg-[var(--primary-color)] hover:opacity-90 transition"
         >
           Reset
         </button>

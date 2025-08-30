@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from "react";
-import AnimeDetailsPanel from "./components/AnimeDetailsPanel";
+import AnimeDetailsPanel from "./AnimeDetailsPanel";
 
 const getTimeInHours = (timeStr = "00:00") => {
   const [h, m] = timeStr.split(":");

@@ -60,7 +60,7 @@ const AppHome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center py-6 px-2 bg-gray-950 text-white min-h-screen">
+    <div className="flex flex-col items-center py-6 px-2 text-white min-h-screen">
       {/* Search Bar */}
       <form onSubmit={(e) => e.preventDefault()} className="w-full flex justify-center mt-8 mb-6 px-4">
         <input

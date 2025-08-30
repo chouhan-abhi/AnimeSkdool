@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Home, Calendar, Image, Star, Settings } from "lucide-react";
-import AlbumView from "./AlbumView";
-import CalendarView from "./CalendarView";
+import WatchlistPage from "./components/WatchlistPage";
+import CalendarView from "./components/CalendarView";
 import AnimeRanking from "./components/AnimeRanking";
 import AppHome from "./components/AppHome";
 import SettingsPage from "./components/SettingsPage";
@@ -18,7 +18,7 @@ const App = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="min-h-screen text-white flex flex-col">
       {/* Header (Desktop) */}
       <header className="hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-50 shadow-sm">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--primary-color)]">
@@ -52,7 +52,7 @@ const App = () => {
       {/* Main Content */}
       <main className="flex-grow p-4 pb-24">
         {activeView === "home" && <AppHome />}
-        {activeView === "album" && <AlbumView />}
+        {activeView === "album" && <WatchlistPage />}
         {activeView === "calendar" && <CalendarView />}
         {activeView === "ranking" && <AnimeRanking />}
         {activeView === "settings" && <SettingsPage />}
