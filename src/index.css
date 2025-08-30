@@ -1,19 +1,62 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&family=Baloo+2&family=Fredoka+One&family=Press+Start+2P&display=swap');
+
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   --primary-color: #ff6b6b;
-  margin: 0;
-  padding: 0;
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-@import "tailwindcss";
+.theme-dark {
+  --bg-color: #121212;
+  --text-color: #f5f5f5;
+  --primary-color: #ff6b6b;
+}
+
+.theme-light {
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --primary-color: #ff6b6b;
+}
+
+.theme-saint {
+  --bg-color: #2e3440;   /* Nord palette */
+  --text-color: #d8dee9;
+  --primary-color: #88c0d0;
+}
+
+/* ===================== */
+/* ✨ Font Presets       */
+/* ===================== */
+
+.font-basic {
+  --font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.font-funky {
+  --font-family: "Comic Sans MS", "Comic Neue", cursive, sans-serif;
+}
+
+.font-techy {
+  --font-family: "Orbitron", "Fira Code", monospace;
+}
+
+.font-cute {
+  --font-family: "Quicksand", "Poppins", cursive, sans-serif;
+}
+
+.font-retro {
+  --font-family: "Press Start 2P", "Courier New", monospace;
+}
+
+/* ===================== */
+/* 📝 Apply Variables    */
+/* ===================== */
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+}

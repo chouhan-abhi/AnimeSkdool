@@ -15,6 +15,7 @@ const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 
 const LOCAL_STORAGE_KEY = "animeScheduleCache";
 const STARRED_KEY = "starredAnime";
+const FILTER_KEY = "animeFilters"; // ✅ NEW KEY
 
 const fetchAnimeSchedule = async (page) => {
   const response = await fetch(`https://api.jikan.moe/v4/seasons/now?filter=tv&page=${page}`);
@@ -25,15 +26,27 @@ const fetchAnimeSchedule = async (page) => {
 const CalendarView = () => {
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState("All");
-  const [showStarredOnly, setShowStarredOnly] = useState(false);
+
+  // ✅ Initialize filters from localStorage
+  const savedFilters = JSON.parse(localStorage.getItem(FILTER_KEY)) || {};
+  const [search, setSearch] = useState(savedFilters.search || "");
+  const [selectedGenre, setSelectedGenre] = useState(savedFilters.selectedGenre || "All");
+  const [selectedStatus, setSelectedStatus] = useState(savedFilters.selectedStatus || "All");
+  const [showStarredOnly, setShowStarredOnly] = useState(savedFilters.showStarredOnly || false);
+
   const [genres, setGenres] = useState([]);
   const [starred, setStarred] = useState(() => JSON.parse(localStorage.getItem(STARRED_KEY)) || []);
   const [selectedAnime, setSelectedAnime] = useState(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // ✅ Persist filter changes
+  useEffect(() => {
+    localStorage.setItem(
+      FILTER_KEY,
+      JSON.stringify({ search, selectedGenre, selectedStatus, showStarredOnly })
+    );
+  }, [search, selectedGenre, selectedStatus, showStarredOnly]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
