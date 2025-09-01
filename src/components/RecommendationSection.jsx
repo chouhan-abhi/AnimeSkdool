@@ -84,7 +84,7 @@ const RecommendationSection = () => {
   const currentAnime = animeQueue[currentIndex];
 
   return (
-    <div className="p-4 m-4 w-full flex flex-col items-center">
+    <div className="p-4 m-4 flex flex-col items-center">
       <h2 className="text-lg font-semibold mb-3 text-[var(--primary-color)]">
         Recommended Anime
       </h2>

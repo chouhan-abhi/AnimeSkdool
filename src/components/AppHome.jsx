@@ -112,7 +112,7 @@ const AppHome = () => {
       )}
 
       {/* Recommendations */}
-      <section className="w-full max-w-5xl mx-2 my-4 px-2">
+      <section className="w-full mx-2 my-4 px-2">
         <RecommendationSection />
       </section>
 
