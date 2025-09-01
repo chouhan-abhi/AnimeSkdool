@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import EpisodesList from "./EpisodeList";
-import { contentProvider, formatNumber } from "./utils";
-import { Badge } from "./HelperComponents";
+import EpisodesList from "../helperComponent/EpisodeList";
+import { contentProvider, formatNumber } from "../utils/utils";
+import { Badge } from "../helperComponent/Badge";
 import { Bookmark } from "lucide-react";
 
 const WATCHLIST_KEY = "watchlist";
@@ -36,7 +36,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     return new Date(dateString) > new Date();
   })();
 
-  const transparentPanel = "p-2 rounded-lg bg-black/30 backdrop-blur";
+  const transparentPanel = "p-2 rounded-lg bg-black/40";
 
   // Watchlist state
   const [isInWatchlist, setIsInWatchlist] = useState(false);
@@ -49,24 +49,21 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   const toggleWatchlist = () => {
     const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
     if (isInWatchlist) {
+      // remove
       const updated = saved.filter((item) => item.mal_id !== mal_id);
       localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated));
       setIsInWatchlist(false);
     } else {
+      // add full anime object
       saved.push({
-        mal_id,
-        title,
-        title_english,
-        status,
-        airDate: aired?.from || broadcast?.start_time,
-        isKids: anime.isKids || false,
-        isSFW: anime.isSFW !== false,
-        isBookmarked: true,
+        ...anime,
+        isBookmarked: true, // optional extra flag
       });
       localStorage.setItem(WATCHLIST_KEY, JSON.stringify(saved));
       setIsInWatchlist(true);
     }
   };
+
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-black/70 backdrop-blur-sm z-[9999] flex justify-end">
@@ -84,7 +81,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             <button
               className="flex justify-center items-center w-10 h-10 cursor-pointer z-10 p-2 rounded-full hover:bg-white/20 transition"
               onClick={onClose}
-              style={{ backdropFilter: "blur(4px)", fontSize: "x-large" }}
+              style={{ backdropFilter: "blur(4px) !important", fontSize: "x-large" }}
             >
               ×
             </button>
@@ -97,7 +94,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               <button
                 onClick={toggleWatchlist}
                 className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-white/20 transition"
-                style={{ backdropFilter: "blur(4px)" }}
+                style={{ backdropFilter: "blur(4px) !important" }}
               >
                 <Bookmark className={`text-white ${isInWatchlist ? "bg-[var(--primary-color)] rounded-full p-[4px]" : ""}`} />
               </button>
@@ -139,7 +136,8 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
                 { label: "Favorites", value: formatNumber(favorites) },
                 { label: "Episodes", value: episodes || "TBA" },
               ].map((stat) => (
-                <div key={stat.label} className={`${transparentPanel} text-center`}>
+                <div key={stat.label} className={`${transparentPanel} text-center`}
+                  style={{ backdropFilter: "blur(4px) !important" }}>
                   <p className="text-xs text-gray-400">{stat.label}</p>
                   <p className="font-semibold">{stat.value}</p>
                 </div>

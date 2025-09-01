@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import AnimeCard from './AnimeCard';
-import PageLoader from './PageLoader';
+import AnimeCard from '../helperComponent/AnimeCard';
+import PageLoader from '../helperComponent/PageLoader';
 
 const WATCHLIST_KEY = 'watchlist';
+const STARRED_KEY = 'starredAnime';
+const CACHE_KEY = 'animeScheduleCache';
 const globalFilters = ['all', 'started', 'bookmarked', 'upcoming'];
 
 const WatchlistPage = () => {
   const [filter, setFilter] = useState('all');
-  const [isKids, setIsKids] = useState(false);
-  const [isSFW, setIsSFW] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [watchlist, setWatchlist] = useState([]);
+  const [starredList, setStarredList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,34 +23,62 @@ const WatchlistPage = () => {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
-      setWatchlist(saved);
+      // ✅ load saved watchlist
+      const savedWatchlist = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
+      setWatchlist(savedWatchlist);
+
+      // ✅ load starred ids + anime cache
+      const starredIds = JSON.parse(localStorage.getItem(STARRED_KEY) || '[]');
+      const animeCache = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+      const animeCacheMap = new Map(animeCache.map(a => [a.mal_id, a]));
+
+      // build starred list separately
+      const starredAnime = starredIds
+        .map(id => animeCacheMap.get(id))
+        .filter(Boolean)
+        .map(anime => ({ ...anime, starred: true }));
+
+      setStarredList(starredAnime);
     } catch (err) {
-      console.error('Failed to load watchlist', err);
+      console.error('Failed to load lists', err);
       setWatchlist([]);
+      setStarredList([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const filteredAnime = useMemo(() => {
-    return watchlist.filter(anime => {
-      if (isKids && !anime.isKids) return false;
-      if (isSFW && !anime.isSFW) return false;
-      if (filter === 'started') return anime.status === 'watching';
-      if (filter === 'bookmarked') return anime.isBookmarked;
-      if (filter === 'upcoming') return new Date(anime.airDate) > new Date();
-      return true;
-    });
-  }, [watchlist, filter, isKids, isSFW]);
+const filteredAnime = useMemo(() => {
+  if (filter === 'all') {
+    // ✅ show everything: watchlist + starred (avoid duplicates by mal_id)
+    const allMap = new Map();
+    [...watchlist, ...starredList].forEach(anime => allMap.set(anime.mal_id, anime));
+    return Array.from(allMap.values());
+  }
+
+  if (filter === 'started') {
+    return starredList;
+  }
+
+  if (filter === 'bookmarked') {
+    return watchlist.filter(anime => anime.isBookmarked);
+  }
+
+  if (filter === 'upcoming') {
+    return watchlist.filter(anime => anime.status?.toLowerCase() === 'not yet aired');
+  }
+
+  return watchlist;
+}, [watchlist, starredList, filter]);
+
 
   return (
     <div className="flex h-screen bg-[var(--bg-color)] text-[var(--text-color)] font-sans">
       {/* Sidebar */}
       {(isSidebarOpen || !isMobile) && (
         <aside
-          className={`bg-[var(--secondary-color)] p-4 w-64 flex-shrink-0 rounded-r-xl transition-all ${
-            isMobile ? 'fixed top-0 left-0 h-full z-50 shadow-lg' : 'h-full'
+          className={`bg-[var(--bg-color)] p-4 flex-shrink-0 rounded-r-xl transition-all ${
+            isMobile ? 'fixed top-0 left-0 h-full w-full z-50 shadow-lg' : 'h-48 w-48'
           }`}
         >
           {isMobile && (
@@ -85,7 +114,6 @@ const WatchlistPage = () => {
         </aside>
       )}
 
-      {/* Mobile overlay */}
       {isMobile && isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40"
@@ -93,40 +121,18 @@ const WatchlistPage = () => {
         />
       )}
 
-      {/* Main content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col h-full">
         <header className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
-          <h1 className="text-2xl font-bold">🎬 My Watchlist</h1>
-          <div className="flex items-center gap-3">
-            {isMobile && (
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="text-[var(--text-color)] text-xl"
-              >
-                ☰
-              </button>
-            )}
-            <div className="flex gap-3 text-sm">
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={isKids}
-                  onChange={() => setIsKids(!isKids)}
-                  className="accent-[var(--primary-color)]"
-                />
-                Kids
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={isSFW}
-                  onChange={() => setIsSFW(!isSFW)}
-                  className="accent-[var(--primary-color)]"
-                />
-                SFW
-              </label>
-            </div>
-          </div>
+          <h1 className="text-2xl font-bold">My Watchlist</h1>
+          {isMobile && (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="text-[var(--text-color)] text-xl"
+            >
+              ☰
+            </button>
+          )}
         </header>
 
         <main className="flex-1 overflow-y-auto p-4">

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import AnimeDetailsPanel from "./AnimeDetailsPanel";
 import RecommendationSection from "./RecommendationSection";
-import PageLoader from "./PageLoader";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
+import PageLoader from "../helperComponent/PageLoader";
 
 const AppHome = () => {
   const [search, setSearch] = useState("");
@@ -83,7 +83,7 @@ const AppHome = () => {
       ) : (
         results.length > 0 && (
           <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col items-center text-center">
-            <h2 className="text-lg font-semibold text-primary mb-3 w-full px-2">
+            <h2 className="text-lg font-semibold text-primary mb-3 w-full px-2 text-[var(--primary-color)]">
               Search Results
             </h2>
 
@@ -97,10 +97,9 @@ const AppHome = () => {
         )
       )}
 
-      {/* Starred Animes (only render if data present) */}
       {starredAnimes.length > 0 && (
         <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
-          <h2 className="text-lg font-semibold text-primary mb-3 w-full">
+          <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
             Your Starred Animes
           </h2>
 

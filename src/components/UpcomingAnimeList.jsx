@@ -1,12 +1,13 @@
 import React from "react";
 import { useUpcomingAnime } from "../queries/useUpcomingAnime";
-import AnimeCard from "./AnimeCard";
+import AnimeCard from "../helperComponent/AnimeCard";
+import PageLoader from "../helperComponent/PageLoader";
 
 const UpcomingAnimeList = () => {
   const { data: animeList, isLoading, isError, error } = useUpcomingAnime();
 
   if (isLoading) {
-    return <div className="text-center py-6">⏳ Loading upcoming anime...</div>;
+    return <PageLoader />
   }
 
   if (isError) {
@@ -20,7 +21,7 @@ const UpcomingAnimeList = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--primary-color)" }}>
-        📺 Upcoming Anime
+        Upcoming Anime
       </h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

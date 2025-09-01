@@ -168,6 +168,7 @@ const CalendarView = () => {
             className={`px-3 py-1 rounded text-sm font-semibold ${
               showStarredOnly ? "bg-yellow-500 text-black" : "bg-gray-700 text-white"
             }`}
+            style={{ backdropFilter: "blur(4px)" }}
           >
             {showStarredOnly ? "★ Starred" : "☆ All"}
           </button>
@@ -201,7 +202,7 @@ const CalendarView = () => {
                     onClick={() => setSelectedAnime(anime)}
                   >
                     <img
-                      src={anime.images.webp.large_image_url || anime.images.jpg.large_image_url}
+                      src={anime.images.webp.image_url || anime.images.jpg.image_url}
                       alt={anime.title}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
