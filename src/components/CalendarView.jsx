@@ -1,59 +1,105 @@
 import React, { useMemo, useEffect, useState } from "react";
 import AnimeDetailsPanel from "./AnimeDetailsPanel";
+import MinimalDayView from "../helperComponent/MinimalDayView";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const getTimeInHours = (timeStr = "00:00") => {
-  const [h, m] = timeStr.split(":");
-  return parseInt(h) + parseInt(m) / 60;
-};
-
+// --- Helpers ---
 const getDurationInMin = (durationStr = "24 min") => {
   const match = durationStr.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 24;
 };
 
-const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const LOCAL_STORAGE_KEY = "animeScheduleCache";
 const STARRED_KEY = "starredAnime";
-const FILTER_KEY = "animeFilters"; // ✅ NEW KEY
+const FILTER_KEY = "animeFilters";
+const APP_SETTINGS_KEY = "appSettings"; // ✅ new key
 
+// --- API fetch ---
 const fetchAnimeSchedule = async (page) => {
-  const response = await fetch(`https://api.jikan.moe/v4/seasons/now?filter=tv&page=${page}`);
+  const response = await fetch(
+    `https://api.jikan.moe/v4/seasons/now?filter=tv&page=${page}`
+  );
   const json = await response.json();
   return json?.data || [];
+};
+
+// --- Time conversion (JST → Local) ---
+const convertJSTtoLocal = (timeStr = "00:00") => {
+  if (!timeStr) return "??:??";
+  try {
+    const [h, m] = timeStr.split(":").map(Number);
+    const utcDate = new Date(Date.UTC(1970, 0, 1, h - 9, m));
+    return utcDate.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return timeStr;
+  }
 };
 
 const CalendarView = () => {
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Initialize filters from localStorage
-  const savedFilters = JSON.parse(localStorage.getItem(FILTER_KEY)) || {};
+    const appSettings =
+      JSON.parse(localStorage.getItem(APP_SETTINGS_KEY)) || {};
+  // ✅ Load initial view
+  const [calendarView, setCalendarView] = useState(appSettings.calendarView || "week");
+  console.log(appSettings);
+
+  // ✅ Sync with localStorage on every mount + when storage updates
+  useEffect(() => {
+    const syncCalendarView = () => {
+      try {
+        const appSettings =
+          JSON.parse(localStorage.getItem(APP_SETTINGS_KEY)) || {};
+        if (appSettings.calendarView && appSettings.calendarView !== calendarView) {
+          setCalendarView(appSettings.calendarView);
+        }
+      } catch {}
+    };
+
+    // run once on mount
+    syncCalendarView();
+
+    // run whenever localStorage changes (same tab or others)
+    const interval = setInterval(syncCalendarView, 500); // poll every 500ms
+    window.addEventListener("storage", syncCalendarView);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", syncCalendarView);
+    };
+  }, [calendarView]);
+
+  const [mobileDayIndex, setMobileDayIndex] = useState(
+    new Date().getDay() - 1
+  );
+
+  // ✅ Filters
+  const savedFilters =
+    JSON.parse(localStorage.getItem(FILTER_KEY)) || {};
   const [search, setSearch] = useState(savedFilters.search || "");
-  const [selectedGenre, setSelectedGenre] = useState(savedFilters.selectedGenre || "All");
-  const [selectedStatus, setSelectedStatus] = useState(savedFilters.selectedStatus || "All");
-  const [showStarredOnly, setShowStarredOnly] = useState(savedFilters.showStarredOnly || false);
+  const [selectedGenre, setSelectedGenre] = useState(
+    savedFilters.selectedGenre || "All"
+  );
+  const [selectedStatus, setSelectedStatus] = useState(
+    savedFilters.selectedStatus || "All"
+  );
+  const [showStarredOnly, setShowStarredOnly] = useState(
+    savedFilters.showStarredOnly || false
+  );
 
   const [genres, setGenres] = useState([]);
-  const [starred, setStarred] = useState(() => JSON.parse(localStorage.getItem(STARRED_KEY)) || []);
+  const [starred, setStarred] = useState(
+    () => JSON.parse(localStorage.getItem(STARRED_KEY)) || []
+  );
   const [selectedAnime, setSelectedAnime] = useState(null);
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  // ✅ Persist filter changes
-  useEffect(() => {
-    localStorage.setItem(
-      FILTER_KEY,
-      JSON.stringify({ search, selectedGenre, selectedStatus, showStarredOnly })
-    );
-  }, [search, selectedGenre, selectedStatus, showStarredOnly]);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  // ✅ Load from cache or fetch
   useEffect(() => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
@@ -76,7 +122,10 @@ const CalendarView = () => {
       const combined = [...page1, ...page2, ...page3].slice(0, 75);
       setAnimeList(combined);
       extractGenres(combined);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(combined));
+      localStorage.setItem(
+        LOCAL_STORAGE_KEY,
+        JSON.stringify(combined)
+      );
     } catch (error) {
       console.error("Failed to fetch anime schedule:", error);
     } finally {
@@ -86,7 +135,9 @@ const CalendarView = () => {
 
   const extractGenres = (list) => {
     const allGenres = new Set();
-    list.forEach((anime) => anime.genres?.forEach((g) => allGenres.add(g.name)));
+    list.forEach((anime) =>
+      anime.genres?.forEach((g) => allGenres.add(g.name))
+    );
     setGenres(["All", ...Array.from(allGenres).sort()]);
   };
 
@@ -98,146 +149,135 @@ const CalendarView = () => {
     localStorage.setItem(STARRED_KEY, JSON.stringify(updated));
   };
 
+  // ✅ Filtering
   const filteredList = useMemo(() => {
     return animeList.filter((anime) => {
-      const matchesSearch = anime.title.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = anime.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
       const matchesGenre =
-        selectedGenre === "All" || anime.genres.some((g) => g.name === selectedGenre);
-      const matchesStatus = selectedStatus === "All" || anime.status === selectedStatus;
-      const matchesStarred = !showStarredOnly || starred.includes(anime.mal_id);
-      return matchesSearch && matchesGenre && matchesStatus && matchesStarred;
+        selectedGenre === "All" ||
+        anime.genres.some((g) => g.name === selectedGenre);
+      const matchesStatus =
+        selectedStatus === "All" ||
+        (selectedStatus === "Upcoming"
+          ? anime.status === "Not yet aired"
+          : anime.status === selectedStatus);
+      const matchesStarred =
+        !showStarredOnly || starred.includes(anime.mal_id);
+      return (
+        matchesSearch &&
+        matchesGenre &&
+        matchesStatus &&
+        matchesStarred
+      );
     });
-  }, [animeList, search, selectedGenre, selectedStatus, showStarredOnly, starred]);
+  }, [
+    animeList,
+    search,
+    selectedGenre,
+    selectedStatus,
+    showStarredOnly,
+    starred,
+  ]);
 
+  // ✅ Group by weekday
   const animeByDay = useMemo(() => {
     const grouped = {};
     weekDays.forEach((day) => (grouped[day] = []));
     filteredList.forEach((anime) => {
       const day = anime.broadcast?.day;
       if (!day) return;
-      const normalizedDay = weekDays.find((d) => day.toLowerCase().startsWith(d.toLowerCase()));
+      const normalizedDay = weekDays.find((d) =>
+        day.toLowerCase().startsWith(d.toLowerCase())
+      );
       if (!normalizedDay) return;
       grouped[normalizedDay].push({
         ...anime,
-        start: anime.broadcast?.time ? getTimeInHours(anime.broadcast.time) : null,
+        localTime: anime.broadcast?.time
+          ? convertJSTtoLocal(anime.broadcast.time)
+          : "??:??",
       });
     });
     Object.keys(grouped).forEach((day) =>
-      grouped[day].sort((a, b) => (a.start ?? Infinity) - (b.start ?? Infinity))
+      grouped[day].sort((a, b) =>
+        a.localTime > b.localTime ? 1 : -1
+      )
     );
     return grouped;
   }, [filteredList]);
 
   if (loading && animeList.length === 0) {
-    return <div className="text-center text-gray-400 py-10">Loading schedule...</div>;
+    return (
+      <div className="text-center text-gray-400 py-10">
+        Loading schedule...
+      </div>
+    );
   }
+
+  // ✅ Day Switcher
+  const handlePrevDay = () =>
+    setMobileDayIndex(
+      (prev) => (prev - 1 + weekDays.length) % weekDays.length
+    );
+  const handleNextDay = () =>
+    setMobileDayIndex((prev) => (prev + 1) % weekDays.length);
+
+  const currentDay = weekDays[mobileDayIndex % 7];
 
   return (
     <div className="relative w-full bg-gray-950 p-4 rounded-xl shadow-inner">
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row justify-between mb-4 gap-4">
-        <h2 className="text-xl font-semibold text-gray-100">Weekly Anime Schedule</h2>
-        <div className="flex flex-wrap gap-3">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-700 text-sm"
-          />
-          <select
-            value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-700 text-sm"
-          >
-            {genres.map((g) => (
-              <option key={g}>{g}</option>
-            ))}
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-700 text-sm"
-          >
-            <option value="All">All Status</option>
-            <option value="Currently Airing">Currently Airing</option>
-            <option value="Finished Airing">Finished Airing</option>
-          </select>
-          <button
-            onClick={() => setShowStarredOnly((prev) => !prev)}
-            className={`px-3 py-1 rounded text-sm font-semibold ${
-              showStarredOnly ? "bg-yellow-500 text-black" : "bg-gray-700 text-white"
-            }`}
-            style={{ backdropFilter: "blur(4px)" }}
-          >
-            {showStarredOnly ? "★ Starred" : "☆ All"}
-          </button>
-        </div>
-      </div>
+      {/* Header Controls */}
+      <div className="flex flex-row justify-between gap-3 mb-4">
+        <h2 className="text-xl font-semibold text-gray-100">
+          Weekly Anime Schedule
+        </h2>
 
-      {/* Responsive Calendar */}
-      <div
-        className={`${
-          isMobile
-            ? "flex overflow-x-auto gap-4 snap-x"
-            : "grid grid-cols-7 gap-4 min-w-[1000px]"
-        }`}
-      >
-        {weekDays.map((day) => (
-          <div
-            key={day}
-            className="bg-gray-900 rounded-lg shadow-md p-3 flex flex-col snap-start min-w-[85%] md:min-w-0 transition-transform"
-          >
-            <h3 className="text-center text-lg font-semibold text-gray-100 mb-3 border-b border-gray-700 pb-2">
-              {day}
-            </h3>
-            {(animeByDay[day] || []).length === 0 ? (
-              <p className="text-gray-600 text-center text-sm">No anime airing</p>
-            ) : (
-              <div className="space-y-3">
-                {animeByDay[day].map((anime) => (
-                  <div
-                    key={anime.mal_id}
-                    className="relative rounded-lg overflow-hidden h-36 cursor-pointer group shadow-lg hover:scale-105 transition-transform"
-                    onClick={() => setSelectedAnime(anime)}
-                  >
-                    <img
-                      src={anime.images.webp.image_url || anime.images.jpg.image_url}
-                      alt={anime.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent"></div>
-                    <div className="relative z-10 p-2 flex flex-col justify-end h-full text-white">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>{anime.broadcast?.time || "??:??"}</span>
-                        <span>{getDurationInMin(anime.duration)} min</span>
-                      </div>
-                      <span className="text-sm font-bold truncate">{anime.title}</span>
-                      {anime.episodes && (
-                        <span className="text-xs text-gray-300">Upcoming Ep: {anime.episodes}</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStar(anime.mal_id);
-                      }}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 text-yellow-400 text-lg"
-                      style={{ zIndex: 20 }}
-                    >
-                      {starred.includes(anime.mal_id) ? "★" : "☆"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Simple Day Switcher */}
+        {calendarView === "day" && (
+          <div className="flex items-center w-32 justify-between bg-gray-800 px-1 py-1 rounded-lg">
+            <button
+              onClick={handlePrevDay}
+              className="rounded-full hover:bg-gray-700"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-200" />
+            </button>
+            <span className="text-gray-100 font-medium mx-1 text-center">
+              {currentDay}
+            </span>
+            <button
+              onClick={handleNextDay}
+              className="rounded-full hover:bg-gray-700"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-200" />
+            </button>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Anime Details Panel */}
+      {/* ✅ Conditional Rendering */}
+      {calendarView === "week" ? (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+          {weekDays.map((day) => (
+            <MinimalDayView
+              key={day}
+              schedule={animeByDay[day] || []}
+              day={day}
+            />
+          ))}
+        </div>
+      ) : (
+        <MinimalDayView
+          schedule={animeByDay[currentDay] || []}
+          day={currentDay}
+        />
+      )}
+
       {selectedAnime && (
-        <AnimeDetailsPanel anime={selectedAnime} onClose={() => setSelectedAnime(null)} />
+        <AnimeDetailsPanel
+          anime={selectedAnime}
+          onClose={() => setSelectedAnime(null)}
+        />
       )}
     </div>
   );
