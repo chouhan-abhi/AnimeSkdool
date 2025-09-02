@@ -79,15 +79,15 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           {/* Close Button */}
           <div className="fixed right-4 top-4 flex justify-end">
             <button
-              className="flex justify-center items-center w-10 h-10 cursor-pointer z-10 p-2 rounded-full hover:bg-white/20 transition"
+              className="flex justify-center items-center w-10 h-10 cursor-pointer z-10 p-2 bg-black/40 rounded-full hover:bg-white/20 transition"
               onClick={onClose}
-              style={{ backdropFilter: "blur(4px) !important", fontSize: "x-large" }}
+              style={{ backdropFilter: "blur(6px) !important", fontSize: "x-large" }}
             >
               ×
             </button>
           </div>
 
-          <div className="p-6 mt-80 z-10">
+          <div className="p-6 mt-80 z-10" style={{ backdropFilter: "blur(1px)" }}>
             {/* Titles with Bookmark */}
             <div className="flex items-center gap-3 mb-1">
               <h2 className="text-3xl font-bold">{title}</h2>
@@ -96,7 +96,11 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
                 className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-white/20 transition"
                 style={{ backdropFilter: "blur(4px) !important" }}
               >
-                <Bookmark className={`text-white ${isInWatchlist ? "bg-[var(--primary-color)] rounded-full p-[4px]" : ""}`} />
+                <Bookmark
+                  size={32}
+                  className={`rounded-full p-[4px] text-xl ${isInWatchlist ? "fill-[var(--primary-color)] text-[var(--primary-color)]" : "text-white"
+                    }`}
+                />
               </button>
             </div>
 
@@ -138,7 +142,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               ].map((stat) => (
                 <div key={stat.label} className={`${transparentPanel} text-center`}
                   style={{ backdropFilter: "blur(4px) !important" }}>
-                  <p className="text-xs text-gray-400">{stat.label}</p>
+                  <p className="text-xs">{stat.label}</p>
                   <p className="font-semibold">{stat.value}</p>
                 </div>
               ))}

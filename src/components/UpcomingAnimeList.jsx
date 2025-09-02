@@ -1,7 +1,7 @@
 import React from "react";
 import { useUpcomingAnime } from "../queries/useUpcomingAnime";
-import AnimeCard from "../helperComponent/AnimeCard";
 import PageLoader from "../helperComponent/PageLoader";
+import AnimeDetailCard from "../helperComponent/AnimeDetailCard";
 
 const UpcomingAnimeList = () => {
   const { data: animeList, isLoading, isError, error } = useUpcomingAnime();
@@ -19,17 +19,16 @@ const UpcomingAnimeList = () => {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--primary-color)" }}>
-        Upcoming Anime
-      </h2>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {animeList?.map((anime) => (
-          <AnimeCard key={anime.mal_id} anime={anime} showStatusBadge />
-        ))}
+    <div className="p-4 h-full">
+      <div className="h-full overflow-y-auto pr-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {animeList?.map((anime) => (
+            <AnimeDetailCard key={anime.mal_id} anime={anime} showStatusBadge />
+          ))}
+        </div>
       </div>
     </div>
+
   );
 };
 

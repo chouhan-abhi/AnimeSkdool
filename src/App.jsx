@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Home, Calendar, Image, Star, Settings } from "lucide-react";
+import { Home, Calendar, Image, Compass, Settings } from "lucide-react";
 import WatchlistPage from "./components/WatchlistPage";
 import CalendarView from "./components/CalendarView";
-import AnimeRanking from "./components/AnimeRanking";
 import AppHome from "./components/AppHome";
 import SettingsPage from "./components/SettingsPage";
+import AnimeView from "./components/AnimeView";
 
 const App = () => {
   // ✅ Initialize from sessionStorage on first render
@@ -21,7 +21,7 @@ const App = () => {
     { key: "home", label: "Home", icon: <Home size={22} /> },
     { key: "watchList", label: "WatchList", icon: <Image size={22} /> },
     { key: "calendar", label: "Calendar", icon: <Calendar size={22} /> },
-    { key: "explore", label: "Explore", icon: <Star size={22} /> },
+    { key: "explore", label: "Explore", icon: <Compass size={22} /> },
     { key: "settings", label: "Settings", icon: <Settings size={22} /> },
   ];
 
@@ -59,20 +59,20 @@ const App = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow p-4 pb-24">
+      <main className="flex-grow md:p-4 pb-24">
         {activeView === "home" && <AppHome />}
         {activeView === "watchList" && <WatchlistPage />}
         {activeView === "calendar" && <CalendarView />}
-        {activeView === "explore" && <AnimeRanking />}
+        {activeView === "explore" && <AnimeView />}
         {activeView === "settings" && <SettingsPage />}
       </main>
 
       {/* Floating Pill Navigation (Mobile) */}
       <nav
         className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 
-        bg-gray-900/20 border border-gray-500 
+        bg-gray-900/40 border border-gray-500 
         flex justify-around items-center gap-6 px-6 py-2 rounded-full shadow-xl z-50 shadow-xl"
-        style={{ backdropFilter: "blur(4px)" }}
+        style={{ backdropFilter: "blur(6px)" }}
       >
         {navItems.map((item) => (
           <button

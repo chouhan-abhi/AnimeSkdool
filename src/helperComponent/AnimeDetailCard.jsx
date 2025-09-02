@@ -1,0 +1,131 @@
+import React, { useState } from "react";
+import AnimeDetailsPanel from "../components/AnimeDetailsPanel";
+
+const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (!anime) return null;
+
+  const {
+    mal_id,
+    title,
+    images,
+    type,
+    episodes,
+    duration,
+    score,
+    rank,
+    status,
+    year,
+    season,
+    rating,
+    studios,
+    genres,
+    popularity,
+    members,
+    producers,
+  } = anime;
+
+  const isBookmarked = bookmarked.includes(mal_id);
+
+  return (
+    <>
+      <div
+        className="relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
+                   transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+        onClick={() => setExpanded(true)}
+      >
+        {/* Background blur */}
+        <div
+          className="absolute inset-0 bg-cover bg-center filter blur-lg scale-105 z-0"
+          style={{ backgroundImage: `url(${images?.jpg?.image_url})` }}
+        />
+        <div className="absolute inset-0 bg-black/60 z-0" />
+
+        {/* Main content */}
+        <div className="relative z-10 flex flex-row h-full overflow-hidden">
+          {/* Left image */}
+          <div className="relative w-40 h-full flex-shrink-0 overflow-hidden rounded-l-xl">
+            <img
+              src={images?.jpg?.image_url}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+
+            {/* Floating rating & rank badges */}
+            <div className="absolute bottom-2 left-2 flex gap-2 items-center">
+              {score && (
+                <span className="font-bold text-xs px-2 py-1 rounded-full bg-black/70 text-white shadow-md">
+                  ⭐ {score}
+                </span>
+              )}
+              {rank && (
+                <span className="font-bold text-xs px-2 py-1 rounded-full bg-black/70 text-white shadow-md">
+                  #{rank}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Right content */}
+          <div className="flex-1 p-4 flex flex-col justify-between text-white relative overflow-hidden">
+            {/* Bookmark */}
+            {toggleBookmark && (
+              <div
+                className="absolute top-2 right-2 text-yellow-400 text-2xl z-20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleBookmark(mal_id);
+                }}
+                title={isBookmarked ? "Bookmarked" : "Bookmark"}
+              >
+                {isBookmarked ? "🔖" : "📑"}
+              </div>
+            )}
+
+            {/* Title & Basic Info */}
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold truncate">{title}</h3>
+              <p className="text-sm text-gray-300 truncate">
+                {type} • {duration} • {episodes ?? "TBA"} eps
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {status} {year ? `• ${season} ${year}` : ""} • {rating}
+              </p>
+            </div>
+
+            {/* Studios, Genres, Producers */}
+            <div className="space-y-1 text-xs text-gray-300 truncate">
+              {studios?.length > 0 && (
+                <p className="truncate">
+                  Studio: {studios.map((s) => s.name).join(", ")}
+                </p>
+              )}
+              {genres?.length > 0 && (
+                <p className="truncate">
+                  Genres: {genres.map((g) => g.name).join(", ")}
+                </p>
+              )}
+              {producers?.length > 0 && (
+                <p className="truncate">
+                  Producer: {producers.map((p) => p.name).join(", ")}
+                </p>
+              )}
+              {popularity && members && (
+                <p className="truncate">
+                  Popularity: #{popularity} • {members.toLocaleString()} members
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded panel */}
+      {expanded && (
+        <AnimeDetailsPanel anime={anime} onClose={() => setExpanded(false)} />
+      )}
+    </>
+  );
+};
+
+export default AnimeDetailCard;
