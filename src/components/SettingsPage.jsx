@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import NoAnimeFound from "../helperComponent/NoAnimeFound";
 
 const SETTINGS_KEY = "appSettings";
 
@@ -60,28 +61,7 @@ const PreviewDayCalendar = ({ schedule }) => {
   return (
     <div className="space-y-2">
       <h3 className="font-semibold text-sm">{days[today]}</h3>
-      {currentDayAnime.length > 0 ? (
-        currentDayAnime.map((anime) => (
-          <div
-            key={anime.mal_id}
-            className="flex items-center gap-3 p-2 rounded-lg bg-[var(--secondary-color)]"
-          >
-            <img
-              src={anime.images?.jpg?.image_url}
-              alt={anime.title}
-              className="w-10 h-14 object-cover rounded"
-            />
-            <div className="flex-1">
-              <p className="text-xs font-semibold">{anime.title}</p>
-              <p className="text-[10px] text-gray-400">
-                {anime.broadcast?.time || "??:??"} | {anime.type}
-              </p>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p className="text-xs text-gray-500">No anime today 😴</p>
-      )}
+      <NoAnimeFound message="Live Preview" />
     </div>
   );
 };
@@ -108,6 +88,15 @@ const SettingsPage = () => {
     }
   });
 
+  const [primaryColor, setPrimaryColor] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      return saved?.primaryColor || "primary-red";
+    } catch {
+      return "primary-red";
+    }
+  });
+
   // Calendar View
   const [calendarView, setCalendarView] = useState(() => {
     try {
@@ -118,25 +107,32 @@ const SettingsPage = () => {
     }
   });
 
-  // Persist + apply theme/font
+  // Persist + apply theme/font/primaryColor
   useEffect(() => {
     document.documentElement.classList.remove("theme-light", "theme-dark", "theme-saint");
     document.documentElement.classList.add(theme);
-    console.log(calendarView)
+
     document.documentElement.classList.remove(
       "font-basic", "font-funky", "font-techy", "font-cute", "font-retro"
     );
     document.documentElement.classList.add(font);
 
+    document.documentElement.classList.remove(
+      "primary-red", "primary-blue", "primary-green", "primary-purple",
+      "primary-orange", "primary-pink", "primary-cyan", "primary-yellow"
+    );
+    document.documentElement.classList.add(primaryColor);
+
     localStorage.setItem(
       SETTINGS_KEY,
-      JSON.stringify({ theme, font, calendarView })
+      JSON.stringify({ theme, font, calendarView, primaryColor })
     );
-  }, [theme, font, calendarView]);
+  }, [theme, font, calendarView, primaryColor]);
 
   const resetSettings = () => {
     setTheme("theme-light");
     setFont("font-basic");
+    setPrimaryColor("primary-red");
     setCalendarView("week");
   };
 
@@ -144,7 +140,7 @@ const SettingsPage = () => {
     <div className="h-full bg-[var(--bg-color)] text-[var(--text-color)] flex flex-col">
       {/* Header */}
       <header className="px-4 py-4 border-b border-gray-800 sticky top-0 z-50 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[var(--primary-color)]">⚙️ Settings</h1>
+        <h1 className="text-2xl font-bold text-[var(--primary-color)]">Settings</h1>
         <button
           onClick={resetSettings}
           className="px-3 py-1 text-sm rounded bg-[var(--primary-color)] hover:opacity-90 transition"
@@ -195,9 +191,30 @@ const SettingsPage = () => {
             </div>
           </div>
 
+          {/* Primary Color Selector */}
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Primary Color</h2>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                "red", "blue", "green", "purple",
+                "orange", "pink", "cyan", "yellow"
+              ].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setPrimaryColor(`primary-${c}`)}
+                  className={`w-8 h-8 rounded-full border-2 transition ${
+                    primaryColor === `primary-${c}`
+                      ? "border-[var(--text-color)] scale-110"
+                      : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: `var(--primary-${c})` }}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Calendar View Selector */}
           <div>
-
             <h2 className="text-lg font-semibold mb-2">Calendar View</h2>
             <div className="flex gap-2 flex-wrap">
               {["week", "day"].map((view) => (
@@ -218,10 +235,10 @@ const SettingsPage = () => {
 
         {/* Live Preview */}
         <section
-          className="flex-1 h-88 rounded-xl border border-gray-700 p-6 shadow-lg transition-all space-y-4"
+          className="flex-1 rounded-xl border border-gray-700 p-6 shadow-lg transition-all space-y-4"
           style={{ background: "var(--bg-color)", color: "var(--text-color)" }}
         >
-          <h3 className="font-semibold text-xl">AniSkdool Preview</h3>
+          <h3 className="font-semibold text-xl text-[var(--primary-color)]">AniSkdool Preview</h3>
           <div className="p-2 border border-gray-700 rounded-lg flex items-center justify-between">
             <p className="flex items-center gap-2 justify-center">
               Episode 1:{" "}

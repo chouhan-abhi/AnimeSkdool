@@ -7,6 +7,15 @@
   --bg-color: #ffffff;
   --text-color: #1a1a1a;
   --font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  --primary-red: #ff6b6b;
+  --primary-blue: #4dabf7;
+  --primary-green: #51cf66;
+  --primary-purple: #9b5de5;
+  --primary-orange: #ff922b;
+  --primary-pink: #f06595;
+  --primary-cyan: #22b8cf;
+  --primary-yellow: #fcc419;
 }
 
 .theme-dark {
@@ -51,12 +60,22 @@
   --font-family: "Press Start 2P", "Courier New", monospace;
 }
 
-/* ===================== */
-/* 📝 Apply Variables    */
-/* ===================== */
+/* Apply via class e.g. .primary-blue */
+.primary-red    { --primary-color: var(--primary-red); }
+.primary-blue   { --primary-color: var(--primary-blue); }
+.primary-green  { --primary-color: var(--primary-green); }
+.primary-purple { --primary-color: var(--primary-purple); }
+.primary-orange { --primary-color: var(--primary-orange); }
+.primary-pink   { --primary-color: var(--primary-pink); }
+.primary-cyan   { --primary-color: var(--primary-cyan); }
+.primary-yellow { --primary-color: var(--primary-yellow); }
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              font-family 0.3s ease,
+              var(--primary-color) 0.3s ease;
 }

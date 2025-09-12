@@ -28,7 +28,7 @@ const AppHome = () => {
   // Clear results when input cleared while typing
   const handleInputChange = (e) => {
     const v = e.target.value;
-    setSearch(v.trim());
+    setSearch(v);
   };
 
   // Card component (responsive widths so small screens show 2 per row)

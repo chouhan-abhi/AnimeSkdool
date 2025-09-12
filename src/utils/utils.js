@@ -7,6 +7,10 @@ export const contentProvider = [
         url: "https://9anime.org.lv/?s=",
         name: "9Anime",
     },
+    {
+        url: "https://www.crunchyroll.com/search?q=",
+        name: "Crunchyroll",
+    }
 ];
 
 export const formatNumber = (num) => {

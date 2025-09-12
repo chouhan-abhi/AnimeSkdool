@@ -1,22 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 
-// Fetch function
-const fetchUpcomingAnime = async () => {
-  const res = await fetch("https://api.jikan.moe/v4/seasons/upcoming");
+// Fetch function with pagination
+const fetchUpcomingAnime = async ({ queryKey }) => {
+  const [_key, page] = queryKey;
+  const res = await fetch(`https://api.jikan.moe/v4/seasons/upcoming?page=${page}`);
   if (!res.ok) throw new Error("Failed to fetch upcoming anime");
+
   const data = await res.json();
 
-  // Sort by airing date (closest first)
-  return data.data.sort(
-    (a, b) => new Date(a.aired.from) - new Date(b.aired.from)
-  );
+  return {
+    data: data.data,          // list of anime
+    pagination: data.pagination, // pagination info
+  };
 };
 
-// React Query hook (v5 syntax)
-export const useUpcomingAnime = () => {
+// React Query hook
+export const useUpcomingAnime = ({ page = 1 } = {}) => {
   return useQuery({
-    queryKey: ["upcomingAnime"],
+    queryKey: ["upcomingAnime", page],
     queryFn: fetchUpcomingAnime,
+    keepPreviousData: true, // ✅ important for infinite scroll
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
   });

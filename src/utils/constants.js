@@ -24,3 +24,8 @@ export const RANKING_FILTER_CONFIG = {
     { value: "rx", label: "Rx - Hentai" },
   ],
 };
+
+export const COMMON_CLASS = {
+  FILTERS: 'w-full rounded-xl px-3 py-2 border appearance-none bg-[var(--bg-color)] text-[var(--text-color)] focus:outline-none transition',
+  DARK_BACKGROUNDS: 'text-[var(--primary-color)] bg-gray-900/90 backdrop-blur sticky top-0 z-50 shadow-sm',
+}

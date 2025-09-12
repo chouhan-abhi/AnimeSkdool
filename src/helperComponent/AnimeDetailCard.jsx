@@ -30,7 +30,7 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
   return (
     <>
       <div
-        className="relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
+        className="z-101 relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
                    transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
         onClick={() => setExpanded(true)}
       >

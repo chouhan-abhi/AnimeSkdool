@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import AnimeCard from '../helperComponent/AnimeCard';
 import PageLoader from '../helperComponent/PageLoader';
+import { SlidersHorizontal } from 'lucide-react';
+import NoAnimeFound from '../helperComponent/NoAnimeFound';
 
 const WATCHLIST_KEY = 'watchlist';
 const STARRED_KEY = 'starredAnime';
@@ -48,28 +50,28 @@ const WatchlistPage = () => {
     }
   }, []);
 
-const filteredAnime = useMemo(() => {
-  if (filter === 'all') {
-    // ✅ show everything: watchlist + starred (avoid duplicates by mal_id)
-    const allMap = new Map();
-    [...watchlist, ...starredList].forEach(anime => allMap.set(anime.mal_id, anime));
-    return Array.from(allMap.values());
-  }
+  const filteredAnime = useMemo(() => {
+    if (filter === 'all') {
+      // ✅ show everything: watchlist + starred (avoid duplicates by mal_id)
+      const allMap = new Map();
+      [...watchlist, ...starredList].forEach(anime => allMap.set(anime.mal_id, anime));
+      return Array.from(allMap.values());
+    }
 
-  if (filter === 'started') {
-    return starredList;
-  }
+    if (filter === 'started') {
+      return starredList;
+    }
 
-  if (filter === 'bookmarked') {
-    return watchlist.filter(anime => anime.isBookmarked);
-  }
+    if (filter === 'bookmarked') {
+      return watchlist.filter(anime => anime.isBookmarked);
+    }
 
-  if (filter === 'upcoming') {
-    return watchlist.filter(anime => anime.status?.toLowerCase() === 'not yet aired');
-  }
+    if (filter === 'upcoming') {
+      return watchlist.filter(anime => anime.status?.toLowerCase() === 'not yet aired');
+    }
 
-  return watchlist;
-}, [watchlist, starredList, filter]);
+    return watchlist;
+  }, [watchlist, starredList, filter]);
 
 
   return (
@@ -77,19 +79,18 @@ const filteredAnime = useMemo(() => {
       {/* Sidebar */}
       {(isSidebarOpen || !isMobile) && (
         <aside
-          className={`bg-[var(--bg-color)] p-4 flex-shrink-0 rounded-r-xl transition-all ${
-            isMobile ? 'fixed top-0 left-0 h-full w-full z-50 shadow-lg' : 'h-48 w-48'
-          }`}
+          className={`bg-[var(--bg-color)] p-4 flex-shrink-0 rounded-r-xl transition-all text-[var(--primary-color)] ${isMobile ? 'fixed top-0 left-0 h-full w-full z-50 shadow-lg' : 'h-48 w-48'
+            }`}
         >
           {isMobile && (
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="absolute top-4 right-4 text-xl font-bold text-[var(--text-color)]"
+              className="absolute top-4 right-4 text-xl font-bold"
             >
               ✕
             </button>
           )}
-          <h2 className="text-lg font-semibold mb-4 text-[var(--primary-color)]">
+          <h2 className="text-lg font-semibold mb-4">
             Filters
           </h2>
           <ul className="flex flex-col gap-2">
@@ -100,11 +101,10 @@ const filteredAnime = useMemo(() => {
                     setFilter(f);
                     if (isMobile) setIsSidebarOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded transition text-sm ${
-                    filter === f
-                      ? 'bg-[var(--primary-color)] text-[var(--bg-color)]'
-                      : 'hover:bg-[var(--accent-color)] text-[var(--text-color)]'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded transition text-md ${filter === f
+                      ? 'bg-[var(--primary-color)] text-white'
+                      : 'hover:shadow-md'
+                    }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
@@ -123,14 +123,14 @@ const filteredAnime = useMemo(() => {
 
       {/* Main */}
       <div className="flex-1 flex flex-col h-full">
-        <header className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
-          <h1 className="text-2xl font-bold">My Watchlist</h1>
+        <header className="flex items-center justify-between p-4 shadow-md">
+          <h1 className="text-2xl font-bold">Watchlist</h1>
           {isMobile && (
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="text-[var(--text-color)] text-xl"
+              className="bg-[var(--primary-color)] p-[6px] rounded-full text-white text-xl shadow-md hover:opacity-90 transition"
             >
-              ☰
+              <SlidersHorizontal size={18} />
             </button>
           )}
         </header>
@@ -147,9 +147,7 @@ const filteredAnime = useMemo(() => {
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-400 py-20 text-lg">
-              😴 No anime found
-            </div>
+            <NoAnimeFound />
           )}
         </main>
       </div>

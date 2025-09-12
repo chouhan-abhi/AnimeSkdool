@@ -1,10 +1,11 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { parseISO, isAfter, isBefore, format } from "date-fns";
+import DayCalendarLoader from "../../helperComponent/CalendarLoader";
 
 const MinimalDayView = ({ schedule = [], day, onSelectAnime }) => {
   const [now, setNow] = useState(new Date());
 
-  // Update current time every 30 seconds for smoother red line
+  // Update current time every 30 seconds
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
@@ -15,7 +16,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime }) => {
     return todayStr === day;
   }, [day, now]);
 
-  // Figure out current or next airing anime
+  // Find current/next airing anime
   const nowOrNext = useMemo(() => {
     if (!schedule || schedule.length === 0) return null;
 
@@ -45,7 +46,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime }) => {
     return null;
   }, [schedule, now]);
 
-  // Calculate red line position (percent of day)
+  // Red line position
   const currentTimePosition = useMemo(() => {
     if (!isToday || schedule.length === 0) return 0;
 
@@ -61,43 +62,49 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="bg-gray-900 rounded-lg shadow-lg p-2 relative">
+    <div className="min-h-screen bg-gray-900 rounded-lg shadow-lg p-2 relative">
       {/* Header */}
       <h3 className="text-lg font-semibold text-gray-100 mb-3 border-b border-gray-700 pb-2 text-center">
         {day}
       </h3>
 
-      {/* Red line for current time */}
+      {/* Red line */}
       {isToday && schedule.length > 0 && (
         <div
-          className="absolute left-0 right-0 flex items-center h-0 z-10"
+          className="absolute left-0 right-0 flex items-center h-0 z-21"
           style={{ top: `${currentTimePosition}%` }}
         >
-          <span className="text-red-400 text-xs mr-2 font-mono">
+          <div className="flex-1 h-[2px] bg-[var(--primary-color)]" />
+          <span className="bg-[var(--primary-color)] text-xs px-2 rounded-xl font-mono">
             {format(now, "HH:mm")}
           </span>
-          <div className="flex-1 h-[2px] bg-red-500" />
         </div>
       )}
 
-      {/* No anime fallback */}
+      {/* No anime */}
       {schedule.length === 0 ? (
-        <p className="text-gray-600 text-center text-sm">No anime airing</p>
+        <DayCalendarLoader />
       ) : (
         <ul className="space-y-3 mb-20 relative z-20">
           {schedule.map((anime) => (
             <li
               key={anime.mal_id}
-              className="flex items-center gap-2 bg-gray-800 rounded-lg p-1 hover:bg-gray-700 transition cursor-pointer"
-              onClick={() => onSelectAnime && onSelectAnime(anime)}
+              className="flex items-center gap-2 bg-gray-800 rounded-lg p-1 hover:bg-gray-700 transition"
             >
+              {/* Thumbnail */}
               <img
                 src={anime.images.webp?.image_url || anime.images.jpg?.image_url}
                 alt={anime.title}
                 className="w-12 h-16 object-cover rounded-md flex-shrink-0"
+                onClick={() => onSelectAnime && onSelectAnime(anime)}
               />
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-space gap-2 text-xs text-gray-400">
+
+              {/* Info */}
+              <div
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={() => onSelectAnime && onSelectAnime(anime)}
+              >
+                <div className="flex justify-between gap-2 text-xs text-gray-400">
                   <span>{anime.localTime}</span>
                   <span>{anime.duration?.match(/\d+/)?.[0] || "24"} min</span>
                 </div>
@@ -110,15 +117,23 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime }) => {
                   </p>
                 )}
               </div>
-              <div className="flex-shrink-0 text-yellow-400 text-2xl">
+
+              {/* ⭐ Star toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent anime select
+                  anime.onToggleStar && anime.onToggleStar();
+                }}
+                className="flex-shrink-0 text-yellow-400 text-2xl"
+              >
                 {anime.starred ? "★" : "☆"}
-              </div>
+              </button>
             </li>
           ))}
         </ul>
       )}
 
-      {/* Sticky footer card */}
+      {/* Sticky footer (ongoing/next anime) */}
       {nowOrNext && (
         <div
           className="fixed bottom-4 left-4 right-4 bg-[var(--primary-color)] text-white rounded-lg shadow-xl p-3 flex items-center gap-3 animate-bounceIn cursor-pointer"

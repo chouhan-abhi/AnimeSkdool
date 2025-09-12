@@ -81,7 +81,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             <button
               className="flex justify-center items-center w-10 h-10 cursor-pointer z-10 p-2 bg-black/40 rounded-full hover:bg-white/20 transition"
               onClick={onClose}
-              style={{ backdropFilter: "blur(6px) !important", fontSize: "x-large" }}
+              style={{ backdropFilter: "blur(6px) !important", fontSize: "x-large", position: "fixed", top: "6vh", right: "2vw", zIndex: 999 }}
             >
               ×
             </button>

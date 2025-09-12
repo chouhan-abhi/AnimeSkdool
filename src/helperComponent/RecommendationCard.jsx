@@ -8,8 +8,8 @@ const RecommendationCard = ({ anime, onOpen, animateClasses }) => {
   return (
     <div
       onClick={handleClick}
-      className={`relative w-full max-w-5xl h-[380px] md:h-[480px] 
-        rounded-2xl shadow-xl overflow-hidden cursor-pointer select-none 
+      className={`relative w-full max-w-5xl h-[520px] md:h-[520px] 
+        rounded-2xl shadow-3xl overflow-hidden cursor-pointer select-none 
         transform transition-transform duration-500 ease-out ${animateClasses}`}
     >
       {/* Poster full background */}
