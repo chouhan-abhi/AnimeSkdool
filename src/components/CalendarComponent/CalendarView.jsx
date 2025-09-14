@@ -13,6 +13,7 @@ import MinimalDayView from "./MinimalDayView";
 import AnimeDetailsPanel from "../AnimeDetailsPanel";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
 import PageLoader from "../../helperComponent/PageLoader";
+import storageManager from "../../utils/storageManager";
 
 const LOCAL_KEY = "calendarData";
 
@@ -85,13 +86,17 @@ const CalendarView = () => {
 
   const genres = extractGenres(allAnime);
 
-  const toggleStar = (animeId) => {
+  const toggleStar = (anime) => {
     setStarred((prev) =>
-      prev.includes(animeId)
-        ? prev.filter((id) => id !== animeId)
-        : [...prev, animeId]
+      prev.includes(anime.mal_id)
+        ? prev.filter((id) => id !== anime.mal_id)
+        : [...prev, anime.mal_id]
     );
+
+    const willBeStarred = !starred.includes(anime.mal_id);
+    storageManager.saveToWatchlist(anime, willBeStarred);
   };
+
 
   const filteredList = useMemo(() => {
     return allAnime.filter((anime) => {
@@ -127,7 +132,7 @@ const CalendarView = () => {
       grouped[normalizedDay].push({
         ...anime,
         starred: starred.includes(anime.mal_id),
-        onToggleStar: () => toggleStar(anime.mal_id),
+        onToggleStar: () => toggleStar(anime),
       });
     });
     return grouped;

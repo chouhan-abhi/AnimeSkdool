@@ -1,6 +1,6 @@
    export const Badge = ({ children, className = "" }) => (
         <span
-            className={`bg-gray-700 text-gray-200 px-2 py-1 rounded-full text-xs ${className}`}
+            className={`border border-[var(--primary-color)] text-center px-2 py-1 rounded-lg transition hover:bg-[var(--primary-color)] cursor-pointer ${className}`}
         >
             {children}
         </span>

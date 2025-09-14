@@ -153,79 +153,81 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
             <EpisodesList animeId={mal_id} />
 
-            {/* Genres */}
-            {genres?.length > 0 && (
-              <div className={`${transparentPanel} mb-6`}>
-                <h4 className="font-semibold text-lg mb-2">Genres</h4>
-                <div className="flex flex-wrap gap-2">
-                  {genres.map((g) => (
-                    <Badge key={g.mal_id} className="cursor-pointer hover:bg-gray-600">
-                      {g.name}
-                    </Badge>
+
+            <div className={`${transparentPanel} mb-6`}>
+              {/* Genres */}
+              {genres?.length > 0 && (
+                <>
+                  <h4 className="font-semibold text-lg mb-2">Genres</h4>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {genres.map((g) => (
+                      <Badge key={g.mal_id}>
+                        {g.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Studios & Producers */}
+              {[
+                { title: "Studios", data: studios },
+                { title: "Producers", data: producers },
+              ].map(
+                (section) =>
+                  section.data?.length > 0 && (
+                    <>
+                      <h4 className="font-semibold text-lg mb-2">{section.title}</h4>
+                      <div className="flex flex-wrap gap-3  mb-6">
+                        {section.data.map((item) => (
+                          <a
+                            key={item.mal_id}
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="border border-gray-600 text-center px-4 py-2 rounded-lg transition hover:bg-[var(--primary-color)]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    </>
+                  )
+              )}
+
+              {/* Trailer */}
+              {trailer?.embed_url && (
+                <>
+                  <h4 className="font-semibold text-lg mb-2">Trailer</h4>
+                  <iframe
+                    src={`${trailer.embed_url}&mute=1`}
+                    title="Anime Trailer"
+                    width="100%"
+                    height="315"
+                    allow="encrypted-media"
+                    allowFullScreen
+                    className="rounded-lg  mb-6"
+                  />
+                </>
+              )}
+
+              {/* Watch It On */}
+              <>
+                <h4 className="font-semibold text-lg mb-2">Watch it on</h4>
+                <div className="flex flex-wrap gap-3  mb-6">
+                  {contentProvider.map((provider) => (
+                    <a
+                      key={provider.name}
+                      href={`${provider.url}${encodeURIComponent(title_english || title || title_japanese)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="border border-gray-600  text-center  px-4 py-2 rounded-lg transition hover:bg-[var(--primary-color)]"
+                    >
+                      {provider.name}
+                    </a>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Studios & Producers */}
-            {[
-              { title: "Studios", data: studios },
-              { title: "Producers", data: producers },
-            ].map(
-              (section) =>
-                section.data?.length > 0 && (
-                  <div key={section.title} className={`${transparentPanel} mb-6`}>
-                    <h4 className="font-semibold text-lg mb-2">{section.title}</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {section.data.map((item) => (
-                        <a
-                          key={item.mal_id}
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="border border-gray-600 text-center p-3 rounded-lg transition hover:bg-gray-600"
-                        >
-                          {item.name}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )
-            )}
-
-            {/* Trailer */}
-            {trailer?.embed_url && (
-              <div className={`my-6 ${transparentPanel}`}>
-                <h4 className="font-semibold text-lg mb-2">Trailer</h4>
-                <iframe
-                  src={`${trailer.embed_url}&mute=1`}
-                  title="Anime Trailer"
-                  width="100%"
-                  height="315"
-                  allow="encrypted-media"
-                  allowFullScreen
-                  className="rounded-lg"
-                />
-              </div>
-            )}
-
-            {/* Watch It On */}
-            <div className={`${transparentPanel} mb-6`}>
-              <h4 className="font-semibold text-lg mb-2">Watch it on</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {contentProvider.map((provider) => (
-                  <a
-                    key={provider.name}
-                    href={`${provider.url}${encodeURIComponent(title_english)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="border border-gray-600 text-center p-3 rounded-lg transition hover:bg-gray-600"
-                  >
-                    <span className="mr-2">▶</span>
-                    {provider.name}
-                  </a>
-                ))}
-              </div>
+              </>
             </div>
 
             {/* MAL Link */}
@@ -235,7 +237,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline font-medium mr-4 border border-gray-600 rounded-lg transition hover:bg-gray-600 px-4 py-2"
+                  className="underline font-medium mr-4 border border-gray-600 rounded-lg transition hover:bg-[var(--primary-color)] px-4 py-2"
                   style={{ color: "var(--primary-color)" }}
                 >
                   View on MAL →

@@ -1,37 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import AnimeDetailsPanel from "./AnimeDetailsPanel";
 import RecommendationSection from "./RecommendationSection";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
 import PageLoader from "../helperComponent/PageLoader";
+import { useStarredAnime } from "../queries/useStarredAnime";
+import { useWatchlistAnime } from "../queries/useWatchlistAnime";
+import storageManager from "../utils/storageManager";
 
 const AppHome = () => {
   const [search, setSearch] = useState("");
   const [selectedAnime, setSelectedAnime] = useState(null);
-  const [starredAnimes, setStarredAnimes] = useState([]);
 
-  // use our new React Query hook
+  // ✅ React Query hooks
   const { data: results = [], isFetching, isError } = useAnimeSearch(search);
+  const { data: starredAnimes = [] } = useStarredAnime();
+  const { data: watchlistAnimes = [] } = useWatchlistAnime();
 
-  // Load starred anime from localStorage (cached schedule)
-  useEffect(() => {
-    try {
-      const starredIds = JSON.parse(localStorage.getItem("starredAnime") || "[]");
-      const cache = JSON.parse(localStorage.getItem("animeScheduleCache") || "[]");
-      const matched = cache.filter((anime) => starredIds.includes(anime.mal_id));
-      setStarredAnimes(matched || []);
-    } catch (err) {
-      console.error("Failed to load starred animes", err);
-      setStarredAnimes([]);
-    }
-  }, []);
+  const handleInputChange = (e) => setSearch(e.target.value);
 
-  // Clear results when input cleared while typing
-  const handleInputChange = (e) => {
-    const v = e.target.value;
-    setSearch(v);
-  };
-
-  // Card component (responsive widths so small screens show 2 per row)
   const AnimeCard = ({ anime }) => {
     if (!anime) return null;
     return (
@@ -48,7 +34,7 @@ const AppHome = () => {
           />
         </div>
 
-        {/* bottom gradient + title overlay */}
+        {/* title overlay */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
           <div className="absolute bottom-3 left-3 right-3 text-white text-sm font-semibold leading-tight line-clamp-2">
@@ -61,60 +47,83 @@ const AppHome = () => {
 
   return (
     <div className="flex flex-col items-center py-6 px-2 text-white min-h-screen">
-      {/* Search Bar */}
-      <form onSubmit={(e) => e.preventDefault()} className="w-full flex justify-center mt-8 mb-6 px-4">
-        <input
-          type="text"
-          value={search}
-          onChange={handleInputChange}
-          placeholder="Search your new anime..."
-          className="p-2 w-full max-w-xl text-base rounded-full border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary"
-          aria-label="Search anime"
-        />
-      </form>
+      {/* ✅ Main content + Sidebar as 70-30 split */}
+      <div className="w-full max-w-8xl grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">
+        {/* Main content */}
+        <div className="flex flex-col items-center">
+          {/* 🔍 Search bar */}
+          <form onSubmit={(e) => e.preventDefault()} className="w-full flex justify-center mt-8 mb-6 px-4">
+            <input
+              type="text"
+              value={search}
+              onChange={handleInputChange}
+              placeholder="Search your new anime..."
+              className="p-2 w-full max-w-xl text-base rounded-full border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Search anime"
+            />
+          </form>
 
-      {/* Search Results */}
-      {isFetching ? (
-        <div className="w-full max-w-5xl p-4">
-          <PageLoader />
-        </div>
-      ) : isError ? (
-        <p className="text-red-400">Failed to fetch results. Try again later.</p>
-      ) : (
-        results.length > 0 && (
-          <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col items-center text-center">
-            <h2 className="text-lg font-semibold text-primary mb-3 w-full px-2 text-[var(--primary-color)]">
-              Search Results
-            </h2>
-
-            {/* centered row-based layout */}
-            <div className="w-full flex flex-wrap justify-center gap-4 py-2">
-              {results.slice(0, 20).map((anime) => (
-                <AnimeCard key={anime.mal_id} anime={anime} />
-              ))}
+          {/* Search Results */}
+          {isFetching ? (
+            <div className="w-full max-w-5xl p-4">
+              <PageLoader />
             </div>
-          </section>
-        )
-      )}
+          ) : isError ? (
+            <p className="text-red-400">Failed to fetch results. Try again later.</p>
+          ) : (
+            results.length > 0 && (
+              <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col items-center text-center">
+                <h2 className="text-lg font-semibold text-primary mb-3 w-full px-2 text-[var(--primary-color)]">
+                  Search Results
+                </h2>
+                <div className="w-full flex flex-wrap justify-center gap-4 py-2">
+                  {results.slice(0, 20).map((anime) => (
+                    <AnimeCard key={anime.mal_id} anime={anime} />
+                  ))}
+                </div>
+              </section>
+            )
+          )}
 
-      {starredAnimes.length > 0 && (
-        <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
-          <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
-            Your Starred Animes
-          </h2>
+          {/* ⭐ Starred */}
+          {starredAnimes?.length > 0 && (
+            <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
+                Your Starred Animes
+              </h2>
+              <div className="w-full flex flex-wrap justify-center gap-4">
+                {starredAnimes.map((anime) => (
+                  <AnimeCard key={anime.mal_id} anime={anime} />
+                ))}
+              </div>
+            </section>
+          )}
 
-          <div className="w-full flex flex-wrap justify-center gap-4">
-            {starredAnimes.map((anime) => (
-              <AnimeCard key={anime.mal_id} anime={anime} />
-            ))}
-          </div>
-        </section>
-      )}
+          {/* 🎬 Watchlist */}
+          {storageManager.get("watchlist")?.length > 0 && (
+            <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
+                Your Watchlist
+              </h2>
+              <div className="w-full flex flex-wrap justify-center gap-4">
+                {watchlistAnimes.map((anime) => (
+                  <AnimeCard key={anime.mal_id} anime={anime} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
 
-      {/* Recommendations */}
-      <section className="w-full mx-2 my-4 px-2">
+        {/* Sidebar (desktop only) */}
+        <aside className="hidden lg:block my-3">
+          <RecommendationSection />
+        </aside>
+      </div>
+
+      {/* On Mobile: recommendations below */}
+      <div className="w-full lg:hidden mx-2 my-4 px-2">
         <RecommendationSection />
-      </section>
+      </div>
 
       {/* Details Panel */}
       {selectedAnime && (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Github } from "lucide-react"; // ✅ Import GitHub icon
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
 
 const SETTINGS_KEY = "appSettings";
@@ -41,7 +42,10 @@ const PreviewWeekCalendar = ({ schedule }) => {
           <span className="font-semibold">{day}</span>
           <div className="mt-1 text-center">
             {schedule.find(
-              (anime) => anime.broadcast?.day?.toLowerCase().startsWith(day.toLowerCase())
+              (anime) =>
+                anime.broadcast?.day
+                  ?.toLowerCase()
+                  .startsWith(day.toLowerCase())
             )?.title || "—"}
           </div>
         </div>
@@ -52,7 +56,15 @@ const PreviewWeekCalendar = ({ schedule }) => {
 
 const PreviewDayCalendar = ({ schedule }) => {
   const today = new Date().getDay();
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   const currentDayAnime = schedule.filter(
     (anime) =>
       anime.broadcast?.day?.toLowerCase() === days[today].toLowerCase()
@@ -61,7 +73,15 @@ const PreviewDayCalendar = ({ schedule }) => {
   return (
     <div className="space-y-2">
       <h3 className="font-semibold text-sm">{days[today]}</h3>
-      <NoAnimeFound message="Live Preview" />
+      {currentDayAnime.length > 0 ? (
+        currentDayAnime.map((anime) => (
+          <div key={anime.mal_id} className="p-2 border rounded">
+            {anime.title}
+          </div>
+        ))
+      ) : (
+        <NoAnimeFound message="Live Preview" />
+      )}
     </div>
   );
 };
@@ -109,17 +129,31 @@ const SettingsPage = () => {
 
   // Persist + apply theme/font/primaryColor
   useEffect(() => {
-    document.documentElement.classList.remove("theme-light", "theme-dark", "theme-saint");
+    document.documentElement.classList.remove(
+      "theme-light",
+      "theme-dark",
+      "theme-saint"
+    );
     document.documentElement.classList.add(theme);
 
     document.documentElement.classList.remove(
-      "font-basic", "font-funky", "font-techy", "font-cute", "font-retro"
+      "font-basic",
+      "font-funky",
+      "font-techy",
+      "font-cute",
+      "font-retro"
     );
     document.documentElement.classList.add(font);
 
     document.documentElement.classList.remove(
-      "primary-red", "primary-blue", "primary-green", "primary-purple",
-      "primary-orange", "primary-pink", "primary-cyan", "primary-yellow"
+      "primary-red",
+      "primary-blue",
+      "primary-green",
+      "primary-purple",
+      "primary-orange",
+      "primary-pink",
+      "primary-cyan",
+      "primary-yellow"
     );
     document.documentElement.classList.add(primaryColor);
 
@@ -140,7 +174,9 @@ const SettingsPage = () => {
     <div className="h-full bg-[var(--bg-color)] text-[var(--text-color)] flex flex-col">
       {/* Header */}
       <header className="px-4 py-4 border-b border-gray-800 sticky top-0 z-50 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[var(--primary-color)]">Settings</h1>
+        <h1 className="text-2xl font-bold text-[var(--primary-color)]">
+          Settings
+        </h1>
         <button
           onClick={resetSettings}
           className="px-3 py-1 text-sm rounded bg-[var(--primary-color)] hover:opacity-90 transition"
@@ -150,7 +186,7 @@ const SettingsPage = () => {
       </header>
 
       {/* Main Layout */}
-      <main className="flex flex-col md:flex-row flex-grow p-4 gap-6">
+      <main className="flex flex-col md:flex-row flex-grow p-4 gap-6 pb-20">
         {/* Controls */}
         <section className="md:w-1/3 flex flex-col gap-6">
           {/* Theme Selector */}
@@ -161,10 +197,11 @@ const SettingsPage = () => {
                 <button
                   key={t}
                   onClick={() => setTheme(`theme-${t}`)}
-                  className={`px-3 py-1 border rounded transition ${theme === `theme-${t}`
+                  className={`px-3 py-1 border rounded transition ${
+                    theme === `theme-${t}`
                       ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
                       : "hover:bg-gray-800 border-gray-600"
-                    }`}
+                  }`}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
                 </button>
@@ -180,10 +217,11 @@ const SettingsPage = () => {
                 <button
                   key={f}
                   onClick={() => setFont(`font-${f}`)}
-                  className={`px-3 py-1 border rounded transition ${font === `font-${f}`
+                  className={`px-3 py-1 border rounded transition ${
+                    font === `font-${f}`
                       ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
                       : "hover:bg-gray-800 border-gray-600"
-                    }`}
+                  }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
@@ -196,8 +234,14 @@ const SettingsPage = () => {
             <h2 className="text-lg font-semibold mb-2">Primary Color</h2>
             <div className="flex gap-2 flex-wrap">
               {[
-                "red", "blue", "green", "purple",
-                "orange", "pink", "cyan", "yellow"
+                "red",
+                "blue",
+                "green",
+                "purple",
+                "orange",
+                "pink",
+                "cyan",
+                "yellow",
               ].map((c) => (
                 <button
                   key={c}
@@ -221,10 +265,11 @@ const SettingsPage = () => {
                 <button
                   key={view}
                   onClick={() => setCalendarView(view)}
-                  className={`px-3 py-1 border rounded transition ${calendarView === view
+                  className={`px-3 py-1 border rounded transition ${
+                    calendarView === view
                       ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
                       : "hover:bg-gray-800 border-gray-600"
-                    }`}
+                  }`}
                 >
                   {view === "week" ? "Week View" : "Day View"}
                 </button>
@@ -238,7 +283,9 @@ const SettingsPage = () => {
           className="flex-1 rounded-xl border border-gray-700 p-6 shadow-lg transition-all space-y-4"
           style={{ background: "var(--bg-color)", color: "var(--text-color)" }}
         >
-          <h3 className="font-semibold text-xl text-[var(--primary-color)]">AniSkdool Preview</h3>
+          <h3 className="font-semibold text-xl text-[var(--primary-color)]">
+            AniSkdool Preview
+          </h3>
           <div className="p-2 border border-gray-700 rounded-lg flex items-center justify-between">
             <p className="flex items-center gap-2 justify-center">
               Episode 1:{" "}
@@ -258,6 +305,19 @@ const SettingsPage = () => {
           )}
         </section>
       </main>
+
+      {/* ✅ Fixed Footer */}
+      <footer className="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 px-4 py-3 flex items-center justify-center gap-3 text-sm z-50">
+        <span className="text-gray-400 italic">Made for one anime lover to another 💖</span>
+        <a
+          href="https://github.com/chouhan-abhi/AnimeSkdool"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2 py-1 text-gray-300 hover:text-white transition-colors"
+        >
+          <Github size={16} /> GitHub
+        </a>
+      </footer>
     </div>
   );
 };
