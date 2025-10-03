@@ -1,13 +1,17 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useInfiniteAnimeRanking } from "../../queries/useInfiniteAnimeRanking";
-import AnimeDetailsPanel from "../AnimeDetailsPanel";
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
-import PageLoader from "../../helperComponent/PageLoader";
-import { SlidersHorizontal } from "lucide-react";
+import {
+  Search,
+  Grid,
+  List,
+  RefreshCw,
+  TrendingUp,
+  Menu,
+} from "lucide-react";
 import ExploreFilters from "./ExploreFilters";
-import NoAnimeFound from "../../helperComponent/NoAnimeFound";
-import CalendarLoader from "../../helperComponent/CalendarLoader";
 
+/* -------------------- CONSTANTS -------------------- */
 const STORAGE_KEYS = {
   type: "animeType",
   filter: "animeFilter",
@@ -15,146 +19,253 @@ const STORAGE_KEYS = {
   sfw: "animeSfw",
 };
 
-const ExploreAnime = () => {
-  // filters (persisted in localStorage)
-  const [type, setType] = useState(() => localStorage.getItem(STORAGE_KEYS.type) || "");
-  const [filter, setFilter] = useState(
-    () => localStorage.getItem(STORAGE_KEYS.filter) || "bypopularity"
-  );
-  const [rating, setRating] = useState(() => localStorage.getItem(STORAGE_KEYS.rating) || "");
-  const [sfw, setSfw] = useState(
-    () => (localStorage.getItem(STORAGE_KEYS.sfw) === "false" ? false : true)
-  );
+/* -------------------- CUSTOM HOOKS -------------------- */
+const usePersistedState = (key, defaultValue) => {
+  const [state, setState] = useState(() => localStorage.getItem(key) || defaultValue);
+  useEffect(() => localStorage.setItem(key, state), [key, state]);
+  return [state, setState];
+};
 
-  const [selectedAnime, setSelectedAnime] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+const useResponsive = (breakpoint = 1024) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+};
+
+/* -------------------- UI SUBCOMPONENTS -------------------- */
+const SearchBar = ({ value, onChange }) => (
+  <div className="mb-6">
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
+      <input
+        type="text"
+        placeholder="Search anime..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-10 pr-3 py-3 rounded-lg bg-surface-container text-on-surface text-sm shadow-inner border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary transition"
+      />
+    </div>
+  </div>
+);
+
+const ViewModeToggle = ({ viewMode, setViewMode }) => (
+  <div className="mt-6 border flex bg-surface-container-high rounded-full shadow-md">
+    {[
+      { mode: "grid", icon: Grid, title: "Grid view" },
+      { mode: "list", icon: List, title: "List view" },
+    ].map(({ mode, icon: Icon, title }) => (
+      <button
+        key={mode}
+        onClick={() => setViewMode(mode)}
+        className={`p-2 rounded-full flex-1 flex justify-center transition ${
+          viewMode === mode
+            ? "bg-[var(--primary-color)] text-white shadow-md"
+            : "text-on-surface hover:shadow-sm hover:bg-surface-container"
+        }`}
+        title={title}
+      >
+        <Icon className="w-5 h-5" />
+      </button>
+    ))}
+  </div>
+);
+
+const Sidebar = ({
+  type,
+  setType,
+  filter,
+  setFilter,
+  rating,
+  setRating,
+  sfw,
+  setSfw,
+  searchQuery,
+  setSearchQuery,
+  viewMode,
+  setViewMode,
+}) => (
+  <aside className="w-72 bg-surface-container-low bg-white/80 dark:bg-gray-900/70 dark:bg-surface-container-dark p-4 sticky top-0 h-screen overflow-y-auto shadow-lg rounded-r-xl">
+    <SearchBar value={searchQuery} onChange={setSearchQuery} />
+    <div className="rounded-xl bg-surface-container-high dark:bg-surface-container-dark shadow-md p-3">
+      <ExploreFilters
+        embedded
+        isMobile={false}
+        showSidebar={false}
+        onClose={() => {}}
+        type={type}
+        setType={setType}
+        filter={filter}
+        setFilter={setFilter}
+        rating={rating}
+        setRating={setRating}
+        sfw={sfw}
+        setSfw={setSfw}
+      />
+    </div>
+    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+  </aside>
+);
+
+const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
+  <div className="sticky top-0 z-10 bg-surface-container/90 backdrop-blur border-b border-outline">
+    <div className="flex items-center justify-between p-4">
+      <div className="flex items-center gap-2">
+        <TrendingUp className="w-6 h-6 text-primary" />
+        <h2 className="text-lg font-semibold text-on-surface">Explore Anime</h2>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onOpenSidebar}
+          className="p-2 rounded-full hover:bg-surface-container-high"
+        >
+          <Menu className="w-5 h-5 text-on-surface-variant" />
+        </button>
+        <button
+          onClick={onRefresh}
+          className="p-2 rounded-full hover:bg-surface-container-high"
+        >
+          <RefreshCw className="w-5 h-5 text-on-surface-variant" />
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* -------------------- MAIN COMPONENT -------------------- */
+const ExploreAnime = () => {
+  // Persisted filters
+  const [type, setType] = usePersistedState(STORAGE_KEYS.type, "");
+  const [filter, setFilter] = usePersistedState(STORAGE_KEYS.filter, "bypopularity");
+  const [rating, setRating] = usePersistedState(STORAGE_KEYS.rating, "");
+  const [sfw, setSfw] = usePersistedState(STORAGE_KEYS.sfw, "true");
+
+  const isMobile = useResponsive();
   const [showSidebar, setShowSidebar] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const observerRef = useRef(null);
 
-  // responsive
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+  // Fetch data
+  const { data, error, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useInfiniteAnimeRanking({ type, filter, rating, sfw });
 
-  // persist filters
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.type, type);
-    localStorage.setItem(STORAGE_KEYS.filter, filter);
-    localStorage.setItem(STORAGE_KEYS.rating, rating);
-    localStorage.setItem(STORAGE_KEYS.sfw, String(sfw));
-  }, [type, filter, rating, sfw]);
-
-  // fetch hook (infinite query)
-  const {
-    data,
-    error,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteAnimeRanking({ type, filter, rating, sfw });
-
-  // flatten pages into a single array
   const animeList = data?.pages.flatMap((page) => page.data) || [];
 
-  // observer for infinite scroll
+  useEffect(() => {
+    if (animeList.length > 0 && isInitialLoad) setIsInitialLoad(false);
+  }, [animeList.length, isInitialLoad]);
+
+  // Infinite scroll
   const lastElementRef = useCallback(
     (node) => {
       if (isFetchingNextPage) return;
       if (observerRef.current) observerRef.current.disconnect();
-
       observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage();
-        }
+        if (entries[0].isIntersecting && hasNextPage) fetchNextPage();
       });
-
       if (node) observerRef.current.observe(node);
     },
     [isFetchingNextPage, hasNextPage, fetchNextPage]
   );
 
-return (
-  <div className="flex h-full overflow-hidden fixed">
-    <main className="flex-1 overflow-y-auto p-4 relative z-0">
-      {isMobile && (
-        <button
-          onClick={() => setShowSidebar(true)}
-          style={{ position: "fixed", bottom: "10vh", right: "4vw", zIndex: 999 }}
-          className="fixed bottom-20 right-4 p-3 bg-[var(--primary-color)] rounded-full shadow-md z-[99]"
-        >
-          <SlidersHorizontal size={24} />
-        </button>
-      )}
+  const handleRefresh = () => window.location.reload();
 
-      {isLoading ? (
-        <CalendarLoader />
-      ) : error ? (
-        <NoAnimeFound message={error.message || String(error)} />
-      ) : animeList.length === 0 ? (
-        <NoAnimeFound />
-      ) : (
-        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {animeList.map((anime, idx) => {
-            if (animeList.length === idx + 1) {
-              return (
-                <div ref={lastElementRef} key={anime.mal_id}>
-                  <AnimeDetailCard
-                    anime={anime}
-                    onClick={() => setSelectedAnime(anime)}
-                  />
-                </div>
-              );
-            }
-            return (
-              <AnimeDetailCard
-                key={anime.mal_id}
-                anime={anime}
-                onClick={() => setSelectedAnime(anime)}
-              />
-            );
-          })}
-        </div>
-      )}
+  const filteredAnimeList = animeList.filter((anime) =>
+    searchQuery === ""
+      ? true
+      : anime.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        anime.title_english?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-      {isFetchingNextPage && (
-        <div className="flex justify-center mt-4">
-          <PageLoader />
-        </div>
-      )}
-    </main>
-
-    {/* Sidebar + Backdrop (render at root level, above header) */}
-    {showSidebar && (
-      <>
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[70]"
-          onClick={() => setShowSidebar(false)}
+  return (
+    <div className="flex h-full bg-surface-light dark:bg-surface-dark transition-colors">
+      {!isMobile && (
+        <Sidebar
+          type={type}
+          setType={setType}
+          filter={filter}
+          setFilter={setFilter}
+          rating={rating}
+          setRating={setRating}
+          sfw={sfw}
+          setSfw={setSfw}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
-        <div className="fixed top-0 left-0 h-full w-72 bg-[var(--bg-color)] shadow-lg z-[80]">
-          <ExploreFilters
-            isMobile={isMobile}
-            showSidebar={showSidebar}
-            onClose={() => setShowSidebar(false)}
-            type={type}
-            setType={setType}
-            filter={filter}
-            setFilter={setFilter}
-            rating={rating}
-            setRating={setRating}
-            sfw={sfw}
-            setSfw={setSfw}
+      )}
+
+      <main className="flex-1 overflow-y-auto">
+        {isMobile && (
+          <MobileHeader
+            onOpenSidebar={() => setShowSidebar(true)}
+            onRefresh={handleRefresh}
           />
+        )}
+
+        <div className="p-6">
+          {isInitialLoad && isLoading && (
+            <p className="text-center text-on-surface-variant">Loading anime...</p>
+          )}
+
+          {!isLoading && !error && (
+            <div
+              className={`grid gap-6 ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {filteredAnimeList.map((anime, idx) => {
+                const isLastItem = filteredAnimeList.length === idx + 1;
+                return (
+                  <div
+                    key={anime.mal_id}
+                    ref={isLastItem ? lastElementRef : null}
+                    className="rounded-xl overflow-hidden shadow-sm bg-surface-container hover:shadow-lg hover:scale-[1.01] transition"
+                  >
+                    <AnimeDetailCard anime={anime} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </>
-    )}
-  </div>
-);
+      </main>
 
-
+      {/* Mobile Sidebar */}
+      {isMobile && showSidebar && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-[70]"
+            onClick={() => setShowSidebar(false)}
+          />
+          <div className="fixed top-0 left-0 h-full w-72 bg-surface-container-high shadow-xl z-[80] border-r border-outline">
+            <ExploreFilters
+              isMobile
+              showSidebar={showSidebar}
+              onClose={() => setShowSidebar(false)}
+              type={type}
+              setType={setType}
+              filter={filter}
+              setFilter={setFilter}
+              rating={rating}
+              setRating={setRating}
+              sfw={sfw}
+              setSfw={setSfw}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default ExploreAnime;

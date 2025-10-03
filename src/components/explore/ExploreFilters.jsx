@@ -1,5 +1,5 @@
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState } from "react";
+import { X, Filter, RotateCcw, Check, ChevronDown } from "lucide-react";
 import { RANKING_FILTER_CONFIG, COMMON_CLASS } from "../../utils/constants";
 
 const ExploreFilters = ({
@@ -14,114 +14,232 @@ const ExploreFilters = ({
   setRating,
   sfw,
   setSfw,
+  embedded,
 }) => {
-  const FILTER_CLASSES = COMMON_CLASS.FILTERS;
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleReset = () => {
+    setIsResetting(true);
+    setTimeout(() => {
+      setType("");
+      setFilter("bypopularity");
+      setRating("");
+      setSfw(true);
+      setIsResetting(false);
+    }, 200);
+  };
+
+  const hasActiveFilters = type || filter !== "bypopularity" || rating || !sfw;
+
+  // 🔹 Embedded mode (inside sidebar wrapper)
+  if (embedded) {
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Anime Type */}
+        <FilterSelect
+          label="Anime Type"
+          value={type}
+          onChange={setType}
+          options={[
+            { value: "", label: "All Types" },
+            { value: "tv", label: "TV Series" },
+            { value: "movie", label: "Movie" },
+            { value: "ova", label: "OVA" },
+            { value: "special", label: "Special" },
+          ]}
+        />
+
+        {/* Sort */}
+        <FilterSelect
+          label="Sort By"
+          value={filter}
+          onChange={setFilter}
+          options={RANKING_FILTER_CONFIG.filter}
+        />
+
+        {/* Rating */}
+        <FilterSelect
+          label="Age Rating"
+          value={rating}
+          onChange={setRating}
+          options={[
+            { value: "", label: "All Ratings" },
+            { value: "g", label: "G - All Ages" },
+            { value: "pg", label: "PG - Children" },
+            { value: "pg13", label: "PG13 - Teens 13+" },
+            { value: "r17", label: "R - 17+ (Violence & Profanity)" },
+            { value: "r", label: "R+ - Mild Nudity" },
+            { value: "rx", label: "Rx - Hentai" },
+          ]}
+        />
+
+        {/* SFW Toggle */}
+        <SfwToggle sfw={sfw} setSfw={setSfw} />
+      </div>
+    );
+  }
+
+  // 🔹 Full Sidebar mode
   return (
     <aside
-      className={`w-64 flex-shrink-0 transform transition-transform duration-300 rounded-xl
-        ${COMMON_CLASS.DARK_BACKGROUNDS}
-        ${isMobile ? "top-0 left-0 h-screen w-full" : "relative h-screen"} 
-        ${isMobile ? (showSidebar ? "animate-slideIn" : "-translate-x-full hidden") : "translate-x-0"}
+      className={`w-72 flex-shrink-0 transform transition-all duration-300 
+        bg-[var(--bg-color)] shadow-lg rounded-r-xl 
+        ${isMobile ? "fixed top-0 left-0 h-screen w-full z-[80]" : "relative h-screen"} 
+        ${isMobile ? (showSidebar ? "translate-x-0" : "-translate-x-full") : "translate-x-0"}
       `}
     >
       {/* Header */}
-      <div className="flex justify-between items-center px-4 py-3 top-0 z-10">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          Filters
-        </h2>
-        {isMobile && (
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full hover:bg-[var(--hover-color)] transition"
-          >
-            <X size={20} className="text-[var(--text-color)]" />
-          </button>
-        )}
+      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200/20">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-[var(--primary-color)]/10 rounded-lg">
+            <Filter className="w-5 h-5 text-[var(--primary-color)]" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-[var(--text-color)]">Filters</h2>
+            <p className="text-xs text-gray-500">Customize discovery</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <button
+              onClick={handleReset}
+              disabled={isResetting}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition disabled:opacity-50"
+              title="Reset all filters"
+            >
+              <RotateCcw
+                className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${
+                  isResetting ? "animate-spin" : ""
+                }`}
+              />
+            </button>
+          )}
+          {isMobile && (
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+            >
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Body */}
-      <div className="flex flex-col gap-6 p-4 overflow-y-auto h-[calc(100%-56px)]">
-        {/* Type */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Type</label>
-          <div className="relative">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className={FILTER_CLASSES}
-            >
-              <option value="">All Types</option>
-              <option value="tv">TV</option>
-              <option value="movie">Movie</option>
-              <option value="ova">OVA</option>
-              <option value="special">Special</option>
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▾</span>
-          </div>
-        </div>
+      <div className="flex flex-col gap-6 p-6 overflow-y-auto h-[calc(100%-70px)]">
+        <FilterSelect
+          label="Anime Type"
+          value={type}
+          onChange={setType}
+          options={[
+            { value: "", label: "All Types" },
+            { value: "tv", label: "TV Series" },
+            { value: "movie", label: "Movie" },
+            { value: "ova", label: "OVA" },
+            { value: "special", label: "Special" },
+          ]}
+        />
 
-        {/* Filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Filter</label>
-          <div className="relative">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className={FILTER_CLASSES}
-            >
-              {RANKING_FILTER_CONFIG.filter.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▾</span>
-          </div>
-        </div>
+        <FilterSelect
+          label="Sort By"
+          value={filter}
+          onChange={setFilter}
+          options={RANKING_FILTER_CONFIG.filter}
+        />
 
-        {/* Rating */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Rating</label>
-          <div className="relative">
-            <select
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-              className={FILTER_CLASSES}>
-              <option value="">All Ratings</option>
-              <option value="g">G - All Ages</option>
-              <option value="pg">PG - Children</option>
-              <option value="pg13">PG13 - Teens 13+</option>
-              <option value="r17">R - 17+ (Violence & Profanity)</option>
-              <option value="r">R+ - Mild Nudity</option>
-              <option value="rx">Rx - Hentai</option>
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▾</span>
-          </div>
-        </div>
+        <FilterSelect
+          label="Age Rating"
+          value={rating}
+          onChange={setRating}
+          options={[
+            { value: "", label: "All Ratings" },
+            { value: "g", label: "G - All Ages" },
+            { value: "pg", label: "PG - Children" },
+            { value: "pg13", label: "PG13 - Teens 13+" },
+            { value: "r17", label: "R - 17+ (Violence & Profanity)" },
+            { value: "r", label: "R+ - Mild Nudity" },
+            { value: "rx", label: "Rx - Hentai" },
+          ]}
+        />
 
-        {/* SFW Toggle */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Content Mode</label>
-          <button
-            onClick={() => setSfw((prev) => !prev)}
-            className={`w-full flex items-center justify-between rounded-full px-4 py-2 text-sm font-medium transition 
-              ${sfw ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}
-          >
-            {sfw ? "SFW Only" : "NSFW Allowed"}
-            <span
-              className={`ml-2 inline-block w-10 h-5 rounded-full transition-all relative 
-                ${sfw ? "bg-white/40" : "bg-black/30"}`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform 
-                ${sfw ? "translate-x-5" : "translate-x-0"}`}
+        <SfwToggle sfw={sfw} setSfw={setSfw} />
+
+        {/* Active Filters Summary */}
+        {hasActiveFilters && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {type && <Chip label={`Type: ${type}`} />}
+            {filter !== "bypopularity" && (
+              <Chip
+                label={`Sort: ${
+                  RANKING_FILTER_CONFIG.filter.find((f) => f.value === filter)?.label
+                }`}
               />
-            </span>
-          </button>
-        </div>
+            )}
+            {rating && <Chip label={`Rating: ${rating}`} />}
+            {!sfw && <Chip label="All Content" />}
+          </div>
+        )}
       </div>
     </aside>
   );
 };
+
+// 🔹 Reusable Components
+const FilterSelect = ({ label, value, onChange, options }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-semibold text-[var(--text-color)]">{label}</label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl bg-white/70 dark:bg-surface-dark/70 border border-gray-200 
+        shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 
+        transition-all appearance-none cursor-pointer text-sm"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+    </div>
+  </div>
+);
+
+const SfwToggle = ({ sfw, setSfw }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-semibold text-[var(--text-color)]">
+      Content Safety
+    </label>
+    <button
+      onClick={() => setSfw((prev) => !prev)}
+      className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition 
+        ${sfw ? "bg-green-500 text-white hover:shadow-lg" : "bg-red-500 text-white hover:shadow-lg"}`}
+    >
+      <span className="flex items-center gap-2">
+        {sfw ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+        {sfw ? "Safe Content Only" : "All Content Allowed"}
+      </span>
+      <div className="relative">
+        <div
+          className={`w-12 h-6 rounded-full ${sfw ? "bg-white/30" : "bg-black/30"} transition`}
+        >
+          <div
+            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform 
+            ${sfw ? "translate-x-6" : "translate-x-0.5"}`}
+          />
+        </div>
+      </div>
+    </button>
+  </div>
+);
+
+const Chip = ({ label }) => (
+  <span className="px-3 py-1 rounded-full text-xs font-medium bg-[var(--primary-color)]/10 text-[var(--primary-color)] shadow-sm">
+    {label}
+  </span>
+);
 
 export default ExploreFilters;

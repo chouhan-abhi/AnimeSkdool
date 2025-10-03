@@ -26,6 +26,7 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
   } = anime;
 
   const isBookmarked = bookmarked.includes(mal_id);
+  const nsfw = rating === "Rx - Hentai";
 
   return (
     <>
@@ -50,6 +51,13 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
               alt={title}
               className="w-full h-full object-cover"
             />
+
+            {/* NSFW badge */}
+            {nsfw && (
+              <div className="absolute top-1 right-1 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+                NSFW
+              </div>
+            )}
 
             {/* Floating rating & rank badges */}
             <div className="absolute bottom-2 left-2 flex gap-2 items-center">
