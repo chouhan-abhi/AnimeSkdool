@@ -10,6 +10,7 @@ import {
   Menu,
 } from "lucide-react";
 import ExploreFilters from "./ExploreFilters";
+import useResponsive from "../../queries/useResponsive";
 
 /* -------------------- CONSTANTS -------------------- */
 const STORAGE_KEYS = {
@@ -24,16 +25,6 @@ const usePersistedState = (key, defaultValue) => {
   const [state, setState] = useState(() => localStorage.getItem(key) || defaultValue);
   useEffect(() => localStorage.setItem(key, state), [key, state]);
   return [state, setState];
-};
-
-const useResponsive = (breakpoint = 1024) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [breakpoint]);
-  return isMobile;
 };
 
 /* -------------------- UI SUBCOMPONENTS -------------------- */
@@ -111,8 +102,8 @@ const Sidebar = ({
 );
 
 const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
-  <div className="sticky top-0 z-10 bg-surface-container/90 backdrop-blur border-b border-outline">
-    <div className="flex items-center justify-between p-4">
+  <div className="sticky top-0 z-10 bg-surface-container/90 backdrop-blur">
+    <div className="flex items-center justify-between px-4 py-1">
       <div className="flex items-center gap-2">
         <TrendingUp className="w-6 h-6 text-primary" />
         <h2 className="text-lg font-semibold text-on-surface">Explore Anime</h2>
@@ -120,13 +111,13 @@ const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
       <div className="flex items-center gap-2">
         <button
           onClick={onOpenSidebar}
-          className="p-2 rounded-full hover:bg-surface-container-high"
+          className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
           <Menu className="w-5 h-5 text-on-surface-variant" />
         </button>
         <button
           onClick={onRefresh}
-          className="p-2 rounded-full hover:bg-surface-container-high"
+          className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
           <RefreshCw className="w-5 h-5 text-on-surface-variant" />
         </button>

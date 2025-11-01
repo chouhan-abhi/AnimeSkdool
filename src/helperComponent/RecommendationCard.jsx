@@ -4,7 +4,7 @@ const RecommendationCard = ({ anime, onOpen, animateClasses }) => {
   const handleClick = () => {
     onOpen(anime);
   };
-
+  
   return (
     <div
       onClick={handleClick}

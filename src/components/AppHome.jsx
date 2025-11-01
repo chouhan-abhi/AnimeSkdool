@@ -1,17 +1,19 @@
-import React, { useState } from "react";
-import AnimeDetailsPanel from "./AnimeDetailsPanel";
-import RecommendationSection from "./RecommendationSection";
+import React, { useState, Suspense, lazy } from "react";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
-import PageLoader from "../helperComponent/PageLoader";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
+import PageLoader from "../helperComponent/PageLoader";
 import storageManager from "../utils/storageManager";
+
+// ✅ Lazy load heavy components
+const AnimeDetailsPanel = lazy(() => import("./AnimeDetailsPanel"));
+const RecommendationSection = lazy(() => import("./RecommendationSection"));
+const AnimeReview = lazy(() => import("./AnimeReview/AnimeReview"));
 
 const AppHome = () => {
   const [search, setSearch] = useState("");
   const [selectedAnime, setSelectedAnime] = useState(null);
 
-  // ✅ React Query hooks
   const { data: results = [], isFetching, isError } = useAnimeSearch(search);
   const { data: starredAnimes = [] } = useStarredAnime();
   const { data: watchlistAnimes = [] } = useWatchlistAnime();
@@ -22,22 +24,22 @@ const AppHome = () => {
     if (!anime) return null;
     return (
       <div
-        className="relative rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition 
-                   w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/4 max-w-[148px]"
+        className="relative rounded-xl overflow-hidden cursor-pointer transform hover:scale-[1.03] transition duration-300
+                   w-[46%] sm:w-[30%] md:w-[23%] xl:w-[20%] max-w-[160px] group shadow-sm"
         onClick={() => setSelectedAnime(anime)}
       >
-        <div className="aspect-[3/4] w-full bg-gray-700 rounded-lg overflow-hidden">
+        <div className="aspect-[3/4] w-full rounded-xl overflow-hidden">
           <img
             src={anime.images?.webp?.image_url || anime.images?.jpg?.image_url}
             alt={anime.title}
-            className="w-full h-full object-cover"
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         </div>
 
-        {/* title overlay */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
-          <div className="absolute bottom-3 left-3 right-3 text-white text-sm font-semibold leading-tight line-clamp-2">
+        {/* Overlay for title */}
+        <div className="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/90 to-transparent">
+          <div className="text-white text-sm font-semibold leading-tight line-clamp-2 drop-shadow-lg">
             {anime.title}
           </div>
         </div>
@@ -46,37 +48,38 @@ const AppHome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center py-6 px-2 text-white min-h-screen">
-      {/* ✅ Main content + Sidebar as 70-30 split */}
-      <div className="w-full max-w-8xl grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">
-        {/* Main content */}
-        <div className="flex flex-col items-center">
-          {/* 🔍 Search bar */}
-          <form onSubmit={(e) => e.preventDefault()} className="w-full flex justify-center mt-8 mb-6 px-4">
+    <div className="flex flex-col items-center py-8 px-3 text-on-background min-h-screen transition-colors">
+      <div className="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-[68%_32%] gap-8">
+        {/* =================== LEFT PANEL =================== */}
+        <div className="flex flex-col w-full rounded-2xl bg-surface transition-colors">
+          {/* Search Bar */}
+          <form onSubmit={(e) => e.preventDefault()} className="w-full text-[var(--primary-color)] mb-4">
             <input
               type="text"
               value={search}
               onChange={handleInputChange}
-              placeholder="Search your new anime..."
-              className="p-2 w-full max-w-xl text-base rounded-full border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="Search anime"
+              placeholder="Search for an anime..."
+              className="p-3 w-full text-base rounded-full bg-gray-900/90  border
+                         focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition-colors"
             />
           </form>
 
           {/* Search Results */}
           {isFetching ? (
-            <div className="w-full max-w-5xl p-4">
+            <div className="p-4 my-4 w-full bg-gray-900/90 rounded-xl">
               <PageLoader />
             </div>
           ) : isError ? (
-            <p className="text-red-400">Failed to fetch results. Try again later.</p>
+            <p className="text-[var(--error-color)] p-4 my-4 w-full bg-gray-900/90 rounded-xl">
+              Failed to fetch results. Try again later.
+            </p>
           ) : (
             results.length > 0 && (
-              <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col items-center text-center">
-                <h2 className="text-lg font-semibold text-primary mb-3 w-full px-2 text-[var(--primary-color)]">
+              <section className="p-4 my-4 w-full bg-gray-900/90 rounded-xl">
+                <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
                   Search Results
                 </h2>
-                <div className="w-full flex flex-wrap justify-center gap-4 py-2">
+                <div className="w-full flex flex-wrap justify-start gap-4">
                   {results.slice(0, 20).map((anime) => (
                     <AnimeCard key={anime.mal_id} anime={anime} />
                   ))}
@@ -85,13 +88,13 @@ const AppHome = () => {
             )
           )}
 
-          {/* ⭐ Starred */}
+          {/* Starred Section */}
           {starredAnimes?.length > 0 && (
-            <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
-              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
-                Your Starred Animes
+            <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
+                ⭐ Your Starred Animes
               </h2>
-              <div className="w-full flex flex-wrap justify-center gap-4">
+              <div className="w-full flex flex-wrap justify-start gap-4">
                 {starredAnimes.map((anime) => (
                   <AnimeCard key={anime.mal_id} anime={anime} />
                 ))}
@@ -99,35 +102,56 @@ const AppHome = () => {
             </section>
           )}
 
-          {/* 🎬 Watchlist */}
+          {/* Watchlist Section */}
           {storageManager.get("watchlist")?.length > 0 && (
-            <section className="p-2 mx-2 my-4 w-full max-w-5xl flex flex-col text-center">
-              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3 w-full">
-                Your Watchlist
+            <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
+                🎬 Your Watchlist
               </h2>
-              <div className="w-full flex flex-wrap justify-center gap-4">
+              <div className="w-full flex flex-wrap justify-start gap-4">
                 {watchlistAnimes.map((anime) => (
                   <AnimeCard key={anime.mal_id} anime={anime} />
                 ))}
               </div>
             </section>
           )}
+
+          {/* Recommendation Section */}
+          <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
+            <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
+              💡 Anime Recommendations
+            </h2>
+            <Suspense fallback={<div className="p-6"><PageLoader /></div>}>
+              <RecommendationSection />
+            </Suspense>
+          </section>
         </div>
 
-        {/* Sidebar (desktop only) */}
-        <aside className="hidden lg:block my-3">
-          <RecommendationSection />
+        {/* =================== RIGHT SIDEBAR =================== */}
+        <aside className="w-full rounded-2xl bg-gray-900/90  shadow-sm bg-surface p-5 flex flex-col text-left transition-colors">
+          <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-4">
+            🗨️ Recent Anime Reviews
+          </h2>
+          <Suspense fallback={<div className="p-6"><PageLoader /></div>}>
+            <AnimeReview />
+          </Suspense>
         </aside>
       </div>
 
-      {/* On Mobile: recommendations below */}
-      <div className="w-full lg:hidden mx-2 my-4 px-2">
-        <RecommendationSection />
-      </div>
-
-      {/* Details Panel */}
+      {/* =================== DETAILS PANEL =================== */}
       {selectedAnime && (
-        <AnimeDetailsPanel anime={selectedAnime} onClose={() => setSelectedAnime(null)} />
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 flex items-center justify-center bg-black/70">
+              <PageLoader />
+            </div>
+          }
+        >
+          <AnimeDetailsPanel
+            anime={selectedAnime}
+            onClose={() => setSelectedAnime(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -7,11 +7,11 @@ const NoAnimeFound = ({ message = "Oops! Nothing Here" }) => {
       {/* Funky ghost icon */}
       <Ghost
         size={128}
-        className="text-[var(--primary-color)] mt-4 mb-4 animate-bounce"
+        className="text-gray-500 mt-4 mb-4 animate-bounce"
       />
 
       {/* Fun heading */}
-      <h2 className="text-2xl font-bold text-[var(--primary-color)] mb-2">
+      <h2 className="text-1xl font-bold text-[var(--primary-color)] mb-2">
         {message}
       </h2>
       {/* Easter egg / retry hint */}

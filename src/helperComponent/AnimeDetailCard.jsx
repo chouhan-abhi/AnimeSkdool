@@ -31,7 +31,7 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
   return (
     <>
       <div
-        className="z-101 relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
+        className="relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
                    transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
         onClick={() => setExpanded(true)}
       >
@@ -40,10 +40,11 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
           className="absolute inset-0 bg-cover bg-center filter blur-lg scale-105 z-0"
           style={{ backgroundImage: `url(${images?.jpg?.image_url})` }}
         />
+
         <div className="absolute inset-0 bg-black/60 z-0" />
 
         {/* Main content */}
-        <div className="relative z-10 flex flex-row h-full overflow-hidden">
+        <div className="relative flex flex-row h-full overflow-hidden">
           {/* Left image */}
           <div className="relative w-40 h-full flex-shrink-0 overflow-hidden rounded-l-xl">
             <img

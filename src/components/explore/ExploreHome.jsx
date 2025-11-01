@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ExploreAnime from "./ExploreAnime";
 import ExploreSeasons from "./ExploreSeasons";
 import { Calendar, TrendingUp } from "lucide-react";
@@ -33,7 +33,7 @@ const ExploreHome = () => {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-[var(--bg-color)] to-[var(--bg-color)]/95">
       {/* Centered Chrome-like Tab Selector */}
-      <div className="relative bg-[var(--bg-color)] border-b border-gray-200/20 flex justify-center">
+      <div className="relative bg-[var(--bg-color)] flex justify-center">
         <div className="flex items-center gap-2 px-4 rounded-t-xl shadow-sm bg-surface-container-high mt-2">
           {modes.map((mode) => {
             const Icon = mode.icon;
