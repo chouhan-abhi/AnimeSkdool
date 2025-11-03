@@ -5,3 +5,5 @@
             {children}
         </span>
     );
+
+export default Badge;

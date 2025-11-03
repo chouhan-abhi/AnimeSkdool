@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from "react";
-import { parseISO, isAfter, isBefore, format } from "date-fns";
+import { format, isAfter, isBefore } from "date-fns";
 import { Star, Clock } from "lucide-react";
 import DayCalendarLoader from "../../helperComponent/CalendarLoader";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
@@ -11,8 +11,6 @@ function convertJSTtoLocal(dateStr) {
   if (!dateStr) return null;
   const date = new Date(dateStr);
   if (isNaN(date)) return null;
-
-  // Convert from JST -> UTC
   const utcMs = date.getTime() - JST_OFFSET * 60 * 1000;
   return new Date(utcMs);
 }
@@ -26,8 +24,8 @@ function formatTime(date) {
   }).format(date);
 }
 
-// ---- Anime card ----
-const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
+// ---- AnimeCard ----
+const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
   const image =
     anime.images?.webp?.image_url || anime.images?.jpg?.image_url || "";
 
@@ -41,18 +39,21 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
   return (
     <li
       onClick={() => onSelect?.(anime)}
-      className={`relative overflow-hidden rounded-lg shadow-sm cursor-pointer transition-all duration-200 group ${
-        isOngoing ? "ring-2 ring-red-500 scale-[1.01]" : "hover:scale-[1.01]"
-      }`}
+      className={`relative overflow-hidden rounded-lg shadow-sm cursor-pointer transition-all duration-200 group
+        ${isOngoing ? "ring-2 ring-red-500 scale-[1.01]" : "hover:scale-[1.01]"}
+        opacity-0 animate-slideIn
+      `}
+      style={{
+        animationDelay: `${index * 120}ms`,
+        animationFillMode: "forwards",
+      }}
     >
-      {/* Background */}
       <div
-        className="absolute inset-0 bg-center bg-cover blur-sm opacity-30"
+        className="absolute inset-0 bg-center bg-cover opacity-40"
         style={{ backgroundImage: `url(${image})` }}
       />
 
-      {/* Foreground */}
-      <div className="relative flex items-center gap-2 p-2 bg-black/20 backdrop-blur-sm">
+      <div className="relative flex items-center gap-2 p-2 bg-gray-900/80">
         <div className="relative flex-shrink-0">
           <img
             src={image}
@@ -83,7 +84,6 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
           )}
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0 text-gray-100">
           <div className="flex justify-between text-[10px] text-gray-300 mb-[1px]">
             <div className="flex items-center gap-1">
@@ -114,7 +114,6 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
 // ---- MinimalDayView ----
 const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   const [now, setNow] = useState(new Date());
-
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
@@ -124,7 +123,6 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
 
   const nowOrNext = useMemo(() => {
     if (!schedule?.length) return null;
-
     const sorted = [...schedule].sort(
       (a, b) =>
         new Date(a.localDate || a.aired?.from) -
@@ -134,10 +132,8 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
     for (const anime of sorted) {
       const start = convertJSTtoLocal(anime.localDate || anime.aired?.from);
       if (!start) continue;
-
       const durationMins = parseInt(anime.duration?.match(/\d+/)?.[0] || "24");
       const end = new Date(start.getTime() + durationMins * 60000);
-
       if (isBefore(start, now) && isAfter(end, now))
         return { ...anime, status: "Ongoing" };
       if (isAfter(start, now)) return { ...anime, status: "Next" };
@@ -155,13 +151,24 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="min-h-[400px] bg-gray-900 rounded-xl shadow-lg p-3 relative overflow-hidden">
-      {/* Header */}
+    <div className="h-[82vh] bg-gray-900 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
+      {/* Inline animation keyframes */}
+      <style>
+        {`
+          @keyframes slideIn {
+            0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          .animate-slideIn {
+            animation: slideIn 0.4s ease-out forwards;
+          }
+        `}
+      </style>
+
       <h3 className="text-base font-semibold text-gray-100 mb-3 border-b border-gray-700 pb-1 text-center">
         {day}
       </h3>
 
-      {/* Red line */}
       {isToday && schedule.length > 0 && (
         <div
           className="absolute left-0 right-0 flex items-center h-0 z-20"
@@ -174,31 +181,32 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
         </div>
       )}
 
-      {/* States */}
-      {isLoading ? (
-        <DayCalendarLoader />
-      ) : schedule.length === 0 ? (
-        <div className="flex justify-center items-center h-[350px]">
-          <NoAnimeFound message="No anime scheduled for this day" />
-        </div>
-      ) : (
-        <ul className="space-y-2 mb-20 relative z-10">
-          {schedule.map((anime) => (
-            <AnimeCard
-              key={anime.mal_id}
-              anime={anime}
-              isOngoing={
-                nowOrNext?.mal_id === anime.mal_id &&
-                nowOrNext.status === "Ongoing"
-              }
-              onSelect={onSelectAnime}
-              onToggleStar={anime.onToggleStar}
-            />
-          ))}
-        </ul>
-      )}
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+        {isLoading ? (
+          <DayCalendarLoader />
+        ) : schedule.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <NoAnimeFound message="No anime scheduled for this day" />
+          </div>
+        ) : (
+          <ul className="space-y-2 relative z-10 pb-24">
+            {schedule.map((anime, i) => (
+              <AnimeCard
+                key={anime.mal_id}
+                anime={anime}
+                index={i}
+                isOngoing={
+                  nowOrNext?.mal_id === anime.mal_id &&
+                  nowOrNext.status === "Ongoing"
+                }
+                onSelect={onSelectAnime}
+                onToggleStar={anime.onToggleStar}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
 
-      {/* Sticky footer */}
       {nowOrNext && (
         <div
           onClick={() => onSelectAnime?.(nowOrNext)}
@@ -216,9 +224,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
             <p className="text-[10px] font-bold uppercase tracking-wide">
               {nowOrNext.status}
             </p>
-            <p className="text-sm font-semibold truncate">
-              {nowOrNext.title}
-            </p>
+            <p className="text-sm font-semibold truncate">{nowOrNext.title}</p>
             <p className="text-[10px]">
               {formatTime(
                 convertJSTtoLocal(

@@ -1,22 +1,48 @@
-import React, { useState, Suspense, lazy } from "react";
+import React, { useState, Suspense, lazy, useEffect } from "react";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
 import PageLoader from "../helperComponent/PageLoader";
 import storageManager from "../utils/storageManager";
 
-// ✅ Lazy load heavy components
 const AnimeDetailsPanel = lazy(() => import("./AnimeDetailsPanel"));
 const RecommendationSection = lazy(() => import("./RecommendationSection"));
 const AnimeReview = lazy(() => import("./AnimeReview/AnimeReview"));
 
+const useDebounce = (value, delay = 400) => {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+};
+
 const AppHome = () => {
   const [search, setSearch] = useState("");
   const [selectedAnime, setSelectedAnime] = useState(null);
+  const debouncedSearch = useDebounce(search);
+  const { data: results = [], isFetching, isError } = useAnimeSearch(debouncedSearch);
 
-  const { data: results = [], isFetching, isError } = useAnimeSearch(search);
   const { data: starredAnimes = [] } = useStarredAnime();
   const { data: watchlistAnimes = [] } = useWatchlistAnime();
+
+  useEffect(() => {
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(() => {
+        import("./AnimeReview/AnimeReview");
+        import("./AnimeDetailsPanel");
+        import("./RecommendationSection");
+      });
+    } else {
+      setTimeout(() => {
+        import("./AnimeReview/AnimeReview");
+        import("./AnimeDetailsPanel");
+        import("./RecommendationSection");
+      }, 2000);
+    }
+  }, []);
+
 
   const handleInputChange = (e) => setSearch(e.target.value);
 
@@ -48,18 +74,18 @@ const AppHome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center py-8 px-3 text-on-background min-h-screen transition-colors">
-      <div className="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-[68%_32%] gap-8">
+    <div className="flex flex-col items-center py-8 px-2 text-on-background min-h-screen transition-colors">
+      <div className="w-full max-w-[1900px] grid grid-cols-1 lg:grid-cols-[68%_32%] gap-8">
         {/* =================== LEFT PANEL =================== */}
         <div className="flex flex-col w-full rounded-2xl bg-surface transition-colors">
           {/* Search Bar */}
-          <form onSubmit={(e) => e.preventDefault()} className="w-full text-[var(--primary-color)] mb-4">
+          <form onSubmit={(e) => e.preventDefault()} className="w-full hover:text-[var(--primary-color)]">
             <input
               type="text"
               value={search}
               onChange={handleInputChange}
               placeholder="Search for an anime..."
-              className="p-3 w-full text-base rounded-full bg-gray-900/90  border
+              className="p-3 w-full text-base shadow-md rounded-full bg-gray-900/90
                          focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition-colors"
             />
           </form>
@@ -128,7 +154,10 @@ const AppHome = () => {
         </div>
 
         {/* =================== RIGHT SIDEBAR =================== */}
-        <aside className="w-full rounded-2xl bg-gray-900/90  shadow-sm bg-surface p-5 flex flex-col text-left transition-colors">
+        <aside
+          className="w-full rounded-2xl bg-gray-900/90 shadow-sm bg-surface p-5 flex flex-col text-left transition-colors
+             mr-4 lg:mr-6 xl:mr-8" // 👈 Added responsive right margin
+        >
           <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-4">
             🗨️ Recent Anime Reviews
           </h2>
@@ -136,6 +165,7 @@ const AppHome = () => {
             <AnimeReview />
           </Suspense>
         </aside>
+
       </div>
 
       {/* =================== DETAILS PANEL =================== */}

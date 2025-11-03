@@ -1,17 +1,42 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  lazy,
+  Suspense,
+  memo,
+} from "react";
 import ReactDOM from "react-dom";
-import EpisodesList from "../helperComponent/EpisodeList";
-import { contentProvider, formatNumber } from "../utils/utils";
-import { Badge } from "../helperComponent/Badge";
 import { Bookmark } from "lucide-react";
+import { contentProvider, formatNumber } from "../utils/utils";
+import PageLoader from "../helperComponent/PageLoader";
+
+// ✅ Lazy load heavy subcomponents
+const EpisodesList = lazy(() => import("../helperComponent/EpisodeList"));
+const Badge = lazy(() => import("../helperComponent/Badge"));
 
 const WATCHLIST_KEY = "watchlist";
 
 const AnimeDetailsPanel = ({ anime, onClose }) => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [portalRoot, setPortalRoot] = useState(null);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+  const [isExpanded, setIsExpanded] = useState(false);
 
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
+  const resizeTimeout = useRef(null);
+
+  // 🧠 Lazy preloading of subcomponents (improves subsequent loads)
+  useEffect(() => {
+    requestIdleCallback?.(() => {
+      import("../helperComponent/EpisodeList");
+      import("../helperComponent/Badge");
+    });
+  }, []);
+
+  // 🖼️ Preload portal and watchlist
   useEffect(() => {
     const root = document.getElementById("modal-root");
     setPortalRoot(root);
@@ -19,40 +44,60 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
     setIsInWatchlist(saved.some((item) => item.mal_id === anime.mal_id));
 
-    const checkScreen = () => setIsLargeScreen(window.innerWidth >= 1024);
-    checkScreen();
-    window.addEventListener("resize", checkScreen);
-    return () => window.removeEventListener("resize", checkScreen);
+    const handleResize = () => {
+      clearTimeout(resizeTimeout.current);
+      resizeTimeout.current = setTimeout(() => {
+        setIsLargeScreen(window.innerWidth >= 1024);
+      }, 150);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout.current);
+    };
   }, [anime.mal_id]);
 
-  const handleEscClose = useCallback(
-    (e) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose]
-  );
-
+  // ⌨️ Close with ESC key
   useEffect(() => {
-    window.addEventListener("keydown", handleEscClose);
-    return () => window.removeEventListener("keydown", handleEscClose);
-  }, [handleEscClose]);
+    const handleEsc = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
 
-  const toggleWatchlist = () => {
-    const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
-    if (isInWatchlist) {
-      const updated = saved.filter((item) => item.mal_id !== anime.mal_id);
-      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated));
-      setIsInWatchlist(false);
-    } else {
-      saved.push({ ...anime, isBookmarked: true });
-      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(saved));
-      setIsInWatchlist(true);
-    }
+  // 📱 Swipe gestures for mobile expand/collapse
+  const handleTouchStart = (e) => (touchStartY.current = e.touches[0].clientY);
+  const handleTouchMove = (e) => (touchEndY.current = e.touches[0].clientY);
+  const handleTouchEnd = () => {
+    const delta = touchStartY.current - touchEndY.current;
+    if (delta > 50) setIsExpanded(true);
+    else if (delta < -50) setIsExpanded(false);
   };
+
+  // ⭐ Watchlist toggle (memoized)
+  const toggleWatchlist = useCallback(() => {
+    const saved = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+    let updated;
+    if (isInWatchlist) {
+      updated = saved.filter((item) => item.mal_id !== anime.mal_id);
+    } else {
+      updated = [...saved, { ...anime, isBookmarked: true }];
+    }
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated));
+    setIsInWatchlist(!isInWatchlist);
+  }, [isInWatchlist, anime]);
 
   if (!portalRoot) return null;
 
-  const transparentPanel = "p-2 rounded-lg bg-black/40";
+  // 🧩 Memoized stats block
+  const StatBlock = memo(({ label, value }) => (
+    <div
+      className="p-2 rounded-lg bg-black/40 text-center"
+      style={{ backdropFilter: "blur(4px)" }}
+    >
+      <p className="text-xs">{label}</p>
+      <p className="font-semibold">{value}</p>
+    </div>
+  ));
 
   const renderDetails = () => (
     <div className="overflow-y-auto h-full space-y-6">
@@ -66,7 +111,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         >
           <Bookmark
             size={32}
-            className={`rounded-full p-[4px] ${
+            className={`p-[4px] ${
               isInWatchlist
                 ? "fill-[var(--primary-color)] text-[var(--primary-color)]"
                 : "text-white"
@@ -75,12 +120,8 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         </button>
       </div>
 
-      {anime.title_english && (
-        <p className="text-sm italic">{anime.title_english}</p>
-      )}
-      {anime.title_japanese && (
-        <p className="text-sm italic">{anime.title_japanese}</p>
-      )}
+      {anime.title_english && <p className="text-sm italic">{anime.title_english}</p>}
+      {anime.title_japanese && <p className="text-sm italic">{anime.title_japanese}</p>}
 
       {/* Status + Stats */}
       <div className="flex flex-wrap gap-3 my-4">
@@ -91,8 +132,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         )}
         {anime.score && (
           <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-            ⭐ {anime.score}{" "}
-            <span className="text-xs">({anime.scored_by || 0} users)</span>
+            ⭐ {anime.score} ({anime.scored_by || 0} users)
           </span>
         )}
         {anime.rank && (
@@ -103,67 +143,65 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-3 rounded-lg mb-6">
-        {[
-          { label: "Popularity", value: `#${anime.popularity}` },
-          { label: "Members", value: formatNumber(anime.members) },
-          { label: "Favorites", value: formatNumber(anime.favorites) },
-          { label: "Episodes", value: anime.episodes || "TBA" },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className={`${transparentPanel} text-center`}
-            style={{ backdropFilter: "blur(4px)" }}
-          >
-            <p className="text-xs">{stat.label}</p>
-            <p className="font-semibold">{stat.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        <StatBlock label="Popularity" value={`#${anime.popularity}`} />
+        <StatBlock label="Members" value={formatNumber(anime.members)} />
+        <StatBlock label="Favorites" value={formatNumber(anime.favorites)} />
+        <StatBlock label="Episodes" value={anime.episodes || "TBA"} />
       </div>
 
       <p className="mb-4 leading-relaxed">
         {anime.synopsis || "No synopsis available."}
       </p>
 
-      <EpisodesList animeId={anime.mal_id} />
+      {/* Lazy load EpisodesList */}
+      <Suspense fallback={<PageLoader />}>
+        <EpisodesList animeId={anime.mal_id} />
+      </Suspense>
 
       <div
-        className={`${transparentPanel} mb-6 p-4`}
-        style={{ backdropFilter: "blur(4px)" }}
+        className="p-4 bg-black/40 rounded-lg backdrop-blur-md mb-6"
       >
         {anime.genres?.length > 0 && (
           <>
             <h4 className="font-semibold text-lg mb-2">Genres</h4>
             <div className="flex flex-wrap gap-2 mb-6">
-              {anime.genres.map((g) => (
-                <Badge key={g.mal_id}>{g.name}</Badge>
-              ))}
+              <Suspense fallback={<span>Loading...</span>}>
+                {anime.genres.map((g) => (
+                  <Badge key={g.mal_id}>{g.name}</Badge>
+                ))}
+              </Suspense>
             </div>
           </>
         )}
 
-        {[{ title: "Studios", data: anime.studios }, { title: "Producers", data: anime.producers }].map(
-          (section) =>
-            section.data?.length > 0 && (
-              <div key={section.title} className="mb-6">
-                <h4 className="font-semibold text-lg mb-2">{section.title}</h4>
-                <div className="flex flex-wrap gap-3">
-                  {section.data.map((item) => (
-                    <a
-                      key={item.mal_id}
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="border border-gray-600 text-center px-4 py-2 rounded-lg transition hover:bg-[var(--primary-color)]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
+        {/* Studios / Producers */}
+        {["studios", "producers"].map((key) => {
+          const section = anime[key];
+          if (!section?.length) return null;
+          return (
+            <div key={key} className="mb-6">
+              <h4 className="font-semibold text-lg mb-2">
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </h4>
+              <div className="flex flex-wrap gap-3">
+                {section.map((item) => (
+                  <a
+                    key={item.mal_id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-gray-600 text-center px-4 py-2 rounded-lg transition hover:bg-[var(--primary-color)]"
+                  >
+                    {item.name}
+                  </a>
+                ))}
               </div>
-            )
-        )}
+            </div>
+          );
+        })}
 
+        {/* Trailer */}
         {anime.trailer?.embed_url && (
           <>
             <h4 className="font-semibold text-lg mb-2">Trailer</h4>
@@ -179,6 +217,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           </>
         )}
 
+        {/* Watch it on */}
         <h4 className="font-semibold text-lg mb-2">Watch it on</h4>
         <div className="flex flex-wrap gap-3 mb-6">
           {contentProvider.map((provider) => (
@@ -197,14 +236,14 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         </div>
       </div>
 
+      {/* External link */}
       {anime.url && (
         <div className="mt-4 flex justify-end">
           <a
             href={anime.url}
             target="_blank"
             rel="noreferrer"
-            className="underline font-medium mr-4 border border-gray-600 rounded-lg transition hover:bg-[var(--primary-color)] px-4 py-2"
-            style={{ color: "var(--primary-color)" }}
+            className="underline font-medium mr-4 border border-gray-600 rounded-lg transition hover:bg-[var(--primary-color)] px-4 py-2 text-[var(--primary-color)]"
           >
             View on MAL →
           </a>
@@ -214,9 +253,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   );
 
   const handleBackdropClick = (e) => {
-    if (isLargeScreen && e.target.id === "anime-details-backdrop") {
-      onClose();
-    }
+    if (isLargeScreen && e.target.id === "anime-details-backdrop") onClose();
   };
 
   return ReactDOM.createPortal(
@@ -236,27 +273,54 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
       {/* Background Image */}
       <div
-        className={`relative ${
-          isLargeScreen ? "w-[68%] h-full order-2" : "w-full h-[50vh] order-1"
+        className={`absolute top-0 right-0 ${
+          isLargeScreen ? "w-[68%] h-full order-2" : "relative w-full h-[50vh] order-1"
         } overflow-hidden`}
       >
         <img
-          src={anime.images?.jpg?.large_image_url}
+          src={anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url}
           alt={anime.title}
-          className="absolute inset-0 w-full h-full object-cover object-center scale-110 transition-transform duration-500"
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover object-right scale-110 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-l from-black/20 via-black/50 to-black/90"></div>
       </div>
 
       {/* Details Panel */}
       <div
-        className={`relative z-10 text-white overflow-y-auto animate-slideIn ${
+        className={`fixed left-0 right-0 text-white animate-slideIn ${
           isLargeScreen
-            ? "w-[40%] max-w-[640px] p-10 bg-transparent backdrop-blur-2xl order-1"
-            : "w-full bg-black/85 p-6 order-2"
+            ? "relative z-10 w-[40%] max-w-[720px] p-10 order-1 overflow-y-auto"
+            : "z-40 flex flex-col transition-all duration-500 ease-in-out overflow-hidden"
         }`}
+        style={
+          isLargeScreen
+            ? {}
+            : { top: isExpanded ? "0" : "50vh", height: "100vh" }
+        }
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {renderDetails()}
+        {/* Blurred + dark background for mobile */}
+        {!isLargeScreen && (
+          <div
+            className="absolute inset-0 z-0 max-w-[720px]"
+            style={{
+              backgroundImage: `url(${anime.images?.webp?.image_url || anime.images?.jpg?.image_url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              filter: "blur(28px) brightness(0.35) contrast(1.2)",
+              transform: "scale(1.1)",
+            }}
+          />
+        )}
+
+        {/* Foreground content */}
+        <div className={`relative z-10 flex-1 overflow-y-auto ${isLargeScreen ? "" : "p-6"}`}>
+          {renderDetails()}
+        </div>
       </div>
 
       <style>
@@ -275,4 +339,4 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   );
 };
 
-export default AnimeDetailsPanel;
+export default memo(AnimeDetailsPanel);
