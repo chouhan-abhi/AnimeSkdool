@@ -10,7 +10,7 @@ A modern anime explorer powered by [Jikan API](https://docs.api.jikan.moe/) (MyA
 
 | Detail view |
 |:-------------:|
-| ![Screenshot 6](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/Aniskdool%20ui6.png) |
+| ![Screenshot 6](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/AniSkdool%20ui6.png) |
 
 | Desktop View | Watchlist |
 |:-------------:|:-----------:|
