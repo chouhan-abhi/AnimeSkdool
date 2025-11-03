@@ -15,7 +15,9 @@ A modern anime explorer powered by [Jikan API](https://docs.api.jikan.moe/) (MyA
 | Calendar | Explore | Settings |
 |:-------------:|:----------:|:----------------:|
 | ![Screenshot 3](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/Aniskdool%20ui3.png) | ![Screenshot 4](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/Aniskdool%20ui4.png) | ![Screenshot 5](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/Aniskdool%20ui5.png) |
-
+| Detail view |
+|:-------------:|:-----------:|
+| ![Screenshot 6](https://raw.githubusercontent.com/chouhan-abhi/AnimeSkdool/refs/heads/main/public/screenshots/Aniskdool%20ui6.png) |
 ---
 
 ## ✨ Features
