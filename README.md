@@ -1,92 +1,75 @@
-# 🌸 AnimeSkdool  
+<h1 align="center">AniSkdool</h1>
 
-[![Ask DeepWiki](https://devin.ai/assets/askdeepwiki.png)](https://deepwiki.com/chouhan-abhi/AnimeSkdool)
+<p align="center">
+  <i>Discover, track, and explore anime with a stunning, lightning-fast interface</i><br/>
+  Built with ⚡ <b>React</b> + 🎨 <b>Tailwind CSS</b>
+</p>
 
-AnimeSkdool is a **next-gen anime companion app** built for fans who don’t just watch anime—they **live by it**.  
-From keeping track of weekly airings to building a personal watchlist and exploring hidden gems, AnimeSkdool helps you **discover, organize, and never miss your favorite shows**.  
-
-Powered by the **Jikan API** and optimized with modern web tech, it delivers a **smooth, offline-friendly, and highly customizable experience**.
-
----
-
-## ✨ Key Features  
-
-- **🗓️ Smart Weekly Calendar**  
-  A dynamic schedule that shows exactly when your favorite anime airs each week. Switch between **day view** or **full week view** to plan your binge.  
-
-- **🔍 Explore & Discover**  
-  Browse **top-ranked, trending, and upcoming anime** with advanced filters for type, genre, popularity, and rating.  
-
-- **⭐ Unified Watchlist + Starred Favorites**  
-  Save entire anime objects (not just IDs) directly to your personal watchlist. Mark favorites with a **Starred tag** for easy access—even works offline with cached data.  
-
-- **📄 Deep Anime Profiles**  
-  Every anime comes with rich details: synopsis, trailers, genres, studios, ratings, and more.  
-
-- **🎲 Recommendation Carousel**  
-  Get random curated picks when you’re not sure what to watch next.  
-
-- **⚡ Blazing Fast Search**  
-  Instant, responsive search powered by React Query and caching—find anime without waiting.  
-
-- **🎨 Customizable Experience**  
-  Choose your **primary color theme**, tweak fonts, and personalize UI settings.  
-
-- **📦 Offline-First Design**  
-  Thanks to a **progressive service worker**, AnimeSkdool keeps working with cached schedules, starred anime, and watchlists even when offline.  
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-blue?logo=react" />
+  <img src="https://img.shields.io/badge/TailwindCSS-v3-38bdf8?logo=tailwindcss" />
+  <img src="https://img.shields.io/badge/Lazy%20Loading-Optimized-success" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
+</p>
 
 ---
 
-## 🖼️ Screenshots & Previews  
+## 🖼️ Preview
 
-Here’s a sneak peek of what AnimeSkdool looks like:  
+<p align="center">
+  <img src="https://github.com/<your-username>/animescope/assets/preview-desktop.png" alt="AnimeScope desktop preview" width="800"/>
+</p>
 
-### 📅 Weekly Schedule  
-![Weekly Schedule](./screenshots/skdool5.png)  
-
-### 🔍 Explore & Discover  
-![Explore Page](./screenshots/skdool3.png)  
-
-### ⭐ Watchlist & Starred Anime  
-![Watchlist](./screenshots/skdool2.png)  
-
-### 🎨 Customizable UI  
-![Themes](./screenshots/skdool-settings.png)
-
-*(Replace the placeholders above with actual screenshots or GIFs from your app once available.)*  
+<p align="center">
+  <img src="https://github.com/<your-username>/animescope/assets/preview-mobile.png" alt="AnimeScope mobile preview" width="300"/>
+</p>
 
 ---
 
-## 🛠️ Tech Stack  
+## 🌟 Features
 
-- **Frontend:** React (with Vite ⚡ for ultra-fast builds)  
-- **Data Fetching & State:** TanStack Query (React Query) for caching + background updates  
-- **Styling:** Tailwind CSS (utility-first, responsive, modern)  
-- **Icons:** Lucide React  
-- **Storage:** LocalStorage manager for persistent user data (watchlist, starred anime, settings)  
-- **Offline Support:** Service Worker with **dynamic runtime caching**  
+### 🎬 Explore & Search
+- Lightning-fast anime search powered by the **Jikan API (MyAnimeList)**  
+- Responsive card grid with hover animations and lazy-loaded images  
+- Search updates instantly with no full reloads  
+
+### 📖 Detailed Anime View
+- Elegant **slide-in detail panel** with full synopsis, ratings, and metadata  
+- Optimized **lazy-loading** for heavy components  
+- Background image with **blur + dark overlay** for perfect readability  
+- Mobile-first behavior: opens from half the screen, supports swipe up/down gestures  
+
+### 💾 Track Your Favorites
+- ⭐ **Starred list** for your all-time favorites  
+- 🎬 **Watchlist** saved to `localStorage` — persistent even after refresh  
+- One-click bookmarking with animated feedback  
+
+### 💡 Recommendations & Reviews
+- “Anime Recommendations” and “Recent Reviews” sidebar sections  
+- Dynamically lazy-loaded for minimal main bundle size  
+- Beautiful cards and gradient UI  
+
+### ⚡ Performance
+- React 18 Suspense + `React.lazy()` for all large components  
+- Memoized renders and optimized scrollable sections  
+- GPU-friendly background blurs (`filter: blur()` + opacity layers)  
+- Split code by page and on-demand component loading  
 
 ---
 
-## 🚀 Getting Started  
+## 🧩 Tech Stack
 
-To run AnimeSkdool locally:  
+| Category | Tools |
+|-----------|--------|
+| **Frontend** | React 18, Vite |
+| **Styling** | Tailwind CSS (utility-first, responsive design) |
+| **Data Layer** | Jikan REST API (MyAnimeList) |
+| **Icons** | Lucide React |
+| **State & Fetching** | React Query-style hooks (`useAnimeSearch`, `useStarredAnime`) |
+| **Storage** | LocalStorage (via custom `storageManager`) |
+| **Performance** | React.lazy, Suspense, code splitting |
 
-### Prerequisites  
-- Node.js (v16+)  
-- npm (or any compatible package manager)  
+---
 
-### Installation  
+## 📁 Project Structure
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/chouhan-abhi/AnimeSkdool.git
-
-# 2. Navigate into the project
-cd AnimeSkdool
-
-# 3. Install dependencies
-npm install
-
-# 4. Start the dev server
-npm run dev
