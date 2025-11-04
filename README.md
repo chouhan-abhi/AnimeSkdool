@@ -193,10 +193,4 @@ You’re free to use, modify, and distribute it — attribution appreciated 🌟
 Powered by the anime community & the Jikan API.
 
 ---
-
-```
-
----
-
-Would you like me to make it **GitHub-pro ready** with dynamic badges (e.g., `last commit`, `stars`, `repo size`) and a **demo section** for your deployed site (Netlify/Vercel link)?
 ```
