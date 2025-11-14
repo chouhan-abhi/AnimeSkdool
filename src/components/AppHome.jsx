@@ -3,20 +3,11 @@ import { useAnimeSearch } from "../queries/useAnimeSearch";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
 import PageLoader from "../helperComponent/PageLoader";
-import storageManager from "../utils/storageManager";
+import { useDebounce } from "../utils/utils";
 
 const AnimeDetailsPanel = lazy(() => import("./AnimeDetailsPanel"));
 const RecommendationSection = lazy(() => import("./RecommendationSection"));
 const AnimeReview = lazy(() => import("./AnimeReview/AnimeReview"));
-
-const useDebounce = (value, delay = 400) => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debounced;
-};
 
 const AppHome = () => {
   const [search, setSearch] = useState("");
@@ -129,7 +120,7 @@ const AppHome = () => {
           )}
 
           {/* Watchlist Section */}
-          {storageManager.get("watchlist")?.length > 0 && (
+          {watchlistAnimes?.length > 0 && (
             <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
               <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
                 🎬 Your Watchlist

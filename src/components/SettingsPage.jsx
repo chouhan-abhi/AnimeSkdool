@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Github } from "lucide-react"; // ✅ Import GitHub icon
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
-
-const SETTINGS_KEY = "appSettings";
+import storageManager from "../utils/storageManager";
 
 // Dummy data for preview
 const dummySchedule = [
@@ -89,42 +88,26 @@ const PreviewDayCalendar = ({ schedule }) => {
 // ---------------------- Settings Page ----------------------
 
 const SettingsPage = () => {
-  // Theme + Font
+  // Theme + Font - using storageManager
   const [theme, setTheme] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-      return saved?.theme || "theme-light";
-    } catch {
-      return "theme-light";
-    }
+    const saved = storageManager.getSettings();
+    return saved?.theme || "theme-light";
   });
 
   const [font, setFont] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-      return saved?.font || "font-basic";
-    } catch {
-      return "font-basic";
-    }
+    const saved = storageManager.getSettings();
+    return saved?.font || "font-basic";
   });
 
   const [primaryColor, setPrimaryColor] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-      return saved?.primaryColor || "primary-red";
-    } catch {
-      return "primary-red";
-    }
+    const saved = storageManager.getSettings();
+    return saved?.primaryColor || "primary-red";
   });
 
   // Calendar View
   const [calendarView, setCalendarView] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-      return saved?.calendarView || "week";
-    } catch {
-      return "week";
-    }
+    const saved = storageManager.getSettings();
+    return saved?.calendarView || "week";
   });
 
   // Persist + apply theme/font/primaryColor
@@ -157,10 +140,8 @@ const SettingsPage = () => {
     );
     document.documentElement.classList.add(primaryColor);
 
-    localStorage.setItem(
-      SETTINGS_KEY,
-      JSON.stringify({ theme, font, calendarView, primaryColor })
-    );
+    // Use storageManager to save settings
+    storageManager.saveSettings({ theme, font, calendarView, primaryColor });
   }, [theme, font, calendarView, primaryColor]);
 
   const resetSettings = () => {

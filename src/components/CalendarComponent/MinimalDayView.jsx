@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, memo } from "react";
 import { format, isAfter, isBefore } from "date-fns";
-import { Star, Clock } from "lucide-react";
+import { Star, Clock, Calendar as CalendarIcon } from "lucide-react";
 import DayCalendarLoader from "../../helperComponent/CalendarLoader";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
 
@@ -10,7 +10,7 @@ const JST_OFFSET = 9 * 60; // JST = UTC+9
 function convertJSTtoLocal(dateStr) {
   if (!dateStr) return null;
   const date = new Date(dateStr);
-  if (isNaN(date)) return null;
+  if (Number.isNaN(date.getTime())) return null;
   const utcMs = date.getTime() - JST_OFFSET * 60 * 1000;
   return new Date(utcMs);
 }
@@ -38,8 +38,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
 
   return (
     <li
-      onClick={() => onSelect?.(anime)}
-      className={`relative overflow-hidden rounded-lg shadow-sm cursor-pointer transition-all duration-200 group
+      className={`relative overflow-hidden rounded-lg shadow-sm transition-all duration-200 group
         ${isOngoing ? "ring-2 ring-red-500 scale-[1.01]" : "hover:scale-[1.01]"}
         opacity-0 animate-slideIn
       `}
@@ -48,12 +47,18 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
         animationFillMode: "forwards",
       }}
     >
-      <div
-        className="absolute inset-0 bg-center bg-cover opacity-40"
-        style={{ backgroundImage: `url(${image})` }}
-      />
+      <button
+        type="button"
+        onClick={() => onSelect?.(anime)}
+        className="w-full h-full text-left relative"
+        aria-label={`View details for ${anime.title}`}
+      >
+        <div
+          className="absolute inset-0 bg-center bg-cover opacity-40 pointer-events-none"
+          style={{ backgroundImage: `url(${image})` }}
+        />
 
-      <div className="relative flex items-center gap-2 p-2 bg-gray-900/80">
+        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)]/90 backdrop-blur-sm border border-[var(--text-color)]/10">
         <div className="relative flex-shrink-0">
           <img
             src={image}
@@ -63,11 +68,12 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
 
           {/* Star button */}
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onToggleStar?.();
             }}
-            className="absolute top-1 right-1 bg-black/60 rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform"
+            className="absolute top-1 right-1 bg-[var(--bg-color)]/80 backdrop-blur-sm rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform border border-[var(--text-color)]/20"
           >
             <Star
               size={13}
@@ -84,29 +90,30 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
           )}
         </div>
 
-        <div className="flex-1 min-w-0 text-gray-100">
-          <div className="flex justify-between text-[10px] text-gray-300 mb-[1px]">
+        <div className="flex-1 min-w-0 text-[var(--text-color)]">
+          <div className="flex justify-between text-[10px] text-[var(--text-color)]/70 mb-[1px]">
             <div className="flex items-center gap-1">
-              <Clock size={10} className="text-gray-400" />
+              <Clock size={10} className="text-[var(--text-color)]/60" />
               <span>{localTime}</span>
             </div>
             <span>{anime.duration?.match(/\d+/)?.[0] || "24"}m</span>
           </div>
-          <p className="text-[13px] font-semibold leading-tight truncate">
+          <p className="text-[13px] font-semibold leading-tight truncate text-[var(--text-color)]">
             {anime.title}
           </p>
           {anime.episodes && (
-            <p className="text-[10px] text-gray-400 mt-[1px]">
+            <p className="text-[10px] text-[var(--text-color)]/60 mt-[1px]">
               Ep {anime.episodes}
             </p>
           )}
           {anime.aired?.string && (
-            <p className="text-[10px] text-gray-400 truncate mt-[1px]">
+            <p className="text-[10px] text-[var(--text-color)]/60 truncate mt-[1px]">
               {anime.aired.string}
             </p>
           )}
         </div>
-      </div>
+        </div>
+      </button>
     </li>
   );
 };
@@ -132,7 +139,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
     for (const anime of sorted) {
       const start = convertJSTtoLocal(anime.localDate || anime.aired?.from);
       if (!start) continue;
-      const durationMins = parseInt(anime.duration?.match(/\d+/)?.[0] || "24");
+      const durationMins = Number.parseInt(anime.duration?.match(/\d+/)?.[0] || "24", 10);
       const end = new Date(start.getTime() + durationMins * 60000);
       if (isBefore(start, now) && isAfter(end, now))
         return { ...anime, status: "Ongoing" };
@@ -151,7 +158,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="h-[82vh] bg-gray-900 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
+    <div className="h-[82vh] bg-[var(--bg-color)]/95 backdrop-blur-sm border border-[var(--text-color)]/10 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
       {/* Inline animation keyframes */}
       <style>
         {`
@@ -165,7 +172,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
         `}
       </style>
 
-      <h3 className="text-base font-semibold text-gray-100 mb-3 border-b border-gray-700 pb-1 text-center">
+      <h3 className="text-base font-semibold text-[var(--text-color)] mb-3 border-b border-[var(--text-color)]/20 pb-1 text-center">
         {day}
       </h3>
 
@@ -181,12 +188,18 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[var(--text-color)]/20 scrollbar-track-[var(--bg-color)]">
         {isLoading ? (
           <DayCalendarLoader />
         ) : schedule.length === 0 ? (
-          <div className="flex justify-center items-center h-full">
+          <div className="flex flex-col justify-center items-center h-full p-4 text-center">
+            <div className="text-[var(--text-color)]/50 mb-2">
+              <CalendarIcon size={48} className="opacity-50" />
+            </div>
             <NoAnimeFound message="No anime scheduled for this day" />
+            <p className="text-xs text-[var(--text-color)]/60 mt-2">
+              Try adjusting your filters or check other days
+            </p>
           </div>
         ) : (
           <ul className="space-y-2 relative z-10 pb-24">
@@ -208,9 +221,11 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
       </div>
 
       {nowOrNext && (
-        <div
+        <button
+          type="button"
           onClick={() => onSelectAnime?.(nowOrNext)}
           className="fixed bottom-4 left-4 right-4 bg-red-500 text-white rounded-md shadow-lg p-2.5 flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.01]"
+          aria-label={`View ${nowOrNext.status} anime: ${nowOrNext.title}`}
         >
           <img
             src={
@@ -235,10 +250,10 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
             </p>
           </div>
           <Star size={15} className="text-white" />
-        </div>
+        </button>
       )}
     </div>
   );
 };
 
-export default MinimalDayView;
+export default memo(MinimalDayView);

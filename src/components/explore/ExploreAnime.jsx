@@ -11,19 +11,14 @@ import {
 } from "lucide-react";
 import ExploreFilters from "./ExploreFilters";
 import useResponsive from "../../queries/useResponsive";
-
-/* -------------------- CONSTANTS -------------------- */
-const STORAGE_KEYS = {
-  type: "animeType",
-  filter: "animeFilter",
-  rating: "animeRating",
-  sfw: "animeSfw",
-};
+import storageManager from "../../utils/storageManager";
 
 /* -------------------- CUSTOM HOOKS -------------------- */
 const usePersistedState = (key, defaultValue) => {
-  const [state, setState] = useState(() => localStorage.getItem(key) || defaultValue);
-  useEffect(() => localStorage.setItem(key, state), [key, state]);
+  const [state, setState] = useState(() => storageManager.get(key, defaultValue));
+  useEffect(() => {
+    storageManager.set(key, state);
+  }, [key, state]);
   return [state, setState];
 };
 
@@ -128,11 +123,11 @@ const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
 
 /* -------------------- MAIN COMPONENT -------------------- */
 const ExploreAnime = () => {
-  // Persisted filters
-  const [type, setType] = usePersistedState(STORAGE_KEYS.type, "");
-  const [filter, setFilter] = usePersistedState(STORAGE_KEYS.filter, "bypopularity");
-  const [rating, setRating] = usePersistedState(STORAGE_KEYS.rating, "");
-  const [sfw, setSfw] = usePersistedState(STORAGE_KEYS.sfw, "true");
+  // Persisted filters - using storageManager keys
+  const [type, setType] = usePersistedState(storageManager.keys.type, "");
+  const [filter, setFilter] = usePersistedState(storageManager.keys.filter, "bypopularity");
+  const [rating, setRating] = usePersistedState(storageManager.keys.rating, "");
+  const [sfw, setSfw] = usePersistedState(storageManager.keys.sfw, "true");
 
   const isMobile = useResponsive();
   const [showSidebar, setShowSidebar] = useState(false);

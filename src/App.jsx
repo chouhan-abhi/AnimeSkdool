@@ -5,8 +5,7 @@ import CalendarView from "./components/CalendarComponent/CalendarView";
 import AppHome from "./components/AppHome";
 import SettingsPage from "./components/SettingsPage";
 import ExploreHome from "./components/explore/ExploreHome";
-
-const PRIMARY_COLOR_KEY = "primaryColor";
+import storageManager from "./utils/storageManager";
 
 const App = () => {
   // ✅ Initialize active view from sessionStorage
@@ -14,13 +13,8 @@ const App = () => {
     return sessionStorage.getItem("activeView") || "home";
   });
 
-  // ✅ Load saved theme color on mount
-  useEffect(() => {
-    const savedColor = localStorage.getItem(PRIMARY_COLOR_KEY);
-    if (savedColor) {
-      document.documentElement.style.setProperty("--primary-color", savedColor);
-    }
-  }, []);
+  // Note: Theme and color settings are applied in SettingsPage and main.jsx
+  // This component doesn't need to handle theme application
 
   // ✅ Persist activeView in sessionStorage
   useEffect(() => {
@@ -48,6 +42,7 @@ const App = () => {
           {navItems.map((item) => (
             <button
               key={item.key}
+              type="button"
               onClick={() => setActiveView(item.key)}
               className={`px-4 py-2 text-sm font-medium transition-all duration-200 
                 ${activeView === item.key
@@ -87,6 +82,7 @@ const App = () => {
         {navItems.map((item) => (
           <button
             key={item.key}
+            type="button"
             onClick={() => setActiveView(item.key)}
             className={`relative p-2 rounded-full transition-all duration-200 
               ${activeView === item.key

@@ -3,10 +3,8 @@ import AnimeCard from "../helperComponent/AnimeCard";
 import PageLoader from "../helperComponent/PageLoader";
 import { SlidersHorizontal } from "lucide-react";
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
+import storageManager from "../utils/storageManager";
 
-const WATCHLIST_KEY = "watchlist";
-const STARRED_KEY = "starredAnime";
-const CACHE_KEY = "animeScheduleCache";
 const globalFilters = ["all", "started", "bookmarked", "upcoming"];
 
 const WatchlistPage = () => {
@@ -25,11 +23,11 @@ const WatchlistPage = () => {
 
   useEffect(() => {
     try {
-      const savedWatchlist = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+      const savedWatchlist = storageManager.get(storageManager.keys.WATCHLIST_KEY, []);
       setWatchlist(savedWatchlist);
 
-      const starredIds = JSON.parse(localStorage.getItem(STARRED_KEY) || "[]");
-      const animeCache = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+      const starredIds = storageManager.get(storageManager.keys.STARRED_KEY, []);
+      const animeCache = storageManager.get(storageManager.keys.ANIME_CACHE_KEY, []);
       const animeCacheMap = new Map(animeCache.map((a) => [a.mal_id, a]));
 
       const starredAnime = starredIds

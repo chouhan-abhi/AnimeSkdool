@@ -4,8 +4,8 @@ import storageManager from "../utils/storageManager";
 export const useWatchlistAnime = () => {
   return useQuery({
     queryKey: ["watchlistAnime"],
-    queryFn: () => storageManager.get("watchlist") || [],
+    queryFn: () => storageManager.get(storageManager.keys.WATCHLIST_KEY, []),
     staleTime: 0,
-    cacheTime: 0, // 5 min
+    cacheTime: 0,
   });
 };

@@ -5,6 +5,8 @@ import App from './App.jsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import storageManager from './utils/storageManager';
+import { ToastProvider } from './utils/toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,14 +27,12 @@ persistQueryClient({
   persister: localStoragePersister,
 });
 
-// --- Apply saved theme and font from localStorage ---
-const SETTINGS_KEY = 'appSettings';
-
+// --- Apply saved theme and font from storageManager ---
 const applySavedSettings = () => {
   try {
-    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    const saved = storageManager.getSettings();
     const root = document.documentElement;
-console.log(saved);
+
     if (saved?.theme) {
       // Remove old theme classes
       root.classList.remove("theme-light", "theme-dark", "theme-saint");
@@ -73,7 +73,9 @@ applySavedSettings();
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
