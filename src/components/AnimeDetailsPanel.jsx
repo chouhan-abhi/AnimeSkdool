@@ -37,45 +37,63 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     });
   }, []);
 
-  // 🖼️ Preload portal and watchlist
+  // 🖼️ Preload portal and watchlist - with error handling
   useEffect(() => {
-    const root = document.getElementById("modal-root");
-    setPortalRoot(root);
+    try {
+      const root = document.getElementById("modal-root");
+      setPortalRoot(root || document.body); // Fallback to body if modal-root doesn't exist
 
-    setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
+      setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
 
-    const handleResize = () => {
-      clearTimeout(resizeTimeout.current);
-      resizeTimeout.current = setTimeout(() => {
-        setIsLargeScreen(window.innerWidth >= 1024);
-      }, 150);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(resizeTimeout.current);
-    };
+      const handleResize = () => {
+        clearTimeout(resizeTimeout.current);
+        resizeTimeout.current = setTimeout(() => {
+          setIsLargeScreen(window.innerWidth >= 1024);
+        }, 200); // Increased debounce for mobile
+      };
+      window.addEventListener("resize", handleResize, { passive: true });
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        clearTimeout(resizeTimeout.current);
+        if (touchTimeout.current) clearTimeout(touchTimeout.current);
+      };
+    } catch (error) {
+      console.error('Error in portal setup:', error);
+    }
   }, [anime.mal_id]);
 
-  // ⌨️ Close with ESC key
+  // ⌨️ Close with ESC key - with cleanup
   useEffect(() => {
-    const handleEsc = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", handleEsc);
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleEsc, { passive: false });
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // 📱 Swipe gestures for mobile expand/collapse
-  const handleTouchStart = (e) => {
+  // 📱 Swipe gestures for mobile expand/collapse - debounced for performance
+  const touchTimeout = useRef(null);
+  const handleTouchStart = useCallback((e) => {
     touchStartY.current = e.touches[0].clientY;
-  };
-  const handleTouchMove = (e) => {
+  }, []);
+  
+  const handleTouchMove = useCallback((e) => {
+    e.preventDefault(); // Prevent scrolling during gesture
     touchEndY.current = e.touches[0].clientY;
-  };
-  const handleTouchEnd = () => {
-    const delta = touchStartY.current - touchEndY.current;
-    if (delta > 50) setIsExpanded(true);
-    else if (delta < -50) setIsExpanded(false);
-  };
+  }, []);
+  
+  const handleTouchEnd = useCallback(() => {
+    if (touchTimeout.current) clearTimeout(touchTimeout.current);
+    touchTimeout.current = setTimeout(() => {
+      const delta = touchStartY.current - touchEndY.current;
+      if (Math.abs(delta) > 50) {
+        setIsExpanded(delta > 50);
+      }
+    }, 50);
+  }, []);
 
   // ⭐ Watchlist toggle (memoized)
   const toggleWatchlist = useCallback(() => {
@@ -286,18 +304,19 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     }
   };
 
-  return ReactDOM.createPortal(
-    <div
-      id="anime-details-backdrop"
-      className={`fixed inset-0 w-screen h-screen z-[9999] flex ${
-        isLargeScreen 
-          ? "flex-row bg-black/80 backdrop-blur-sm" 
-          : "flex-col bg-black/70"
-      } overflow-hidden`}
-      onClick={handleBackdropClick}
-      onKeyDown={handleBackdropKeyDown}
-      style={!isLargeScreen ? { contain: "layout style paint" } : {}}
-    >
+  // Error boundary for mobile - prevent crashes
+  try {
+    return ReactDOM.createPortal(
+      <div
+        id="anime-details-backdrop"
+        className={`fixed inset-0 w-screen h-screen z-[9999] flex ${
+          isLargeScreen 
+            ? "flex-row bg-black/80 backdrop-blur-sm" 
+            : "flex-col bg-black/70"
+        } overflow-hidden`}
+        onClick={handleBackdropClick}
+        onKeyDown={handleBackdropKeyDown}
+      >
       {/* Close Button */}
       <button
         type="button"
@@ -329,11 +348,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             className="relative z-10 w-[40%] max-w-[720px] p-10 overflow-y-auto text-white animate-slideIn"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-            style={{ 
-              pointerEvents: "auto",
-              willChange: "transform",
-              transform: "translateZ(0)"
-            }}
+            style={{ pointerEvents: "auto" }}
           >
             {renderDetails()}
           </div>
@@ -345,11 +360,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               alt={anime.title}
               loading="lazy"
               className="absolute inset-0 w-full h-full object-cover object-center"
-              style={{ 
-                pointerEvents: "none",
-                willChange: "transform",
-                transform: "translateZ(0)"
-              }}
+              style={{ pointerEvents: "none" }}
             />
             <div 
               className="absolute inset-0 bg-gradient-to-l from-black/20 via-black/50 to-black/90"
@@ -359,15 +370,14 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         </>
       )}
 
-      {/* Mobile Layout: Image on Top, Details Below - Optimized for GPU */}
+      {/* Mobile Layout: Simplified for stability - no complex animations */}
       {!isLargeScreen && (
         <div
           className="flex flex-col w-full h-full overflow-hidden"
           style={{ 
-            top: isExpanded ? "0" : "50vh", 
+            transform: isExpanded ? "translateY(0)" : "translateY(50vh)",
             height: "100vh",
-            contain: "layout style paint",
-            willChange: "transform"
+            transition: "transform 0.3s ease-out"
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -375,51 +385,22 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          {/* Image Header - Top Section - Optimized */}
-          <div 
-            className="relative w-full h-[40vh] min-h-[300px] flex-shrink-0 overflow-hidden"
-            style={{ contain: "layout style paint" }}
-          >
+          {/* Image Header - Simplified */}
+          <div className="relative w-full h-[35vh] min-h-[250px] flex-shrink-0 overflow-hidden">
             <img
               src={anime.images?.webp?.image_url || anime.images?.jpg?.image_url || anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url}
               alt={anime.title}
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-              style={{ 
-                pointerEvents: "none",
-                transform: "translateZ(0)",
-                imageRendering: "auto"
-              }}
-            />
-            {/* Simplified gradient for mobile - single solid overlay */}
-            <div 
-              className="absolute inset-0 bg-black/60"
+              className="absolute inset-0 w-full h-full object-cover"
               style={{ pointerEvents: "none" }}
             />
+            {/* Single solid overlay - no gradients */}
+            <div className="absolute inset-0 bg-black/70" style={{ pointerEvents: "none" }} />
           </div>
 
-          {/* Details Panel - Bottom Section - Optimized */}
-          <div 
-            className="relative z-10 flex-1 overflow-y-auto text-white p-6"
-            style={{ 
-              contain: "layout style",
-              WebkitOverflowScrolling: "touch"
-            }}
-          >
-            {/* Simplified solid background for mobile - no gradients */}
-            <div 
-              className="absolute inset-0 z-0 bg-black/85"
-              style={{ pointerEvents: "none" }}
-            />
-            
-            {/* Foreground content */}
-            <div 
-              className="relative z-10" 
-              style={{ 
-                pointerEvents: "auto",
-                contain: "layout style"
-              }}
-            >
+          {/* Details Panel - Simplified structure */}
+          <div className="relative flex-1 overflow-y-auto text-white bg-black/90 p-4">
+            <div className="relative z-10" style={{ pointerEvents: "auto" }}>
               {renderDetails()}
             </div>
           </div>
@@ -429,25 +410,50 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       <style>
         {`
           @keyframes slideIn {
-            from { transform: translateX(-100%) translateZ(0); opacity: 0; }
-            to { transform: translateX(0) translateZ(0); opacity: 1; }
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
           }
           .animate-slideIn {
             animation: slideIn 0.4s ease-out forwards;
-            will-change: transform;
           }
-          ${!isLargeScreen ? `
-            /* Mobile optimizations - reduce repaints */
-            #anime-details-backdrop * {
-              -webkit-font-smoothing: antialiased;
-              -moz-osx-font-smoothing: grayscale;
-            }
-          ` : ''}
         `}
       </style>
     </div>,
     portalRoot
   );
+  } catch (error) {
+    console.error('AnimeDetailsPanel render error:', error);
+    // Fallback: simple modal without complex features
+    return ReactDOM.createPortal(
+      <div
+        className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4"
+        onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      >
+        <div className="bg-black/80 text-white p-6 rounded-lg max-w-md">
+          <button
+            type="button"
+            onClick={onClose}
+            onKeyDown={(e) => e.key === 'Enter' && onClose()}
+            className="absolute top-4 right-4 text-white text-2xl"
+          >
+            ×
+          </button>
+          <h2 className="text-2xl font-bold mb-4">{anime.title}</h2>
+          <p className="text-sm mb-4">{anime.synopsis || "No synopsis available."}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            onKeyDown={(e) => e.key === 'Enter' && onClose()}
+            className="bg-[var(--primary-color)] px-4 py-2 rounded"
+          >
+            Close
+          </button>
+        </div>
+      </div>,
+      portalRoot || document.body
+    );
+  }
 };
 
 export default memo(AnimeDetailsPanel);
