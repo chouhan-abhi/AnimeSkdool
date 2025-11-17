@@ -272,13 +272,16 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   );
 
   const handleBackdropClick = (e) => {
-    if (isLargeScreen && e.target.id === "anime-details-backdrop") onClose();
+    // Only close if clicking directly on backdrop, not on child elements
+    if (e.target.id === "anime-details-backdrop") {
+      onClose();
+    }
   };
 
   const handleBackdropKeyDown = (e) => {
     // Escape key is already handled by the useEffect above
     // This handler exists to satisfy accessibility requirements
-    if (isLargeScreen && e.key === 'Escape' && e.target.id === "anime-details-backdrop") {
+    if (e.key === 'Escape' && e.target.id === "anime-details-backdrop") {
       onClose();
     }
   };
@@ -296,10 +299,14 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       <button
         type="button"
         className="absolute right-6 top-6 w-14 h-14 flex justify-center items-center cursor-pointer z-50 p-3 bg-black/40 rounded-full hover:bg-white/20 transition text-4xl font-light"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
+            e.stopPropagation();
             onClose();
           }
         }}
@@ -312,7 +319,11 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       {isLargeScreen && (
         <>
           {/* Details Panel - Left Side */}
-          <div className="relative z-10 w-[40%] max-w-[720px] p-10 overflow-y-auto text-white animate-slideIn">
+          <div 
+            className="relative z-10 w-[40%] max-w-[720px] p-10 overflow-y-auto text-white animate-slideIn"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             {renderDetails()}
           </div>
 
@@ -322,7 +333,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               src={anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url}
               alt={anime.title}
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover object-center scale-110 transition-transform duration-500"
+              className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-l from-black/20 via-black/50 to-black/90" />
           </div>
@@ -337,6 +348,8 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           {/* Image Header - Top Section */}
           <div className="relative w-full h-[40vh] min-h-[300px] flex-shrink-0 overflow-hidden">
@@ -351,19 +364,8 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
           {/* Details Panel - Bottom Section */}
           <div className="relative z-10 flex-1 overflow-y-auto text-white p-6">
-            {/* Blurred background overlay for better text readability */}
-            <div
-              className="absolute inset-0 z-0"
-              style={{
-                backgroundImage: `url(${anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                filter: "blur(15px) brightness(0.6) contrast(1.2)",
-                transform: "scale(1.05)",
-              }}
-            />
-            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/70 to-black/80" />
+            {/* Optimized background overlay - removed heavy blur for mobile performance */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/80 via-black/85 to-black/90" />
             
             {/* Foreground content */}
             <div className="relative z-10">

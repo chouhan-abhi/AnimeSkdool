@@ -34,18 +34,19 @@ const ExploreHome = () => {
     <div className="flex flex-col h-screen bg-gradient-to-br from-[var(--bg-color)] to-[var(--bg-color)]/95">
       {/* Centered Chrome-like Tab Selector */}
       <div className="relative bg-[var(--bg-color)] flex justify-center">
-        <div className="flex items-center gap-2 px-4 rounded-t-xl shadow-sm bg-surface-container-high mt-2">
+        <div className="flex items-center gap-2 px-4 rounded-t-xl shadow-sm bg-[var(--bg-color)]/60 mt-2">
           {modes.map((mode) => {
             const Icon = mode.icon;
             const isActive = viewMode === mode.key;
             return (
               <button
                 key={mode.key}
+                type="button"
                 onClick={() => handleModeChange(mode.key)}
                 className={`flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-t-xl transition-all border-b-4 ${
                   isActive
-                    ? "bg-[var(--primary-color)] text-[var(--text-color)] border-b-transparent"
-                    : "bg-surface-container text-[var(--text-color)] border-b-transparent hover:border-b-[var(--primary-color)] hover:text-[var(--primary-color)]"
+                    ? "bg-[var(--primary-color)] text-white border-b-transparent"
+                    : "bg-[var(--bg-color)]/80 text-[var(--text-color)] border-b-transparent hover:border-b-[var(--primary-color)] hover:text-[var(--primary-color)]"
                 }`}
               >
                 <Icon className="w-4 h-4" />

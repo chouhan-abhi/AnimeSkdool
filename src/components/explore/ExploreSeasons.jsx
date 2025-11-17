@@ -78,7 +78,7 @@ const ExploreSeasons = () => {
     <div className="flex h-full relative bg-gradient-to-b from-transparent to-[var(--bg-color)]/50">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <div className="hidden lg:block w-72 border-r border-gray-200 dark:border-gray-700">
+        <div className="hidden lg:block w-72 border-r border-[var(--text-color)]/20">
           <SidebarContent />
         </div>
       )}
@@ -118,24 +118,24 @@ const ExploreSeasons = () => {
   // --- Subcomponents ---
   function MobileHeader({ onOpenSidebar, onRefresh }) {
     return (
-      <div className="sticky top-0 z-10 bg-surface-container/90 backdrop-blur">
+      <div className="sticky top-0 z-10 bg-[var(--bg-color)]/90 backdrop-blur">
         <div className="flex items-center justify-between px-4 py-1">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-primary" />
-            <h2 className="text-lg font-semibold text-on-surface">Explore Anime</h2>
+            <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
+            <h2 className="text-lg font-semibold text-[var(--text-color)]">Explore Anime</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenSidebar}
               className="p-2 rounded-full hover:text-[var(--primary-color)]"
             >
-              <Menu className="w-5 h-5 text-on-surface-variant" />
+              <Menu className="w-5 h-5 text-[var(--text-color)]/60" />
             </button>
             <button
               onClick={onRefresh}
               className="p-2 rounded-full hover:text-[var(--primary-color)]"
             >
-              <RefreshCw className="w-5 h-5 text-on-surface-variant" />
+              <RefreshCw className="w-5 h-5 text-[var(--text-color)]/60" />
             </button>
           </div>
         </div>
@@ -145,7 +145,7 @@ const ExploreSeasons = () => {
 
   function SidebarContent({ closeOnMobile = false }) {
     return (
-      <div className={`h-full rounded-lg w-full ${isMobile ? "max-w-full" : "max-w-sm lg:max-w-xs"} bg-white dark:bg-gray-900 shadow-xl p-4 overflow-y-auto`}>
+      <div className={`h-full rounded-lg w-full ${isMobile ? "max-w-full" : "max-w-sm lg:max-w-xs"} bg-[var(--bg-color)] shadow-xl p-4 overflow-y-auto`}>
         <SidebarHeader closeOnMobile={closeOnMobile} />
         <SeasonDropdown />
         <SfwToggle />
@@ -163,13 +163,13 @@ const ExploreSeasons = () => {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-[var(--text-color)]">Filters</h2>
-            <p className="text-xs text-gray-500">Customize discovery</p>
+            <p className="text-xs text-[var(--text-color)]/60">Customize discovery</p>
           </div>
         </div>
         {closeOnMobile && (
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
+            className="p-2 rounded-lg hover:bg-[var(--text-color)]/10 text-[var(--text-color)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -189,7 +189,7 @@ const ExploreSeasons = () => {
             setIsInitialLoad(true);
             if (isMobile) setIsSidebarOpen(false);
           }}
-          className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-800/80 text-gray-800 dark:text-gray-200 backdrop-blur focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 capitalize"
+          className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-[var(--text-color)]/20 bg-[var(--bg-color)]/80 text-[var(--text-color)] backdrop-blur focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
         >
           {options.map(({ year, season }) => (
             <option key={`${year}-${season}`} value={`${year}-${season}`} className="capitalize">
@@ -197,7 +197,7 @@ const ExploreSeasons = () => {
             </option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-color)]/40 pointer-events-none" />
       </div>
     );
   }
@@ -224,7 +224,7 @@ const ExploreSeasons = () => {
     return (
       <button
         onClick={handleRefresh}
-        className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-[var(--text-color)]/20 rounded-xl text-[var(--text-color)] hover:bg-[var(--text-color)]/10 transition"
       >
         <RefreshCw className="w-4 h-4" /> Reset
       </button>
@@ -271,7 +271,7 @@ const ExploreSeasons = () => {
           onClick={close}
         />
         {/* Sidebar content */}
-        <div className="absolute top-0 left-0 h-full w-full bg-white dark:bg-gray-900 shadow-xl">
+        <div className="absolute top-0 left-0 h-full w-full bg-[var(--bg-color)] shadow-xl">
           <SidebarContent closeOnMobile />
         </div>
       </div>

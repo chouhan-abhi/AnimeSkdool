@@ -95,14 +95,14 @@ const ExploreFilters = ({
         `}
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200/20">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--text-color)]/20">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[var(--primary-color)]/10 rounded-lg">
               <Filter className="w-5 h-5 text-[var(--primary-color)]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-color)]">Filters</h2>
-              <p className="text-xs text-gray-500">Customize discovery</p>
+              <p className="text-xs text-[var(--text-color)]/60">Customize discovery</p>
             </div>
           </div>
 
@@ -111,11 +111,11 @@ const ExploreFilters = ({
               <button
                 onClick={handleReset}
                 disabled={isResetting}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition disabled:opacity-50"
+                className="p-2 hover:bg-[var(--text-color)]/10 rounded-lg transition disabled:opacity-50"
                 title="Reset all filters"
               >
                 <RotateCcw
-                  className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${
+                  className={`w-4 h-4 text-[var(--text-color)]/60 ${
                     isResetting ? "animate-spin" : ""
                   }`}
                 />
@@ -124,9 +124,9 @@ const ExploreFilters = ({
             {isMobile && (
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                className="p-2 hover:bg-[var(--text-color)]/10 rounded-lg transition"
               >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <X className="w-5 h-5 text-[var(--text-color)]/60" />
               </button>
             )}
           </div>
@@ -201,9 +201,9 @@ const FilterSelect = ({ label, value, onChange, options }) => (
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl bg-white/70 dark:bg-surface-dark/70 border border-gray-200 
+        className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)]/80 border border-[var(--text-color)]/20 
         shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 
-        transition-all appearance-none cursor-pointer text-sm"
+        transition-all appearance-none cursor-pointer text-sm text-[var(--text-color)]"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -211,7 +211,7 @@ const FilterSelect = ({ label, value, onChange, options }) => (
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-color)]/40 pointer-events-none" />
     </div>
   </div>
 );

@@ -26,20 +26,20 @@ const usePersistedState = (key, defaultValue) => {
 const SearchBar = ({ value, onChange }) => (
   <div className="mb-6">
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-color)]/60" />
       <input
         type="text"
         placeholder="Search anime..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-10 pr-3 py-3 rounded-lg bg-surface-container text-on-surface text-sm shadow-inner border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary transition"
+        className="w-full pl-10 pr-3 py-3 rounded-lg bg-[var(--bg-color)]/80 text-[var(--text-color)] text-sm shadow-inner border border-[var(--text-color)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 transition"
       />
     </div>
   </div>
 );
 
 const ViewModeToggle = ({ viewMode, setViewMode }) => (
-  <div className="mt-6 border flex bg-surface-container-high rounded-full shadow-md">
+  <div className="mt-6 border border-[var(--text-color)]/20 flex bg-[var(--bg-color)]/50 rounded-full shadow-md">
     {[
       { mode: "grid", icon: Grid, title: "Grid view" },
       { mode: "list", icon: List, title: "List view" },
@@ -50,7 +50,7 @@ const ViewModeToggle = ({ viewMode, setViewMode }) => (
         className={`p-2 rounded-full flex-1 flex justify-center transition ${
           viewMode === mode
             ? "bg-[var(--primary-color)] text-white shadow-md"
-            : "text-on-surface hover:shadow-sm hover:bg-surface-container"
+            : "text-[var(--text-color)] hover:shadow-sm hover:bg-[var(--bg-color)]/80"
         }`}
         title={title}
       >
@@ -74,9 +74,9 @@ const Sidebar = ({
   viewMode,
   setViewMode,
 }) => (
-  <aside className="w-72 bg-surface-container-low bg-white/80 dark:bg-gray-900/70 dark:bg-surface-container-dark p-4 sticky top-0 h-screen overflow-y-auto shadow-lg rounded-r-xl">
+  <aside className="w-72 bg-[var(--bg-color)]/90 p-4 sticky top-0 h-screen overflow-y-auto shadow-lg rounded-r-xl border-r border-[var(--text-color)]/10">
     <SearchBar value={searchQuery} onChange={setSearchQuery} />
-    <div className="rounded-xl bg-surface-container-high dark:bg-surface-container-dark shadow-md p-3">
+    <div className="rounded-xl bg-[var(--bg-color)]/60 shadow-md p-3">
       <ExploreFilters
         embedded
         isMobile={false}
@@ -97,24 +97,24 @@ const Sidebar = ({
 );
 
 const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
-  <div className="sticky top-0 z-10 bg-surface-container/90 backdrop-blur">
+  <div className="sticky top-0 z-10 bg-[var(--bg-color)]/90 backdrop-blur">
     <div className="flex items-center justify-between px-4 py-1">
       <div className="flex items-center gap-2">
-        <TrendingUp className="w-6 h-6 text-primary" />
-        <h2 className="text-lg font-semibold text-on-surface">Explore Anime</h2>
+        <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
+        <h2 className="text-lg font-semibold text-[var(--text-color)]">Explore Anime</h2>
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={onOpenSidebar}
           className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
-          <Menu className="w-5 h-5 text-on-surface-variant" />
+          <Menu className="w-5 h-5 text-[var(--text-color)]/60" />
         </button>
         <button
           onClick={onRefresh}
           className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
-          <RefreshCw className="w-5 h-5 text-on-surface-variant" />
+          <RefreshCw className="w-5 h-5 text-[var(--text-color)]/60" />
         </button>
       </div>
     </div>
@@ -170,7 +170,7 @@ const ExploreAnime = () => {
   );
 
   return (
-    <div className="flex h-full bg-surface-light dark:bg-surface-dark transition-colors">
+    <div className="flex h-full bg-[var(--bg-color)] transition-colors">
       {!isMobile && (
         <Sidebar
           type={type}
@@ -198,7 +198,7 @@ const ExploreAnime = () => {
 
         <div className="p-6">
           {isInitialLoad && isLoading && (
-            <p className="text-center text-on-surface-variant">Loading anime...</p>
+            <p className="text-center text-[var(--text-color)]/60">Loading anime...</p>
           )}
 
           {!isLoading && !error && (
@@ -215,7 +215,7 @@ const ExploreAnime = () => {
                   <div
                     key={anime.mal_id}
                     ref={isLastItem ? lastElementRef : null}
-                    className="rounded-xl overflow-hidden shadow-sm bg-surface-container hover:shadow-lg hover:scale-[1.01] transition"
+                    className="rounded-xl overflow-hidden shadow-sm bg-[var(--bg-color)]/50 hover:shadow-lg hover:scale-[1.01] transition"
                   >
                     <AnimeDetailCard anime={anime} />
                   </div>
@@ -233,7 +233,7 @@ const ExploreAnime = () => {
             className="fixed inset-0 bg-black/40 z-[70]"
             onClick={() => setShowSidebar(false)}
           />
-          <div className="fixed top-0 left-0 h-full w-72 bg-surface-container-high shadow-xl z-[80] border-r border-outline">
+          <div className="fixed top-0 left-0 h-full w-72 bg-[var(--bg-color)] shadow-xl z-[80] border-r border-[var(--text-color)]/20">
             <ExploreFilters
               isMobile
               showSidebar={showSidebar}
