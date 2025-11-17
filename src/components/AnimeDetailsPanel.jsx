@@ -105,11 +105,11 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
   if (!portalRoot) return null;
 
-  // 🧩 Memoized stats block
-  const StatBlock = memo(({ label, value }) => (
+  // 🧩 Memoized stats block - optimized for mobile
+  const StatBlock = memo(({ label, value, isLargeScreen: isLarge }) => (
     <div
       className="p-2 rounded-lg bg-black/40 text-center"
-      style={{ backdropFilter: "blur(4px)" }}
+      style={isLarge ? { backdropFilter: "blur(4px)" } : {}}
     >
       <p className="text-xs">{label}</p>
       <p className="font-semibold">{value}</p>
@@ -125,7 +125,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
           type="button"
           onClick={toggleWatchlist}
           className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-white/20 transition"
-          style={{ backdropFilter: "blur(4px)" }}
+          style={isLargeScreen ? { backdropFilter: "blur(4px)" } : {}}
         >
           <Bookmark
             size={32}
@@ -162,10 +162,10 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-3 mb-6">
-        <StatBlock label="Popularity" value={`#${anime.popularity}`} />
-        <StatBlock label="Members" value={formatNumber(anime.members)} />
-        <StatBlock label="Favorites" value={formatNumber(anime.favorites)} />
-        <StatBlock label="Episodes" value={anime.episodes || "TBA"} />
+        <StatBlock label="Popularity" value={`#${anime.popularity}`} isLargeScreen={isLargeScreen} />
+        <StatBlock label="Members" value={formatNumber(anime.members)} isLargeScreen={isLargeScreen} />
+        <StatBlock label="Favorites" value={formatNumber(anime.favorites)} isLargeScreen={isLargeScreen} />
+        <StatBlock label="Episodes" value={anime.episodes || "TBA"} isLargeScreen={isLargeScreen} />
       </div>
 
       <p className="mb-4 leading-relaxed">
@@ -178,7 +178,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       </Suspense>
 
       <div
-        className="p-4 bg-black/40 rounded-lg backdrop-blur-md mb-6"
+        className={`p-4 bg-black/40 rounded-lg mb-6 ${isLargeScreen ? "backdrop-blur-md" : ""}`}
       >
         {anime.genres?.length > 0 && (
           <>
@@ -289,16 +289,19 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   return ReactDOM.createPortal(
     <div
       id="anime-details-backdrop"
-      className={`fixed inset-0 w-screen h-screen backdrop-blur-sm z-[9999] flex ${
-        isLargeScreen ? "flex-row bg-black/80" : "flex-col bg-black/60"
+      className={`fixed inset-0 w-screen h-screen z-[9999] flex ${
+        isLargeScreen 
+          ? "flex-row bg-black/80 backdrop-blur-sm" 
+          : "flex-col bg-black/70"
       } overflow-hidden`}
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
+      style={!isLargeScreen ? { contain: "layout style paint" } : {}}
     >
       {/* Close Button */}
       <button
         type="button"
-        className="absolute right-6 top-6 w-14 h-14 flex justify-center items-center cursor-pointer z-50 p-3 bg-black/40 rounded-full hover:bg-white/20 transition text-4xl font-light"
+        className="absolute right-6 top-6 w-14 h-14 flex justify-center items-center cursor-pointer z-[100] p-3 bg-black/40 rounded-full hover:bg-white/20 transition text-4xl font-light"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -310,7 +313,10 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             onClose();
           }
         }}
-        style={{ backdropFilter: "blur(6px)" }}
+        style={isLargeScreen 
+          ? { backdropFilter: "blur(6px)", pointerEvents: "auto" }
+          : { pointerEvents: "auto", backgroundColor: "rgba(0,0,0,0.6)" }
+        }
       >
         ×
       </button>
@@ -323,6 +329,11 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             className="relative z-10 w-[40%] max-w-[720px] p-10 overflow-y-auto text-white animate-slideIn"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
+            style={{ 
+              pointerEvents: "auto",
+              willChange: "transform",
+              transform: "translateZ(0)"
+            }}
           >
             {renderDetails()}
           </div>
@@ -334,41 +345,81 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               alt={anime.title}
               loading="lazy"
               className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{ 
+                pointerEvents: "none",
+                willChange: "transform",
+                transform: "translateZ(0)"
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-l from-black/20 via-black/50 to-black/90" />
+            <div 
+              className="absolute inset-0 bg-gradient-to-l from-black/20 via-black/50 to-black/90"
+              style={{ pointerEvents: "none" }}
+            />
           </div>
         </>
       )}
 
-      {/* Mobile Layout: Image on Top, Details Below */}
+      {/* Mobile Layout: Image on Top, Details Below - Optimized for GPU */}
       {!isLargeScreen && (
         <div
-          className="flex flex-col w-full h-full transition-all duration-500 ease-in-out overflow-hidden"
-          style={{ top: isExpanded ? "0" : "50vh", height: "100vh" }}
+          className="flex flex-col w-full h-full overflow-hidden"
+          style={{ 
+            top: isExpanded ? "0" : "50vh", 
+            height: "100vh",
+            contain: "layout style paint",
+            willChange: "transform"
+          }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          {/* Image Header - Top Section */}
-          <div className="relative w-full h-[40vh] min-h-[300px] flex-shrink-0 overflow-hidden">
+          {/* Image Header - Top Section - Optimized */}
+          <div 
+            className="relative w-full h-[40vh] min-h-[300px] flex-shrink-0 overflow-hidden"
+            style={{ contain: "layout style paint" }}
+          >
             <img
-              src={anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url}
+              src={anime.images?.webp?.image_url || anime.images?.jpg?.image_url || anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url}
               alt={anime.title}
               loading="lazy"
               className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{ 
+                pointerEvents: "none",
+                transform: "translateZ(0)",
+                imageRendering: "auto"
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/70" />
+            {/* Simplified gradient for mobile - single solid overlay */}
+            <div 
+              className="absolute inset-0 bg-black/60"
+              style={{ pointerEvents: "none" }}
+            />
           </div>
 
-          {/* Details Panel - Bottom Section */}
-          <div className="relative z-10 flex-1 overflow-y-auto text-white p-6">
-            {/* Optimized background overlay - removed heavy blur for mobile performance */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/80 via-black/85 to-black/90" />
+          {/* Details Panel - Bottom Section - Optimized */}
+          <div 
+            className="relative z-10 flex-1 overflow-y-auto text-white p-6"
+            style={{ 
+              contain: "layout style",
+              WebkitOverflowScrolling: "touch"
+            }}
+          >
+            {/* Simplified solid background for mobile - no gradients */}
+            <div 
+              className="absolute inset-0 z-0 bg-black/85"
+              style={{ pointerEvents: "none" }}
+            />
             
             {/* Foreground content */}
-            <div className="relative z-10">
+            <div 
+              className="relative z-10" 
+              style={{ 
+                pointerEvents: "auto",
+                contain: "layout style"
+              }}
+            >
               {renderDetails()}
             </div>
           </div>
@@ -378,12 +429,20 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
       <style>
         {`
           @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { transform: translateX(-100%) translateZ(0); opacity: 0; }
+            to { transform: translateX(0) translateZ(0); opacity: 1; }
           }
           .animate-slideIn {
             animation: slideIn 0.4s ease-out forwards;
+            will-change: transform;
           }
+          ${!isLargeScreen ? `
+            /* Mobile optimizations - reduce repaints */
+            #anime-details-backdrop * {
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+          ` : ''}
         `}
       </style>
     </div>,

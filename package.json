@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "bash deploy.sh",
+    "deploy:surge": "npm run build && surge dist skdool.surge.sh"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",

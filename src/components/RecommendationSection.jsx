@@ -1,12 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRandomAnimeList } from "../queries/useRandomAnimeList";
-import AnimeDetailsPanel from "./AnimeDetailsPanel";
 import PageLoader from "../helperComponent/PageLoader";
 import AnimeDetailCard from "../helperComponent/AnimeDetailCard";
 
 const RecommendationSection = () => {
-  const [selectedAnime, setSelectedAnime] = useState(null);
-
   // 🔥 Use custom React Query hook
   const {
     data: randomAnimeList = [],
@@ -30,8 +27,7 @@ const RecommendationSection = () => {
           {randomAnimeList.map((anime) => (
             <div
               key={anime.mal_id}
-              onClick={() => setSelectedAnime(anime)}
-              className="cursor-pointer w-full"
+              className="w-full"
             >
               <AnimeDetailCard anime={anime} />
             </div>
@@ -39,14 +35,6 @@ const RecommendationSection = () => {
         </div>
       ) : (
         <p className="text-gray-400 mt-4">No anime found. Try refreshing!</p>
-      )}
-
-      {/* Details Panel */}
-      {selectedAnime && (
-        <AnimeDetailsPanel
-          anime={selectedAnime}
-          onClose={() => setSelectedAnime(null)}
-        />
       )}
     </div>
   );
