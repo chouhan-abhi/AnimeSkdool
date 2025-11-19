@@ -38,12 +38,6 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
   const imageTimeout = useRef(null);
   const isMountedRef = useRef(true);
 
-  // Early return if no anime data - after all hooks
-  if (!anime || !anime.mal_id) {
-    console.warn("AnimeDetailsPanel: No anime data provided");
-    return null;
-  }
-
   // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
     isMountedRef.current = true;
@@ -139,7 +133,6 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     };
   }, []);
 
-
   // Toggle watchlist
   const toggleWatchlist = useCallback(() => {
     if (isInWatchlist) {
@@ -162,8 +155,6 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     [anime, isInWatchlist, showToast]
   );
 
-  if (!portalRoot) return null;
-
   // Memoize backdrop click handler
   const handleBackdropClick = useCallback((e) => {
     if (e.target.id === "anime-details-backdrop") onClose();
@@ -171,14 +162,17 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
   // Memoize image source to prevent recalculation on every render
   const imageSrc = useMemo(() => {
+    if (!anime?.images) return null;
     if (isLargeScreen) {
       return anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
     }
     return anime.images?.webp?.small_image_url || anime.images?.jpg?.small_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
-  }, [isLargeScreen, anime.images]);
+  }, [isLargeScreen, anime?.images]);
 
   // Render details content - memoized to prevent recreation
-  const renderDetailsContent = useCallback(() => (
+  const renderDetailsContent = useCallback(() => {
+    if (!anime) return null;
+    return (
     <div className="space-y-4">
       {/* Title & Bookmark */}
       <div className="flex items-center gap-3">
@@ -193,7 +187,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
             className={`${
               isInWatchlist
                 ? "fill-[var(--primary-color)] text-[var(--primary-color)]"
-                : "text-white"
+                : "text-[var(--text-color)]"
             }`}
           />
         </button>
@@ -270,9 +264,16 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         ))}
       </div>
     </div>
-  ), [anime, isInWatchlist, toggleWatchlist, handleProviderClick]);
+    );
+  }, [anime, isInWatchlist, toggleWatchlist, handleProviderClick]);
 
-  if (!portalRoot || !isMountedRef.current) return null;
+  // Early return if no anime data or portal root - AFTER all hooks
+  if (!anime || !anime.mal_id || !portalRoot || !isMountedRef.current) {
+    if (!anime || !anime.mal_id) {
+      console.warn("AnimeDetailsPanel: No anime data provided");
+    }
+    return null;
+  }
 
   try {
     return ReactDOM.createPortal(
@@ -298,14 +299,16 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
               {renderDetailsContent()}
             </div>
             <div className="flex-1 relative overflow-hidden">
-              {showImage && (
+              {showImage && imageSrc && (
                 <img 
                   src={imageSrc} 
                   alt={anime.title} 
                   loading="lazy" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.style.display = 'none';
+                    if (e.target) {
+                      e.target.style.display = 'none';
+                    }
                   }}
                 />
               )}
