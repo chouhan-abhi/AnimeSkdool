@@ -54,6 +54,17 @@ const ExploreSeasons = () => {
 
   // Infinite scroll observer
   const observerRef = useRef(null);
+  
+  // Cleanup IntersectionObserver on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, []);
+
   const lastElementRef = useCallback(
     (node) => {
       if (isFetchingNextPage) return;
@@ -83,8 +94,8 @@ const ExploreSeasons = () => {
         </div>
       )}
 
-      {/* Mobile Sidebar */}
-      {ReactDOM.createPortal(
+      {/* Mobile Sidebar - Only render when open */}
+      {isSidebarOpen && ReactDOM.createPortal(
         <MobileSidebar isOpen={isSidebarOpen} close={() => setIsSidebarOpen(false)} />,
         document.body
       )}

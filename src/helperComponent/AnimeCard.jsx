@@ -1,8 +1,13 @@
-import React, { useState } from "react";
-import AnimeDetailsPanel from "../components/AnimeDetailsPanel";
+import React, { useState, useCallback, lazy, Suspense } from "react";
+const AnimeDetailsPanel = lazy(() => import("../components/AnimeDetailsPanel"));
 
 const AnimeCard = ({ anime }) => {
   const [expanded, setExpanded] = useState(false);
+
+  // Memoize onClose to prevent re-renders
+  const handleClose = useCallback(() => {
+    setExpanded(false);
+  }, []);
 
   if (!anime) return null;
 
@@ -94,6 +99,12 @@ const AnimeCard = ({ anime }) => {
               src={trailer.images.medium_image_url}
               alt="Trailer thumbnail"
               className="w-16 h-10 object-cover rounded-md shadow-md border border-white/30"
+              loading="lazy"
+              onError={(e) => {
+                if (e.target && e.target.parentElement) {
+                  e.target.parentElement.style.display = 'none';
+                }
+              }}
             />
           </div>
         )}
@@ -101,7 +112,9 @@ const AnimeCard = ({ anime }) => {
 
       {/* Expanded Details Panel */}
       {expanded && (
-        <AnimeDetailsPanel anime={anime} onClose={() => setExpanded(false)} />
+        <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-black/70 z-[9999]"><div className="text-white">Loading...</div></div>}>
+          <AnimeDetailsPanel anime={anime} onClose={handleClose} />
+        </Suspense>
       )}
     </>
   );

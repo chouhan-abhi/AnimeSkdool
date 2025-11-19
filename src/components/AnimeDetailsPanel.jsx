@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
   lazy,
   Suspense,
   memo,
@@ -18,18 +19,47 @@ import { useToast } from "../utils/toast";
 const EpisodesList = lazy(() => import("../helperComponent/EpisodeList"));
 const Badge = lazy(() => import("../helperComponent/Badge"));
 
+// Memoized stat block - moved outside to prevent recreation
+const StatBlock = memo(({ label, value }) => (
+  <div className="p-2 rounded-lg bg-black/40 text-center">
+    <p className="text-xs">{label}</p>
+    <p className="font-semibold">{value}</p>
+  </div>
+));
+
 const AnimeDetailsPanel = ({ anime, onClose }) => {
   const { showToast } = useToast();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [portalRoot, setPortalRoot] = useState(null);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showImage, setShowImage] = useState(false);
 
-  const touchStartY = useRef(0);
-  const touchEndY = useRef(0);
   const resizeTimeout = useRef(null);
-  const touchTimeout = useRef(null);
+  const imageTimeout = useRef(null);
+  const isMountedRef = useRef(true);
+
+  // Early return if no anime data - after all hooks
+  if (!anime || !anime.mal_id) {
+    console.warn("AnimeDetailsPanel: No anime data provided");
+    return null;
+  }
+
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Clear all timeouts on unmount
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+        resizeTimeout.current = null;
+      }
+      if (imageTimeout.current) {
+        clearTimeout(imageTimeout.current);
+        imageTimeout.current = null;
+      }
+    };
+  }, []);
 
   // Preload heavy components lazily
   useEffect(() => {
@@ -39,31 +69,50 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     });
   }, []);
 
-  // Setup portal and watchlist
+  // Setup portal - only once on mount
   useEffect(() => {
+    if (!isMountedRef.current) return;
+    
     try {
-      const root = document.getElementById("modal-root");
-      setPortalRoot(root || document.body);
-
-      setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
-
-      const handleResize = () => {
-        clearTimeout(resizeTimeout.current);
-        resizeTimeout.current = setTimeout(() => {
-          setIsLargeScreen(window.innerWidth >= 1024);
-        }, 200);
-      };
-      window.addEventListener("resize", handleResize, { passive: true });
-
-      return () => {
-        window.removeEventListener("resize", handleResize);
-        clearTimeout(resizeTimeout.current);
-        if (touchTimeout.current) clearTimeout(touchTimeout.current);
-      };
+      const root = document.getElementById("modal-root") || document.body;
+      setPortalRoot(root);
     } catch (error) {
       console.error("Error in portal setup:", error);
+      setPortalRoot(document.body);
+    }
+  }, []);
+
+  // Update watchlist status when anime changes
+  useEffect(() => {
+    if (!isMountedRef.current) return;
+    try {
+      const inWatchlist = storageManager.isInWatchlist(anime.mal_id);
+      setIsInWatchlist(inWatchlist);
+    } catch (error) {
+      console.error("Error checking watchlist:", error);
     }
   }, [anime.mal_id]);
+
+  // Separate resize handler to prevent recreation
+  useEffect(() => {
+    if (!isMountedRef.current) return;
+
+    const handleResize = () => {
+      if (!isMountedRef.current) return;
+      clearTimeout(resizeTimeout.current);
+      resizeTimeout.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIsLargeScreen(window.innerWidth >= 1024);
+        }
+      }, 300);
+    };
+    
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout.current);
+    };
+  }, []);
 
   // ESC key to close
   useEffect(() => {
@@ -74,29 +123,22 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Lazy show image to reduce GPU pressure
+  // Lazy show image to reduce GPU pressure - with cleanup to prevent memory leak
   useEffect(() => {
-    setTimeout(() => setShowImage(true), 100);
-  }, []);
-
-  // Swipe gestures for mobile expand/collapse
-  const handleTouchStart = useCallback((e) => {
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    touchEndY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (touchTimeout.current) clearTimeout(touchTimeout.current);
-    touchTimeout.current = setTimeout(() => {
-      const delta = touchStartY.current - touchEndY.current;
-      if (Math.abs(delta) > 50) {
-        setIsExpanded(delta > 50);
+    imageTimeout.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setShowImage(true);
       }
-    }, 50);
+    }, 100);
+
+    return () => {
+      if (imageTimeout.current) {
+        clearTimeout(imageTimeout.current);
+        imageTimeout.current = null;
+      }
+    };
   }, []);
+
 
   // Toggle watchlist
   const toggleWatchlist = useCallback(() => {
@@ -122,19 +164,25 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
 
   if (!portalRoot) return null;
 
-  // Memoized stat block
-  const StatBlock = memo(({ label, value }) => (
-    <div className="p-2 rounded-lg bg-black/40 text-center">
-      <p className="text-xs">{label}</p>
-      <p className="font-semibold">{value}</p>
-    </div>
-  ));
+  // Memoize backdrop click handler
+  const handleBackdropClick = useCallback((e) => {
+    if (e.target.id === "anime-details-backdrop") onClose();
+  }, [onClose]);
 
-  const renderDetails = () => (
+  // Memoize image source to prevent recalculation on every render
+  const imageSrc = useMemo(() => {
+    if (isLargeScreen) {
+      return anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
+    }
+    return anime.images?.webp?.small_image_url || anime.images?.jpg?.small_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
+  }, [isLargeScreen, anime.images]);
+
+  // Render details content - memoized to prevent recreation
+  const renderDetailsContent = useCallback(() => (
     <div className="space-y-4">
       {/* Title & Bookmark */}
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-bold">{anime.title}</h2>
+        <h2 id="anime-title" className="text-2xl font-bold">{anime.title}</h2>
         <button
           type="button"
           onClick={toggleWatchlist}
@@ -222,16 +270,9 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         ))}
       </div>
     </div>
-  );
+  ), [anime, isInWatchlist, toggleWatchlist, handleProviderClick]);
 
-  const handleBackdropClick = (e) => {
-    if (e.target.id === "anime-details-backdrop") onClose();
-  };
-
-  // Determine image source based on screen
-  const imageSrc = isLargeScreen
-    ? anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url
-    : anime.images?.webp?.small_image_url || anime.images?.jpg?.small_image_url;
+  if (!portalRoot || !isMountedRef.current) return null;
 
   try {
     return ReactDOM.createPortal(
@@ -239,6 +280,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         id="anime-details-backdrop"
         className={`fixed inset-0 z-[9999] flex ${isLargeScreen ? "flex-row bg-black/80" : "flex-col bg-black/90"}`}
         onClick={handleBackdropClick}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
       >
         {/* Close button */}
         <button
@@ -252,24 +294,56 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
         {/* Desktop Layout */}
         {isLargeScreen && (
           <>
-            <div className="w-[40%] max-w-[720px] p-6 overflow-y-auto text-white">{renderDetails()}</div>
+            <div className="w-[40%] max-w-[720px] p-6 overflow-y-auto text-white">
+              {renderDetailsContent()}
+            </div>
             <div className="flex-1 relative overflow-hidden">
               {showImage && (
-                <img src={imageSrc} alt={anime.title} loading="lazy" className="w-full h-full object-cover"/>
+                <img 
+                  src={imageSrc} 
+                  alt={anime.title} 
+                  loading="lazy" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
               )}
             </div>
           </>
         )}
 
-        {/* Mobile Layout */}
+        {/* Mobile Layout - Simplified for stability */}
         {!isLargeScreen && (
-          <div className="flex flex-col w-full overflow-auto p-2">
-            {showImage && (
-              <div className="w-full h-[30vh] min-h-[150px] overflow-hidden">
-                <img src={imageSrc} alt={anime.title} loading="lazy" className="w-full h-full object-cover"/>
+          <div 
+            className="flex flex-col w-full h-full"
+            style={{ 
+              maxHeight: '100vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            {showImage && imageSrc && (
+              <div className="w-full h-[25vh] min-h-[120px] flex-shrink-0 overflow-hidden">
+                <img 
+                  src={imageSrc} 
+                  alt={anime.title || 'Anime'} 
+                  loading="lazy" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    if (e.target) {
+                      e.target.style.display = 'none';
+                    }
+                  }}
+                  onLoad={() => {
+                    // Image loaded successfully
+                  }}
+                />
               </div>
             )}
-            <div className="text-white p-2">{renderDetails()}</div>
+            <div className="text-white p-3 flex-1 min-h-0">
+              {renderDetailsContent()}
+            </div>
           </div>
         )}
       </div>,

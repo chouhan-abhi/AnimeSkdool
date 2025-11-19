@@ -147,6 +147,16 @@ const ExploreAnime = () => {
     if (animeList.length > 0 && isInitialLoad) setIsInitialLoad(false);
   }, [animeList.length, isInitialLoad]);
 
+  // Cleanup IntersectionObserver on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, []);
+
   // Infinite scroll
   const lastElementRef = useCallback(
     (node) => {

@@ -28,6 +28,11 @@ const CalendarView = () => {
   const [selectedAnime, setSelectedAnime] = useState(null);
   const [cachedData, setCachedData] = useState(null);
   const [useCache, setUseCache] = useState(false);
+
+  // Memoize onClose to prevent re-renders
+  const handleClosePanel = useCallback(() => {
+    setSelectedAnime(null);
+  }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ✅ Load from storageManager first
@@ -533,7 +538,7 @@ const CalendarView = () => {
         >
           <AnimeDetailsPanel
             anime={selectedAnime}
-            onClose={() => setSelectedAnime(null)}
+            onClose={handleClosePanel}
           />
         </Suspense>
       )}

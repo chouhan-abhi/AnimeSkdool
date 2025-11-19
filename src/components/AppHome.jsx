@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useEffect } from "react";
+import React, { useState, Suspense, lazy, useEffect, useCallback } from "react";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
@@ -37,6 +37,11 @@ const AppHome = () => {
 
   const handleInputChange = (e) => setSearch(e.target.value);
 
+  // Memoize onClose to prevent re-renders
+  const handleClosePanel = useCallback(() => {
+    setSelectedAnime(null);
+  }, []);
+
   const AnimeCard = ({ anime }) => {
     if (!anime) return null;
     return (
@@ -51,6 +56,11 @@ const AppHome = () => {
             alt={anime.title}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={(e) => {
+              if (e.target) {
+                e.target.style.display = 'none';
+              }
+            }}
           />
         </div>
 
@@ -170,7 +180,7 @@ const AppHome = () => {
         >
           <AnimeDetailsPanel
             anime={selectedAnime}
-            onClose={() => setSelectedAnime(null)}
+            onClose={handleClosePanel}
           />
         </Suspense>
       )}

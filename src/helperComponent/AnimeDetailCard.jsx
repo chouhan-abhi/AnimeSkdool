@@ -1,8 +1,14 @@
-import React, { useState } from "react";
-import AnimeDetailsPanel from "../components/AnimeDetailsPanel";
+import React, { useState, useCallback, lazy, Suspense } from "react";
+const AnimeDetailsPanel = lazy(() => import("../components/AnimeDetailsPanel"));
 
 const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
   const [expanded, setExpanded] = useState(false);
+  
+  // Memoize onClose to prevent re-renders
+  const handleClose = useCallback(() => {
+    setExpanded(false);
+  }, []);
+
   if (!anime) return null;
 
   const {
@@ -35,10 +41,14 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
                    transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
         onClick={() => setExpanded(true)}
       >
-        {/* Background blur */}
+        {/* Background blur - disabled on mobile for performance */}
         <div
-          className="absolute inset-0 bg-cover bg-center filter blur-lg scale-105 z-0"
-          style={{ backgroundImage: `url(${images?.jpg?.image_url})` }}
+          className="absolute inset-0 bg-cover bg-center z-0 hidden md:block"
+          style={{ 
+            backgroundImage: `url(${images?.jpg?.image_url})`,
+            filter: 'blur(12px)',
+            transform: 'scale(1.05)'
+          }}
         />
 
         <div className="absolute inset-0 bg-black/60 z-0" />
@@ -51,6 +61,12 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
               src={images?.jpg?.image_url}
               alt={title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                if (e.target) {
+                  e.target.style.display = 'none';
+                }
+              }}
             />
 
             {/* NSFW badge */}
@@ -131,7 +147,9 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
 
       {/* Expanded panel */}
       {expanded && (
-        <AnimeDetailsPanel anime={anime} onClose={() => setExpanded(false)} />
+        <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-black/70 z-[9999]"><div className="text-white">Loading...</div></div>}>
+          <AnimeDetailsPanel anime={anime} onClose={handleClose} />
+        </Suspense>
       )}
     </>
   );

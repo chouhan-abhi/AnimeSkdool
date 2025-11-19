@@ -1,12 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const useResponsive = (breakpoint = 1024) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= breakpoint;
+    }
+    return false;
+  });
+  
+  const isMountedRef = useRef(true);
+  
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    isMountedRef.current = true;
+    
+    const onResize = () => {
+      if (isMountedRef.current) {
+        setIsMobile(window.innerWidth <= breakpoint);
+      }
+    };
+    
+    window.addEventListener("resize", onResize, { passive: true });
+    
+    return () => {
+      isMountedRef.current = false;
+      window.removeEventListener("resize", onResize);
+    };
   }, [breakpoint]);
+  
   return isMobile;
 };
 
