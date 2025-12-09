@@ -63,15 +63,30 @@ const CalendarView = () => {
     return () => clearTimeout(cacheTimeoutRef.current);
   }, [data, isLoading, useCache]);
 
-  // ✅ Auto–fetch next page until no more (optimized to prevent infinite loops)
+  // ✅ Auto–fetch next page with LIMIT to prevent memory issues
+  // Only fetch up to 3 pages on mobile, 5 on desktop
+  const MAX_PAGES = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 3 : 5;
+  const pageCountRef = useRef(0);
   const hasFetchedRef = useRef(false);
+  
   useEffect(() => {
-    if (!useCache && hasNextPage && !hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      fetchNextPage().finally(() => {
-        hasFetchedRef.current = false;
-      });
+    // Reset page count when data changes (e.g., on initial load)
+    if (!data?.pages) {
+      pageCountRef.current = 0;
+    } else {
+      pageCountRef.current = data.pages.length;
     }
+  }, [data?.pages?.length]);
+  
+  useEffect(() => {
+    // Stop fetching if we hit the limit or using cache
+    if (useCache || !hasNextPage || hasFetchedRef.current) return;
+    if (pageCountRef.current >= MAX_PAGES) return;
+    
+    hasFetchedRef.current = true;
+    fetchNextPage().finally(() => {
+      hasFetchedRef.current = false;
+    });
   }, [hasNextPage, fetchNextPage, useCache]);
 
   // ✅ Final dataset (either cached or API)
@@ -330,7 +345,7 @@ const CalendarView = () => {
   const totalAnimeCount = filteredList.length;
 
   return (
-    <div className="relative w-full bg-[var(--bg-color)]/95 backdrop-blur-sm border border-[var(--text-color)]/10 p-2 my-4 md:p-6 rounded-xl shadow-inner">
+    <div className="relative w-full bg-[var(--bg-color)] border border-[var(--text-color)]/10 p-2 my-4 md:p-6 rounded-xl shadow-inner">
       {/* Header */}
       <div className="flex flex-col gap-3 mb-4">
         {/* First Row: Title and Action Buttons */}
@@ -499,7 +514,7 @@ const CalendarView = () => {
 
       {/* Filters Overlay */}
       {showFilters && (
-        <div className="fixed inset-0 bg-[var(--bg-color)]/90 backdrop-blur-sm z-50 flex flex-col">
+        <div className="fixed inset-0 bg-[var(--bg-color)] z-50 flex flex-col">
           <div className="flex justify-between items-center p-4 bg-[var(--bg-color)] border-b border-[var(--text-color)]/20">
             <h3 className="text-lg font-bold text-[var(--text-color)]">Filters</h3>
             <button
@@ -531,7 +546,7 @@ const CalendarView = () => {
       {selectedAnime && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
               <PageLoader />
             </div>
           }

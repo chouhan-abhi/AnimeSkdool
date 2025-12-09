@@ -97,7 +97,7 @@ const Sidebar = ({
 );
 
 const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
-  <div className="sticky top-0 z-10 bg-[var(--bg-color)]/90 backdrop-blur">
+  <div className="sticky top-0 z-10 bg-[var(--bg-color)]">
     <div className="flex items-center justify-between px-4 py-1">
       <div className="flex items-center gap-2">
         <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />

@@ -48,11 +48,10 @@ const AnimeDayTimeline = ({ animeList, onSelectAnime }) => {
       className="
         fixed bottom-3 md:bottom-6 
         left-2 right-2 md:left-auto md:right-6 
-        bg-indigo-700 text-white rounded-lg shadow-xl flex items-center gap-3 p-3 
+        bg-indigo-700/95 text-white rounded-lg shadow-xl flex items-center gap-3 p-3 
         animate-fadeIn z-[10000]
         max-w-full md:max-w-sm cursor-pointer
       "
-      style={{ backdropFilter: "blur(8px)" }}
     >
       {/* Close button */}
       <button

@@ -32,7 +32,7 @@ const App = () => {
   return (
     <div className="min-h-screen text-white flex flex-col">
       {/* Header (Desktop) */}
-      <header className="fixed hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-50 shadow-sm">
+      <header className="fixed hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900 sticky top-0 z-50 shadow-sm">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--primary-color)]">
           AniSkdool
         </h1>
@@ -57,7 +57,7 @@ const App = () => {
       </header>
 
       {/* Mobile Title Bar */}
-      <header className="md:hidden fixed w-full top-0 z-40 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-4 py-3 flex items-center justify-between shadow-sm">
+      <header className="md:hidden fixed w-full top-0 z-40 bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between shadow-sm">
         <h1 className="text-xl font-bold text-[var(--primary-color)]">
           AniSkdool
         </h1>
@@ -73,12 +73,11 @@ const App = () => {
       </main>
 
       {/* Floating Pill Navigation (Mobile) */}
-      <nav
-        className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 
-        bg-gray-900/40 border border-gray-500 
-        flex justify-around items-center gap-6 px-6 py-2 rounded-full shadow-xl z-50 shadow-xl"
-        style={{ backdropFilter: "blur(6px)" }}
-      >
+            <nav
+              className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 
+              bg-gray-900/90 border border-gray-500 
+              flex justify-around items-center gap-6 px-6 py-2 rounded-full shadow-xl z-50"
+            >
         {navItems.map((item) => (
           <button
             key={item.key}

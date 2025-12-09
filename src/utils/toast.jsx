@@ -43,7 +43,7 @@ export const ToastProvider = ({ children }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-[400px] pointer-events-auto animate-slideInRight"
+            className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-[400px] pointer-events-auto animate-slideInRight"
             style={{
               animation: 'slideInRight 0.3s ease-out forwards',
             }}

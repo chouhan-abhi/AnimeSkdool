@@ -9,14 +9,21 @@ const useResponsive = (breakpoint = 1024) => {
   });
   
   const isMountedRef = useRef(true);
+  const resizeTimeoutRef = useRef(null);
   
   useEffect(() => {
     isMountedRef.current = true;
     
+    // Debounced resize handler to prevent rapid state updates
     const onResize = () => {
-      if (isMountedRef.current) {
-        setIsMobile(window.innerWidth <= breakpoint);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
       }
+      resizeTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIsMobile(window.innerWidth <= breakpoint);
+        }
+      }, 150);
     };
     
     window.addEventListener("resize", onResize, { passive: true });
@@ -24,6 +31,10 @@ const useResponsive = (breakpoint = 1024) => {
     return () => {
       isMountedRef.current = false;
       window.removeEventListener("resize", onResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+        resizeTimeoutRef.current = null;
+      }
     };
   }, [breakpoint]);
   

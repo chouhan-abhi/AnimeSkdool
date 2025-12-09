@@ -14,7 +14,7 @@ const RecommendationSection = () => {
   } = useRandomAnimeList(8);
 
   return (
-    <div className="py-4 flex flex-col items-center rounded-2xl backdrop-blur-md w-full">
+    <div className="py-4 flex flex-col items-center rounded-2xl w-full">
       {/* Content */}
       {isLoading ? (
         <div className="w-full py-10">

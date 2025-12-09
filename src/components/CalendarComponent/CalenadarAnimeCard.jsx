@@ -19,7 +19,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
       />
 
       {/* Foreground content */}
-      <div className="relative flex items-center gap-3 p-3 bg-black/50 backdrop-blur-sm">
+      <div className="relative flex items-center gap-3 p-3 bg-black/70">
         {/* Thumbnail */}
         <div className="relative flex-shrink-0">
           <img

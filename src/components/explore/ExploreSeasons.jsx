@@ -129,7 +129,7 @@ const ExploreSeasons = () => {
   // --- Subcomponents ---
   function MobileHeader({ onOpenSidebar, onRefresh }) {
     return (
-      <div className="sticky top-0 z-10 bg-[var(--bg-color)]/90 backdrop-blur">
+      <div className="sticky top-0 z-10 bg-[var(--bg-color)]">
         <div className="flex items-center justify-between px-4 py-1">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
@@ -200,7 +200,7 @@ const ExploreSeasons = () => {
             setIsInitialLoad(true);
             if (isMobile) setIsSidebarOpen(false);
           }}
-          className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-[var(--text-color)]/20 bg-[var(--bg-color)]/80 text-[var(--text-color)] backdrop-blur focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
+          className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-[var(--text-color)]/20 bg-[var(--bg-color)] text-[var(--text-color)] focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
         >
           {options.map(({ year, season }) => (
             <option key={`${year}-${season}`} value={`${year}-${season}`} className="capitalize">
@@ -276,7 +276,7 @@ const ExploreSeasons = () => {
       >
         {/* Backdrop */}
         <div
-          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity ${
+          className={`absolute inset-0 bg-black/60 transition-opacity ${
             isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
           onClick={close}

@@ -84,8 +84,7 @@ const AnimeCard = ({ anime }) => {
         <div className="absolute top-2 left-2 flex flex-col gap-2 ">
           {(score || rank) && (
             <span
-              style={{ backdropFilter: "blur(4px)" }}
-              className="font-bold text-sm px-3 py-1 rounded-full bg-black/50 shadow-lg"
+              className="font-bold text-sm px-3 py-1 rounded-full bg-black/70 shadow-lg"
             >
               {score ? "⭐" + score : ""} {rank ? "#" + rank : ""}
             </span>

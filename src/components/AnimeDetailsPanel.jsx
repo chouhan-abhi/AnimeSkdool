@@ -76,16 +76,16 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     }
   }, []);
 
-  // Update watchlist status when anime changes
+  // Update watchlist status when anime changes - with null check
   useEffect(() => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current || !anime?.mal_id) return;
     try {
       const inWatchlist = storageManager.isInWatchlist(anime.mal_id);
       setIsInWatchlist(inWatchlist);
     } catch (error) {
       console.error("Error checking watchlist:", error);
     }
-  }, [anime.mal_id]);
+  }, [anime?.mal_id]);
 
   // Separate resize handler to prevent recreation
   useEffect(() => {
@@ -154,6 +154,7 @@ const AnimeDetailsPanel = ({ anime, onClose }) => {
     },
     [anime, isInWatchlist, showToast]
   );
+
 
   // Memoize backdrop click handler
   const handleBackdropClick = useCallback((e) => {

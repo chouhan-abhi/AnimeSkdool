@@ -58,7 +58,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
           style={{ backgroundImage: `url(${image})` }}
         />
 
-        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)]/90 backdrop-blur-sm border border-[var(--text-color)]/10">
+        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)] border border-[var(--text-color)]/10">
         <div className="relative flex-shrink-0">
           <img
             src={image}
@@ -73,7 +73,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
               e.stopPropagation();
               onToggleStar?.();
             }}
-            className="absolute top-1 right-1 bg-[var(--bg-color)]/80 backdrop-blur-sm rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform border border-[var(--text-color)]/20"
+            className="absolute top-1 right-1 bg-[var(--bg-color)] rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform border border-[var(--text-color)]/20"
           >
             <Star
               size={13}
@@ -158,7 +158,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="h-[82vh] bg-[var(--bg-color)]/95 backdrop-blur-sm border border-[var(--text-color)]/10 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
+    <div className="h-[82vh] bg-[var(--bg-color)] border border-[var(--text-color)]/10 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
       {/* Inline animation keyframes */}
       <style>
         {`

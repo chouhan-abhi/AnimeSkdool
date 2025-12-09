@@ -61,7 +61,7 @@ const ExploreHome = () => {
       <div className="flex-1 overflow-hidden relative">
         {/* Transition overlay */}
         {isTransitioning && (
-          <div className="absolute inset-0 bg-[var(--bg-color)]/50 backdrop-blur-sm z-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[var(--bg-color)]/80 z-10 flex items-center justify-center">
             <div className="flex items-center gap-2 text-[var(--primary-color)]">
               <div className="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce" />
               <div

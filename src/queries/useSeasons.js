@@ -1,5 +1,9 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 
+// Detect mobile for limiting data
+const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const MAX_PAGES = isMobile ? 4 : 10;
+
 // GET seasons list (years and seasons)
 const fetchSeasonsList = async () => {
   const res = await fetch("https://api.jikan.moe/v4/seasons");
@@ -36,11 +40,15 @@ export const useInfiniteSeasonAnime = (params) => {
   return useInfiniteQuery({
     queryKey: ["seasonAnimeInfinite", params],
     queryFn: fetchSeasonAnime,
-    getNextPageParam: (lastPage) =>
-      lastPage?.pagination?.has_next_page
+    getNextPageParam: (lastPage, allPages) => {
+      // Limit pages to prevent memory issues on mobile
+      if (allPages.length >= MAX_PAGES) return undefined;
+      return lastPage?.pagination?.has_next_page
         ? lastPage.pagination.current_page + 1
-        : undefined,
+        : undefined;
+    },
     staleTime: 1000 * 60 * 10,
+    gcTime: isMobile ? 1000 * 60 * 5 : 1000 * 60 * 30, // shorter cache on mobile
     refetchOnWindowFocus: false,
   });
 };

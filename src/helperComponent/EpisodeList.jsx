@@ -13,7 +13,7 @@ const EpisodesList = ({ animeId }) => {
   const visibleEpisodes = episodes.slice(0, visibleCount);
 
   return (
-    <div className="mb-6 p-2 bg-black/30 rounded-lg" style={{ backdropFilter: "blur(4px)" }}>
+    <div className="mb-6 p-2 bg-black/50 rounded-lg">
       <h4 className="font-semibold text-lg mb-2">Episodes</h4>
       <div className="flex flex-col gap-2">
         {visibleEpisodes.map((ep) => (
