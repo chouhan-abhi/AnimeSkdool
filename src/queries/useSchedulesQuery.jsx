@@ -21,7 +21,9 @@ export const useSchedulesQuery = () =>
         ? lastPage.pagination.current_page + 1
         : undefined;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: isMobile ? 1000 * 60 * 5 : 1000 * 60 * 30, // shorter cache on mobile
+    // Mobile: No caching - always fresh data
+    staleTime: isMobile ? 0 : 1000 * 60 * 5,
+    gcTime: isMobile ? 0 : 1000 * 60 * 30,
     refetchOnWindowFocus: false,
+    refetchOnMount: isMobile ? 'always' : true,
   });

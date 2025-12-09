@@ -16,7 +16,9 @@ export const useSeasonsList = () => {
   return useQuery({
     queryKey: ["seasonsList"],
     queryFn: fetchSeasonsList,
-    staleTime: 1000 * 60 * 60,
+    // Mobile: No caching - always fresh data
+    staleTime: isMobile ? 0 : 1000 * 60 * 60,
+    gcTime: isMobile ? 0 : 1000 * 60 * 60,
     refetchOnWindowFocus: false,
   });
 };
@@ -47,9 +49,11 @@ export const useInfiniteSeasonAnime = (params) => {
         ? lastPage.pagination.current_page + 1
         : undefined;
     },
-    staleTime: 1000 * 60 * 10,
-    gcTime: isMobile ? 1000 * 60 * 5 : 1000 * 60 * 30, // shorter cache on mobile
+    // Mobile: No caching - always fresh data
+    staleTime: isMobile ? 0 : 1000 * 60 * 10,
+    gcTime: isMobile ? 0 : 1000 * 60 * 30,
     refetchOnWindowFocus: false,
+    refetchOnMount: isMobile ? 'always' : true,
   });
 };
 

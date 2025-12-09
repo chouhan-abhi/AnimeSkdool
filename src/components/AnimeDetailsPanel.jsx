@@ -1,362 +1,343 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-  lazy,
-  Suspense,
-  memo,
-} from "react";
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense, memo } from "react";
 import ReactDOM from "react-dom";
-import { Bookmark } from "lucide-react";
+import { Bookmark, X } from "lucide-react";
 import { contentProvider, formatNumber } from "../utils/utils";
 import PageLoader from "../helperComponent/PageLoader";
 import storageManager from "../utils/storageManager";
 import { useToast } from "../utils/toast";
 
-// Lazy-loaded components
+// Detect mobile once at module level
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+
+// Lazy-loaded components - only for desktop
 const EpisodesList = lazy(() => import("../helperComponent/EpisodeList"));
 const Badge = lazy(() => import("../helperComponent/Badge"));
 
-// Memoized stat block - moved outside to prevent recreation
-const StatBlock = memo(({ label, value }) => (
-  <div className="p-2 rounded-lg bg-black/40 text-center">
-    <p className="text-xs">{label}</p>
-    <p className="font-semibold">{value}</p>
-  </div>
-));
+// ============================================
+// MOBILE VERSION - Lightweight, no frills
+// ============================================
+const MobileAnimeDetails = memo(({ anime, onClose }) => {
+  const { showToast } = useToast();
+  const [isInWatchlist, setIsInWatchlist] = useState(() => 
+    storageManager.isInWatchlist(anime?.mal_id)
+  );
 
-const AnimeDetailsPanel = ({ anime, onClose }) => {
+  // Simple close on ESC
+  useEffect(() => {
+    const onEsc = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  if (!anime) return null;
+
+  const imgUrl = anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
+
+  const toggleWatchlist = () => {
+    if (isInWatchlist) {
+      storageManager.removeFromWatchlist(anime.mal_id);
+      showToast("Removed from watchlist", "info");
+    } else {
+      storageManager.addToWatchlist(anime);
+      showToast("Added to watchlist", "success");
+    }
+    setIsInWatchlist(!isInWatchlist);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-[9999] bg-black text-white"
+      style={{ touchAction: 'pan-y' }}
+    >
+      {/* Header with close */}
+      <div className="sticky top-0 z-10 flex items-center justify-between p-3 bg-black/90">
+        <button type="button" onClick={onClose} className="p-2 -ml-2">
+          <X size={24} />
+        </button>
+        <button type="button" onClick={toggleWatchlist} className="p-2 -mr-2">
+          <Bookmark 
+            size={24} 
+            className={isInWatchlist ? "fill-[var(--primary-color)] text-[var(--primary-color)]" : ""} 
+          />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div 
+        className="overflow-y-auto pb-6"
+        style={{ height: 'calc(100vh - 56px)', WebkitOverflowScrolling: 'touch' }}
+      >
+        {/* Image - small and simple */}
+        {imgUrl && (
+          <div className="w-full h-40 bg-gray-900">
+            <img 
+              src={imgUrl} 
+              alt="" 
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="p-4 space-y-3">
+          {/* Title */}
+          <h1 className="text-xl font-bold leading-tight">{anime.title}</h1>
+          {anime.title_english && anime.title_english !== anime.title && (
+            <p className="text-sm text-gray-400">{anime.title_english}</p>
+          )}
+
+          {/* Quick stats row */}
+          <div className="flex flex-wrap gap-2 text-xs">
+            {anime.score && (
+              <span className="bg-yellow-600 px-2 py-1 rounded">⭐ {anime.score}</span>
+            )}
+            {anime.episodes && (
+              <span className="bg-gray-700 px-2 py-1 rounded">{anime.episodes} eps</span>
+            )}
+            {anime.status && (
+              <span className="bg-gray-700 px-2 py-1 rounded">{anime.status}</span>
+            )}
+          </div>
+
+          {/* Synopsis - truncated for mobile */}
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {anime.synopsis 
+              ? (anime.synopsis.length > 400 
+                  ? `${anime.synopsis.slice(0, 400)}...` 
+                  : anime.synopsis)
+              : "No synopsis available."}
+          </p>
+
+          {/* Genres - simple chips */}
+          {anime.genres?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {anime.genres.slice(0, 5).map((g) => (
+                <span key={g.mal_id} className="text-xs bg-gray-800 px-2 py-1 rounded">
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Watch providers - simple list */}
+          <div className="pt-2">
+            <p className="text-sm font-semibold mb-2">Watch on:</p>
+            <div className="flex flex-wrap gap-2">
+              {contentProvider.slice(0, 4).map((p) => (
+                <a
+                  key={p.name}
+                  href={`${p.url}${encodeURIComponent(anime.title_english || anime.title)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs bg-[var(--primary-color)] px-3 py-2 rounded"
+                >
+                  {p.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ============================================
+// DESKTOP VERSION - Full featured
+// ============================================
+const DesktopAnimeDetails = memo(({ anime, onClose }) => {
   const { showToast } = useToast();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [portalRoot, setPortalRoot] = useState(null);
-  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
-  const [showImage, setShowImage] = useState(false);
-
-  const resizeTimeout = useRef(null);
-  const imageTimeout = useRef(null);
   const isMountedRef = useRef(true);
 
-  // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
     isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      // Clear all timeouts on unmount
-      if (resizeTimeout.current) {
-        clearTimeout(resizeTimeout.current);
-        resizeTimeout.current = null;
-      }
-      if (imageTimeout.current) {
-        clearTimeout(imageTimeout.current);
-        imageTimeout.current = null;
-      }
-    };
+    setPortalRoot(document.getElementById("modal-root") || document.body);
+    return () => { isMountedRef.current = false; };
   }, []);
 
-  // Preload heavy components lazily
   useEffect(() => {
-    requestIdleCallback?.(() => {
-      import("../helperComponent/EpisodeList");
-      import("../helperComponent/Badge");
-    });
-  }, []);
-
-  // Setup portal - only once on mount
-  useEffect(() => {
-    if (!isMountedRef.current) return;
-    
-    try {
-      const root = document.getElementById("modal-root") || document.body;
-      setPortalRoot(root);
-    } catch (error) {
-      console.error("Error in portal setup:", error);
-      setPortalRoot(document.body);
-    }
-  }, []);
-
-  // Update watchlist status when anime changes - with null check
-  useEffect(() => {
-    if (!isMountedRef.current || !anime?.mal_id) return;
-    try {
-      const inWatchlist = storageManager.isInWatchlist(anime.mal_id);
-      setIsInWatchlist(inWatchlist);
-    } catch (error) {
-      console.error("Error checking watchlist:", error);
+    if (anime?.mal_id) {
+      setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
     }
   }, [anime?.mal_id]);
 
-  // Separate resize handler to prevent recreation
   useEffect(() => {
-    if (!isMountedRef.current) return;
-
-    const handleResize = () => {
-      if (!isMountedRef.current) return;
-      clearTimeout(resizeTimeout.current);
-      resizeTimeout.current = setTimeout(() => {
-        if (isMountedRef.current) {
-          setIsLargeScreen(window.innerWidth >= 1024);
-        }
-      }, 300);
-    };
-    
-    window.addEventListener("resize", handleResize, { passive: true });
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(resizeTimeout.current);
-    };
-  }, []);
-
-  // ESC key to close
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleEsc, { passive: false });
-    return () => window.removeEventListener("keydown", handleEsc);
+    const onEsc = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
   }, [onClose]);
 
-  // Lazy show image to reduce GPU pressure - with cleanup to prevent memory leak
-  useEffect(() => {
-    imageTimeout.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        setShowImage(true);
-      }
-    }, 100);
-
-    return () => {
-      if (imageTimeout.current) {
-        clearTimeout(imageTimeout.current);
-        imageTimeout.current = null;
-      }
-    };
-  }, []);
-
-  // Toggle watchlist
   const toggleWatchlist = useCallback(() => {
     if (isInWatchlist) {
       storageManager.removeFromWatchlist(anime.mal_id);
       showToast(`Removed ${anime.title} from watchlist`, "info");
     } else {
       storageManager.addToWatchlist(anime);
-      showToast(`📚 ${anime.title} added to watchlist`, "success");
+      showToast(`Added ${anime.title} to watchlist`, "success");
     }
     setIsInWatchlist(!isInWatchlist);
   }, [isInWatchlist, anime, showToast]);
 
-  // Streaming provider click
-  const handleProviderClick = useCallback(
-    (providerName) => {
-      storageManager.saveToWatchlist(anime, true);
-      if (!isInWatchlist) setIsInWatchlist(true);
-      showToast(`🎬 Started watching ${anime.title} on ${providerName}`, "success");
-    },
-    [anime, isInWatchlist, showToast]
-  );
+  const handleProviderClick = useCallback((name) => {
+    storageManager.saveToWatchlist(anime, true);
+    if (!isInWatchlist) setIsInWatchlist(true);
+    showToast(`Started watching on ${name}`, "success");
+  }, [anime, isInWatchlist, showToast]);
 
-
-  // Memoize backdrop click handler
   const handleBackdropClick = useCallback((e) => {
     if (e.target.id === "anime-details-backdrop") onClose();
   }, [onClose]);
 
-  // Memoize image source to prevent recalculation on every render
-  const imageSrc = useMemo(() => {
-    if (!anime?.images) return null;
-    if (isLargeScreen) {
-      return anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
-    }
-    return anime.images?.webp?.small_image_url || anime.images?.jpg?.small_image_url || anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
-  }, [isLargeScreen, anime?.images]);
+  if (!anime || !portalRoot) return null;
 
-  // Render details content - memoized to prevent recreation
-  const renderDetailsContent = useCallback(() => {
-    if (!anime) return null;
-    return (
-    <div className="space-y-4">
-      {/* Title & Bookmark */}
-      <div className="flex items-center gap-3">
-        <h2 id="anime-title" className="text-2xl font-bold">{anime.title}</h2>
-        <button
-          type="button"
-          onClick={toggleWatchlist}
-          className="w-8 h-8 flex justify-center items-center rounded-full hover:bg-white/20 transition"
-        >
-          <Bookmark
-            size={24}
-            className={`${
-              isInWatchlist
-                ? "fill-[var(--primary-color)] text-[var(--primary-color)]"
-                : "text-[var(--text-color)]"
-            }`}
-          />
-        </button>
-      </div>
-      {anime.title_english && <p className="text-sm italic">{anime.title_english}</p>}
-      {anime.title_japanese && <p className="text-sm italic">{anime.title_japanese}</p>}
+  const imgSrc = anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url;
 
-      {/* Status & Stats */}
-      <div className="flex flex-wrap gap-2">
-        {anime.status && <span className="bg-[var(--primary-color)] text-white px-2 py-1 rounded-full text-xs">📺 {anime.status}</span>}
-        {anime.score && <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs">⭐ {anime.score} ({anime.scored_by || 0})</span>}
-        {anime.rank && <span className="bg-[var(--primary-color)] text-white px-2 py-1 rounded-full text-xs">Rank #{anime.rank}</span>}
-      </div>
+  return ReactDOM.createPortal(
+    <dialog
+      id="anime-details-backdrop"
+      className="fixed inset-0 z-[9999] flex flex-row bg-black/80 m-0 p-0 max-w-none max-h-none w-full h-full"
+      onClick={handleBackdropClick}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      open
+    >
+      {/* Close button */}
+      <button
+        type="button"
+        className="absolute right-4 top-4 w-10 h-10 flex justify-center items-center rounded-full bg-black/60 text-white text-xl hover:bg-white/20 transition z-50"
+        onClick={onClose}
+      >
+        ×
+      </button>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-2">
-        <StatBlock label="Popularity" value={`#${anime.popularity}`} />
-        <StatBlock label="Members" value={formatNumber(anime.members)} />
-        <StatBlock label="Favorites" value={formatNumber(anime.favorites)} />
-        <StatBlock label="Episodes" value={anime.episodes || "TBA"} />
-      </div>
-
-      <p className="leading-relaxed">{anime.synopsis || "No synopsis available."}</p>
-
-      {/* Lazy-load episodes */}
-      <Suspense fallback={<PageLoader />}>
-        <EpisodesList animeId={anime.mal_id} />
-      </Suspense>
-
-      {/* Genres */}
-      {anime.genres?.length > 0 && (
-        <div>
-          <h4 className="font-semibold mb-1">Genres</h4>
-          <div className="flex flex-wrap gap-1">
-            <Suspense fallback={<span>Loading...</span>}>
-              {anime.genres.map((g) => <Badge key={g.mal_id}>{g.name}</Badge>)}
-            </Suspense>
+      {/* Details Panel */}
+      <div className="w-[40%] max-w-[720px] p-6 overflow-y-auto text-white">
+        <div className="space-y-4">
+          {/* Title & Bookmark */}
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold">{anime.title}</h2>
+            <button type="button" onClick={toggleWatchlist} className="p-2 rounded-full hover:bg-white/20">
+              <Bookmark
+                size={24}
+                className={isInWatchlist ? "fill-[var(--primary-color)] text-[var(--primary-color)]" : ""}
+              />
+            </button>
           </div>
-        </div>
-      )}
+          {anime.title_english && <p className="text-sm italic">{anime.title_english}</p>}
 
-      {/* Studios / Producers */}
-      {["studios", "producers"].map((key) => {
-        const section = anime[key];
-        if (!section?.length) return null;
-        return (
-          <div key={key}>
-            <h4 className="font-semibold mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}</h4>
+          {/* Status badges */}
+          <div className="flex flex-wrap gap-2">
+            {anime.status && <span className="bg-[var(--primary-color)] text-white px-2 py-1 rounded-full text-xs">📺 {anime.status}</span>}
+            {anime.score && <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs">⭐ {anime.score}</span>}
+            {anime.rank && <span className="bg-[var(--primary-color)] text-white px-2 py-1 rounded-full text-xs">Rank #{anime.rank}</span>}
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2 rounded-lg bg-black/40 text-center">
+              <p className="text-xs">Popularity</p>
+              <p className="font-semibold">#{anime.popularity}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-black/40 text-center">
+              <p className="text-xs">Members</p>
+              <p className="font-semibold">{formatNumber(anime.members)}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-black/40 text-center">
+              <p className="text-xs">Favorites</p>
+              <p className="font-semibold">{formatNumber(anime.favorites)}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-black/40 text-center">
+              <p className="text-xs">Episodes</p>
+              <p className="font-semibold">{anime.episodes || "TBA"}</p>
+            </div>
+          </div>
+
+          <p className="leading-relaxed">{anime.synopsis || "No synopsis available."}</p>
+
+          {/* Episodes list */}
+          <Suspense fallback={<PageLoader />}>
+            <EpisodesList animeId={anime.mal_id} />
+          </Suspense>
+
+          {/* Genres */}
+          {anime.genres?.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-1">Genres</h4>
+              <div className="flex flex-wrap gap-1">
+                <Suspense fallback={<span>Loading...</span>}>
+                  {anime.genres.map((g) => <Badge key={g.mal_id}>{g.name}</Badge>)}
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* Studios */}
+          {anime.studios?.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-1">Studios</h4>
+              <div className="flex flex-wrap gap-1">
+                {anime.studios.map((s) => (
+                  <a key={s.mal_id} href={s.url} target="_blank" rel="noreferrer" 
+                     className="border px-2 py-1 rounded text-sm hover:bg-[var(--primary-color)]">
+                    {s.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Watch providers */}
+          <div>
+            <h4 className="font-semibold mb-1">Watch on</h4>
             <div className="flex flex-wrap gap-1">
-              {section.map((item) => (
-                <a key={item.mal_id} href={item.url} target="_blank" rel="noreferrer" className="border px-2 py-1 rounded text-sm hover:bg-[var(--primary-color)]">
-                  {item.name}
+              {contentProvider.map((p) => (
+                <a
+                  key={p.name}
+                  href={`${p.url}${encodeURIComponent(anime.title_english || anime.title)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => handleProviderClick(p.name)}
+                  className="border px-2 py-1 rounded text-sm hover:bg-[var(--primary-color)]"
+                >
+                  {p.name}
                 </a>
               ))}
             </div>
           </div>
-        );
-      })}
-
-      {/* Watch providers */}
-      <h4 className="font-semibold mb-1">Watch it on</h4>
-      <div className="flex flex-wrap gap-1">
-        {contentProvider.map((provider) => (
-          <a
-            key={provider.name}
-            href={`${provider.url}${encodeURIComponent(anime.title_english || anime.title || anime.title_japanese)}`}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => handleProviderClick(provider.name)}
-            className="border px-2 py-1 rounded text-sm hover:bg-[var(--primary-color)]"
-          >
-            {provider.name}
-          </a>
-        ))}
+        </div>
       </div>
-    </div>
-    );
-  }, [anime, isInWatchlist, toggleWatchlist, handleProviderClick]);
 
-  // Early return if no anime data or portal root - AFTER all hooks
-  if (!anime || !anime.mal_id || !portalRoot || !isMountedRef.current) {
-    if (!anime || !anime.mal_id) {
-      console.warn("AnimeDetailsPanel: No anime data provided");
-    }
-    return null;
-  }
-
-  try {
-    return ReactDOM.createPortal(
-      <div
-        id="anime-details-backdrop"
-        className={`fixed inset-0 z-[9999] flex ${isLargeScreen ? "flex-row bg-black/80" : "flex-col bg-black/90"}`}
-        onClick={handleBackdropClick}
-        onKeyDown={(e) => e.key === 'Escape' && onClose()}
-      >
-        {/* Close button */}
-        <button
-          type="button"
-          className="absolute right-4 top-4 w-10 h-10 flex justify-center items-center rounded-full bg-black/60 text-white text-xl hover:bg-white/20 transition z-50"
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
-        >
-          ×
-        </button>
-
-        {/* Desktop Layout */}
-        {isLargeScreen && (
-          <>
-            <div className="w-[40%] max-w-[720px] p-6 overflow-y-auto text-white">
-              {renderDetailsContent()}
-            </div>
-            <div className="flex-1 relative overflow-hidden">
-              {showImage && imageSrc && (
-                <img 
-                  src={imageSrc} 
-                  alt={anime.title} 
-                  loading="lazy" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    if (e.target) {
-                      e.target.style.display = 'none';
-                    }
-                  }}
-                />
-              )}
-            </div>
-          </>
+      {/* Image Panel */}
+      <div className="flex-1 relative overflow-hidden">
+        {imgSrc && (
+          <img src={imgSrc} alt={anime.title} loading="lazy" className="w-full h-full object-cover" />
         )}
+      </div>
+    </dialog>,
+    portalRoot
+  );
+});
 
-        {/* Mobile Layout - Simplified for stability */}
-        {!isLargeScreen && (
-          <div 
-            className="flex flex-col w-full h-full"
-            style={{ 
-              maxHeight: '100vh',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
-            {showImage && imageSrc && (
-              <div className="w-full h-[25vh] min-h-[120px] flex-shrink-0 overflow-hidden">
-                <img 
-                  src={imageSrc} 
-                  alt={anime.title || 'Anime'} 
-                  loading="lazy" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    if (e.target) {
-                      e.target.style.display = 'none';
-                    }
-                  }}
-                  onLoad={() => {
-                    // Image loaded successfully
-                  }}
-                />
-              </div>
-            )}
-            <div className="text-white p-3 flex-1 min-h-0">
-              {renderDetailsContent()}
-            </div>
-          </div>
-        )}
-      </div>,
-      portalRoot
-    );
-  } catch (error) {
-    console.error("AnimeDetailsPanel render error:", error);
-    return null;
+// ============================================
+// MAIN EXPORT - Routes to correct version
+// ============================================
+const AnimeDetailsPanel = ({ anime, onClose }) => {
+  if (!anime || !anime.mal_id) return null;
+  
+  // Use lightweight mobile version on small screens
+  if (isMobile) {
+    return <MobileAnimeDetails anime={anime} onClose={onClose} />;
   }
+  
+  return <DesktopAnimeDetails anime={anime} onClose={onClose} />;
 };
 
 export default memo(AnimeDetailsPanel);
