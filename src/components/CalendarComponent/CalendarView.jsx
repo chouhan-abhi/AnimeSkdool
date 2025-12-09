@@ -63,25 +63,12 @@ const CalendarView = () => {
     return () => clearTimeout(cacheTimeoutRef.current);
   }, [data, isLoading, useCache]);
 
-  // ✅ Auto–fetch next page with LIMIT to prevent memory issues
-  // Only fetch up to 3 pages on mobile, 5 on desktop
-  const MAX_PAGES = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 3 : 5;
-  const pageCountRef = useRef(0);
+  // ✅ Auto–fetch ALL pages - calendar needs complete data
   const hasFetchedRef = useRef(false);
   
   useEffect(() => {
-    // Reset page count when data changes (e.g., on initial load)
-    if (!data?.pages) {
-      pageCountRef.current = 0;
-    } else {
-      pageCountRef.current = data.pages.length;
-    }
-  }, [data?.pages?.length]);
-  
-  useEffect(() => {
-    // Stop fetching if we hit the limit or using cache
+    // Stop fetching if using cache or no more pages
     if (useCache || !hasNextPage || hasFetchedRef.current) return;
-    if (pageCountRef.current >= MAX_PAGES) return;
     
     hasFetchedRef.current = true;
     fetchNextPage().finally(() => {

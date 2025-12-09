@@ -101,7 +101,7 @@ const ExploreSeasons = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto pt-4 relative z-0">
+      <main className="flex-1 overflow-y-auto relative z-0">
         {/* Mobile Header */}
         {isMobile && (
           <MobileHeader

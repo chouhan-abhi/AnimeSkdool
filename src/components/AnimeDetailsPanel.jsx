@@ -52,11 +52,11 @@ const MobileAnimeDetails = memo(({ anime, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-black text-white"
+      className="fixed inset-0 z-[9999] bg-black text-white pb-16"
       style={{ touchAction: 'pan-y' }}
     >
       {/* Header with close */}
-      <div className="sticky top-0 z-10 flex items-center justify-between p-3 bg-black/90">
+      <div className="sticky top-14 z-[9999] flex items-center justify-between p-3 bg-black/90">
         <button type="button" onClick={onClose} className="p-2 -ml-2">
           <X size={24} />
         </button>
@@ -70,12 +70,16 @@ const MobileAnimeDetails = memo(({ anime, onClose }) => {
 
       {/* Scrollable content */}
       <div 
-        className="overflow-y-auto pb-6"
-        style={{ height: 'calc(100vh - 56px)', WebkitOverflowScrolling: 'touch' }}
+        className="flex-1 overflow-y-auto pb-6"
+        style={{ 
+          height: 'calc(100vh - 56px)',
+          overflowY: 'scroll',
+          WebkitOverflowScrolling: 'touch'
+        }}
       >
         {/* Image - small and simple */}
         {imgUrl && (
-          <div className="w-full h-40 bg-gray-900">
+          <div className="w-full h-[60vh] bg-gray-900">
             <img 
               src={imgUrl} 
               alt="" 

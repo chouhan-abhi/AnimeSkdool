@@ -1,8 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-// Detect mobile for limiting data
+// Detect mobile
 const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const MAX_PAGES = isMobile ? 3 : 6;
 
 const fetchSchedules = async ({ pageParam = 1 }) => {
   const res = await fetch(`https://api.jikan.moe/v4/schedules?page=${pageParam}`);
@@ -14,16 +13,16 @@ export const useSchedulesQuery = () =>
   useInfiniteQuery({
     queryKey: ["schedules"],
     queryFn: fetchSchedules,
-    getNextPageParam: (lastPage, allPages) => {
-      // Limit pages to prevent memory issues on mobile
-      if (allPages.length >= MAX_PAGES) return undefined;
+    getNextPageParam: (lastPage) => {
+      // Calendar needs ALL data - no page limit
+      // The data is essential for showing the full week schedule
       return lastPage.pagination?.has_next_page
         ? lastPage.pagination.current_page + 1
         : undefined;
     },
-    // Mobile: No caching - always fresh data
+    // Mobile: Fresh data, desktop: 5 min cache
     staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
+    gcTime: isMobile ? 1000 * 60 * 2 : 1000 * 60 * 30, // Keep minimal cache on mobile
     refetchOnWindowFocus: false,
     refetchOnMount: isMobile ? 'always' : true,
   });
