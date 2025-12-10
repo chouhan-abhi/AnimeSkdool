@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import { useSeasonsList, useInfiniteSeasonAnime } from "../../queries/useSeasons";
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
-import CalendarLoader from "../../helperComponent/CalendarLoader";
+import { GridLoader, LoadingMore } from "../../helperComponent/PageLoader";
 import { Calendar, ChevronDown, RefreshCw, X, Menu, TrendingUp, Filter } from "lucide-react";
 import useResponsive from "../../queries/useResponsive";
 
@@ -82,11 +82,11 @@ const ExploreSeasons = () => {
     window.location.reload();
   };
 
-  if (loadingSeasons) return <CalendarLoader />;
+  if (loadingSeasons) return <div className="p-4"><GridLoader count={6} /></div>;
   if (seasonsError) return <NoAnimeFound message={seasonsError.message} />;
 
   return (
-    <div className="flex h-full relative bg-gradient-to-b from-transparent to-[var(--bg-color)]/50">
+    <div className="flex h-full">
       {/* Desktop Sidebar */}
       {!isMobile && (
         <div className="hidden lg:block w-72 border-r border-[var(--text-color)]/20">
@@ -110,14 +110,10 @@ const ExploreSeasons = () => {
           />
         )}
         <div className="px-4 pb-4">
-          {isInitialLoad && isLoading && <CalendarLoader />}
+          {isInitialLoad && isLoading && <GridLoader count={6} />}
           {!isLoading && error && <NoAnimeFound message={error.message} />}
           {!isLoading && !error && animeList.length > 0 && <AnimeGrid />}
-          {!isLoading && isFetchingNextPage && (
-            <div className="flex justify-center mt-8">
-              <CalendarLoader />
-            </div>
-          )}
+          {!isLoading && isFetchingNextPage && <LoadingMore />}
           {!isLoading && animeList.length === 0 && !isInitialLoad && (
             <NoAnimeFound message="No anime found for this season." />
           )}

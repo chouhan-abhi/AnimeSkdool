@@ -12,7 +12,8 @@ import { weekDays, extractGenres } from "./utils";
 import FiltersBar from "./FiltersBar";
 import MinimalDayView from "./MinimalDayView";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
-import PageLoader from "../../helperComponent/PageLoader";
+import CalendarLoader from "../../helperComponent/CalendarLoader";
+import PageLoader, { DetailsPanelLoader } from "../../helperComponent/PageLoader";
 import storageManager from "../../utils/storageManager";
 import { useToast } from "../../utils/toast";
 import { useDebounce } from "../../utils/utils";
@@ -22,7 +23,7 @@ const AnimeDetailsPanel = lazy(() => import("../AnimeDetailsPanel"));
 
 const CalendarView = () => {
   const { showToast } = useToast();
-  const { data, error, isLoading, refetch, fetchNextPage, hasNextPage } =
+  const { data, error, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSchedulesQuery();
 
   const [selectedAnime, setSelectedAnime] = useState(null);
@@ -64,17 +65,17 @@ const CalendarView = () => {
   }, [data, isLoading, useCache]);
 
   // ✅ Auto–fetch ALL pages - calendar needs complete data
-  const hasFetchedRef = useRef(false);
-  
+  // When isFetchingNextPage goes from true→false (page loaded), effect re-runs
   useEffect(() => {
-    // Stop fetching if using cache or no more pages
-    if (useCache || !hasNextPage || hasFetchedRef.current) return;
+    // Stop fetching if:
+    // - Using cached data
+    // - No more pages to fetch
+    // - Currently fetching a page (prevents double-fetch)
+    if (useCache || !hasNextPage || isFetchingNextPage) return;
     
-    hasFetchedRef.current = true;
-    fetchNextPage().finally(() => {
-      hasFetchedRef.current = false;
-    });
-  }, [hasNextPage, fetchNextPage, useCache]);
+    // Fetch next page - effect will re-run when isFetchingNextPage changes
+    fetchNextPage();
+  }, [hasNextPage, fetchNextPage, useCache, isFetchingNextPage]);
 
   // ✅ Final dataset (either cached or API)
   const allAnime = useMemo(() => {
@@ -312,7 +313,7 @@ const CalendarView = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDayView, selectedAnime, jumpToToday]);
 
-  if (isLoading && !useCache) return <PageLoader />;
+  if (isLoading && !useCache) return <CalendarLoader />;
   if (error) {
     return (
       <div className="p-8 text-center">
@@ -533,8 +534,11 @@ const CalendarView = () => {
       {selectedAnime && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
-              <PageLoader />
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex flex-col md:flex-row">
+              <div className="h-[35vh] md:h-full md:flex-1 bg-gray-900 animate-pulse" />
+              <div className="flex-1 md:w-[45%] p-4 md:p-6 text-white">
+                <DetailsPanelLoader />
+              </div>
             </div>
           }
         >

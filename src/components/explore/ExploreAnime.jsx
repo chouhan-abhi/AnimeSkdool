@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useInfiniteAnimeRanking } from "../../queries/useInfiniteAnimeRanking";
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
+import { GridLoader, LoadingMore } from "../../helperComponent/PageLoader";
 import {
   Search,
   Grid,
@@ -206,14 +207,12 @@ const ExploreAnime = () => {
           />
         )}
 
-        <div className="p-6">
-          {isInitialLoad && isLoading && (
-            <p className="text-center text-[var(--text-color)]/60">Loading anime...</p>
-          )}
+        <div className="p-4 md:p-6">
+          {isInitialLoad && isLoading && <GridLoader count={6} />}
 
           {!isLoading && !error && (
             <div
-              className={`grid gap-6 ${
+              className={`grid gap-4 md:gap-6 ${
                 viewMode === "grid"
                   ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                   : "grid-cols-1"
@@ -233,6 +232,8 @@ const ExploreAnime = () => {
               })}
             </div>
           )}
+          
+          {isFetchingNextPage && <LoadingMore />}
         </div>
       </main>
 

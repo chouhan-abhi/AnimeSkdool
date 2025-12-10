@@ -1,86 +1,100 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import ExploreAnime from "./ExploreAnime";
 import ExploreSeasons from "./ExploreSeasons";
-import { Calendar, TrendingUp } from "lucide-react";
+import { Calendar, TrendingUp, Sparkles } from "lucide-react";
 
 const ExploreHome = () => {
   const [viewMode, setViewMode] = useState("seasons");
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleModeChange = (mode) => {
-    if (mode === viewMode) return;
+  const handleModeChange = useCallback((mode) => {
+    if (mode === viewMode || isTransitioning) return;
 
     setIsTransitioning(true);
     setTimeout(() => {
       setViewMode(mode);
       setIsTransitioning(false);
-    }, 150);
-  };
+    }, 200);
+  }, [viewMode, isTransitioning]);
 
   const modes = [
-    {
-      key: "ranking",
-      label: "Explore",
-      icon: TrendingUp,
-    },
     {
       key: "seasons",
       label: "Seasons",
       icon: Calendar,
+      description: "Browse by season",
+    },
+    {
+      key: "ranking",
+      label: "Explore",
+      icon: TrendingUp,
+      description: "Top ranked anime",
     },
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-[var(--bg-color)] to-[var(--bg-color)]/95">
-      {/* Centered Chrome-like Tab Selector */}
-      <div className="relative bg-[var(--bg-color)] flex justify-center">
-        <div className="flex items-center gap-2 px-4 rounded-t-xl shadow-sm bg-[var(--bg-color)]/60 mt-2">
-          {modes.map((mode) => {
-            const Icon = mode.icon;
-            const isActive = viewMode === mode.key;
-            return (
-              <button
-                key={mode.key}
-                type="button"
-                onClick={() => handleModeChange(mode.key)}
-                className={`flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-t-xl transition-all border-b-4 ${
-                  isActive
-                    ? "bg-[var(--primary-color)] text-white border-b-transparent"
-                    : "bg-[var(--bg-color)]/80 text-[var(--text-color)] border-b-transparent hover:border-b-[var(--primary-color)] hover:text-[var(--primary-color)]"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{mode.label}</span>
-              </button>
-            );
-          })}
+    <div className="flex flex-col h-screen bg-[var(--bg-color)]">
+      {/* Header with Tab Selector */}
+      <div className="flex-shrink-0 px-3 pt-3 pb-2 md:px-6 md:pt-4">
+        {/* Segmented Control Container */}
+        <div className="flex justify-start">
+          <div className="inline-flex items-center p-1 rounded-xl bg-[var(--text-color)]/5 border border-[var(--text-color)]/10 shadow-inner">
+            {modes.map((mode) => {
+              const Icon = mode.icon;
+              const isActive = viewMode === mode.key;
+              return (
+                <button
+                  key={mode.key}
+                  type="button"
+                  onClick={() => handleModeChange(mode.key)}
+                  disabled={isTransitioning}
+                  className={`
+                    relative flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg
+                    transition-all duration-200 ease-out
+                    disabled:cursor-not-allowed
+                    ${isActive
+                      ? "bg-[var(--primary-color)] text-white shadow-lg shadow-[var(--primary-color)]/30"
+                      : "text-[var(--text-color)]/70 hover:text-[var(--text-color)] hover:bg-[var(--text-color)]/5"
+                    }
+                  `}
+                  title={mode.description}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? "animate-pulse" : ""}`} />
+                  <span>{mode.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Enhanced Content Area */}
+      {/* Content Area */}
       <div className="flex-1 overflow-hidden relative">
         {/* Transition overlay */}
         {isTransitioning && (
-          <div className="absolute inset-0 bg-[var(--bg-color)]/80 z-10 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-[var(--primary-color)]">
-              <div className="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce" />
-              <div
-                className="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
-                style={{ animationDelay: "0.1s" }}
-              />
-              <div
-                className="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
-                style={{ animationDelay: "0.2s" }}
-              />
+          <div className="absolute inset-0 bg-[var(--bg-color)]/90 z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              {/* Animated spinner */}
+              <div className="relative">
+                <Sparkles 
+                  className="w-8 h-8 text-[var(--primary-color)] animate-spin" 
+                  style={{ animationDuration: '1.5s' }}
+                />
+                <div className="absolute inset-0 w-8 h-8 rounded-full bg-[var(--primary-color)]/20 animate-ping" />
+              </div>
+              <span className="text-xs text-[var(--text-color)]/50 font-medium tracking-wide">
+                Loading...
+              </span>
             </div>
           </div>
         )}
 
-        {/* Content with fade transition */}
+        {/* Content with smooth transition */}
         <div
-          className={`h-full transition-opacity duration-300 ${
-            isTransitioning ? "opacity-0" : "opacity-100"
-          }`}
+          className={`
+            h-full transition-all duration-300 ease-out
+            ${isTransitioning ? "opacity-0 scale-[0.99]" : "opacity-100 scale-100"}
+          `}
         >
           {viewMode === "seasons" ? <ExploreSeasons /> : <ExploreAnime />}
         </div>

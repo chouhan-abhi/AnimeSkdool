@@ -3,7 +3,7 @@ import { Star, Clock } from "lucide-react";
 
 const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
   const image =
-    anime.images.webp?.image_url || anime.images.jpg?.image_url || "";
+    anime.images.webp?.small_image_url || anime.images.jpg?.small_image_url || "";
 
   return (
     <li
@@ -12,20 +12,15 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
         isOngoing ? "ring-2 ring-red-500 scale-[1.02]" : "hover:scale-[1.01]"
       }`}
     >
-      {/* Blurred background */}
-      <div
-        className="absolute inset-0 bg-center bg-cover blur-md opacity-40"
-        style={{ backgroundImage: `url(${image})` }}
-      />
 
       {/* Foreground content */}
-      <div className="relative flex items-center gap-3 p-3 bg-black/70">
+      <div className="relative flex items-center gap-2 p-1 bg-black/70">
         {/* Thumbnail */}
         <div className="relative flex-shrink-0">
           <img
             src={image}
             alt={anime.title}
-            className="w-20 h-28 object-cover rounded-md"
+            className="w-24 h-32 object-cover rounded-md"
           />
           {/* Overlay Star Button */}
           <button

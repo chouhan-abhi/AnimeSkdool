@@ -24,5 +24,5 @@ export const useSchedulesQuery = () =>
     staleTime: isMobile ? 0 : 1000 * 60 * 5,
     gcTime: isMobile ? 1000 * 60 * 2 : 1000 * 60 * 30, // Keep minimal cache on mobile
     refetchOnWindowFocus: false,
-    refetchOnMount: isMobile ? 'always' : true,
+    refetchOnMount: false,
   });

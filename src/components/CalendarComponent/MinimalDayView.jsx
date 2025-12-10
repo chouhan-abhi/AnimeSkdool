@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, memo } from "react";
 import { format, isAfter, isBefore } from "date-fns";
 import { Star, Clock, Calendar as CalendarIcon } from "lucide-react";
-import DayCalendarLoader from "../../helperComponent/CalendarLoader";
+import { DaySkeleton as DayCalendarLoader } from "../../helperComponent/CalendarLoader";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
 
 // ---- Timezone helpers ----
@@ -53,17 +53,13 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
         className="w-full h-full text-left relative"
         aria-label={`View details for ${anime.title}`}
       >
-        <div
-          className="absolute inset-0 bg-center bg-cover opacity-40 pointer-events-none"
-          style={{ backgroundImage: `url(${image})` }}
-        />
 
-        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)] border border-[var(--text-color)]/10">
+        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)]">
         <div className="relative flex-shrink-0">
           <img
             src={image}
             alt={anime.title}
-            className="w-14 h-20 object-cover rounded-md"
+            className="w-16 h-20 object-cover rounded-md"
           />
 
           {/* Star button */}

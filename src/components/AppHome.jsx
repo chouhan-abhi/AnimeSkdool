@@ -2,7 +2,7 @@ import React, { useState, Suspense, lazy, useEffect, useCallback } from "react";
 import { useAnimeSearch } from "../queries/useAnimeSearch";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
-import PageLoader from "../helperComponent/PageLoader";
+import PageLoader, { GridLoader, MiniLoader, DetailsPanelLoader } from "../helperComponent/PageLoader";
 import { useDebounce } from "../utils/utils";
 
 const AnimeDetailsPanel = lazy(() => import("./AnimeDetailsPanel"));
@@ -94,7 +94,7 @@ const AppHome = () => {
           {/* Search Results */}
           {isFetching ? (
             <div className="p-4 my-4 w-full bg-gray-900/90 rounded-xl">
-              <PageLoader />
+              <GridLoader count={4} />
             </div>
           ) : isError ? (
             <p className="text-[var(--error-color)] p-4 my-4 w-full bg-gray-900/90 rounded-xl">
@@ -148,7 +148,7 @@ const AppHome = () => {
             <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
               💡 Anime Recommendations
             </h2>
-            <Suspense fallback={<div className="p-6"><PageLoader /></div>}>
+            <Suspense fallback={<GridLoader count={4} className="py-2" />}>
               <RecommendationSection />
             </Suspense>
           </section>
@@ -162,7 +162,7 @@ const AppHome = () => {
           <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-4">
             🗨️ Recent Anime Reviews
           </h2>
-          <Suspense fallback={<div className="p-6"><PageLoader /></div>}>
+          <Suspense fallback={<MiniLoader text="Loading reviews..." />}>
             <AnimeReview />
           </Suspense>
         </aside>
@@ -173,8 +173,11 @@ const AppHome = () => {
       {selectedAnime && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 flex items-center justify-center bg-black/70">
-              <PageLoader />
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex flex-col md:flex-row">
+              <div className="h-[35vh] md:h-full md:flex-1 bg-gray-900 animate-pulse" />
+              <div className="flex-1 md:w-[45%] p-4 md:p-6 text-white">
+                <DetailsPanelLoader />
+              </div>
             </div>
           }
         >
