@@ -16,18 +16,18 @@ const Badge = lazy(() => import("../helperComponent/Badge"));
 const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   const { showToast } = useToast();
   const [portalRoot, setPortalRoot] = useState(null);
-  const [isInWatchlist, setIsInWatchlist] = useState(() => 
+  const [isInWatchlist, setIsInWatchlist] = useState(() =>
     storageManager.isInWatchlist(anime?.mal_id)
   );
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const isMountedRef = useRef(true);
-  
+
   // Gallery state - loads on demand
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryExpanded, setGalleryExpanded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-  
+
   // Trailer state - loads on demand
   const [trailerData, setTrailerData] = useState(null);
   const [trailerLoading, setTrailerLoading] = useState(false);
@@ -63,7 +63,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   // Fetch gallery images on demand
   const loadGallery = useCallback(async () => {
     if (galleryImages.length > 0 || galleryLoading || !anime?.mal_id) return;
-    
+
     setGalleryLoading(true);
     try {
       const res = await fetch(`https://api.jikan.moe/v4/anime/${anime.mal_id}/pictures`);
@@ -82,14 +82,14 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   // Load trailer on demand - use embed_url from anime object if available
   const loadTrailer = useCallback(async () => {
     if (trailerData || trailerLoading || !anime?.mal_id) return;
-    
+
     // Check if anime already has trailer embed_url or youtube_id
     if (anime.trailer?.embed_url || anime.trailer?.youtube_id) {
       setTrailerData(anime.trailer);
       setTrailerExpanded(true);
       return;
     }
-    
+
     // Fallback: fetch from API if no trailer in anime object
     setTrailerLoading(true);
     try {
@@ -154,9 +154,9 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       <div>
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-xl md:text-2xl font-bold leading-tight">{anime.title}</h1>
-          <button 
-            type="button" 
-            onClick={toggleWatchlist} 
+          <button
+            type="button"
+            onClick={toggleWatchlist}
             className="flex-shrink-0 p-2 rounded-full hover:bg-white/20 transition"
           >
             <Bookmark
@@ -283,7 +283,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             </button>
           )}
         </div>
-        
+
         {trailerExpanded && (trailerData?.embed_url || trailerData?.youtube_id) && (
           <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-900">
             <iframe
@@ -295,7 +295,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             />
           </div>
         )}
-        
+
         {trailerExpanded && !trailerData?.embed_url && !trailerData?.youtube_id && !trailerLoading && (
           <p className="text-xs text-gray-500 text-center py-4 bg-gray-800/40 rounded-lg">
             No trailer available for this anime
@@ -443,11 +443,11 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             </button>
           )}
         </div>
-        
+
         {/* Gallery thumbnails - horizontal scroll */}
         {galleryExpanded && galleryImages.length > 0 && (
           <div className="relative">
-            <div 
+            <div
               className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0"
               style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
             >
@@ -473,7 +473,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             </p>
           </div>
         )}
-        
+
         {galleryExpanded && galleryImages.length === 0 && !galleryLoading && (
           <p className="text-xs text-gray-500 text-center py-4 bg-gray-800/40 rounded-lg">
             No gallery images available
@@ -519,7 +519,8 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
     <dialog
       id="anime-details-backdrop"
       open
-      className="fixed inset-0 z-[9999] m-0 p-0 max-w-none max-h-none w-full h-full bg-black/90 md:bg-black/80"
+      className="
+  fixed inset-0 z-[9999] m-0 p-0 max-w-none max-h-none w-full h-full bg-[var(--bg-color)] text-[var(--text-color)]"
       onClick={handleBackdropClick}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
@@ -534,27 +535,27 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
 
       {/* Layout Container - Stack on mobile, side-by-side on desktop */}
       <div className="h-full flex flex-col md:flex-row overflow-hidden">
-        
+
         {/* Image Panel - Top on mobile, Right on desktop */}
         <div className="relative h-[35vh] md:h-full md:flex-1 md:order-2 flex-shrink-0 overflow-hidden">
           {imgUrl && (
             <>
-              <img 
-                src={imgUrl} 
-                alt={anime.title} 
+              <img
+                src={imgUrl}
+                alt={anime.title}
                 className="w-full h-full object-cover"
                 loading="eager"
               />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent md:bg-gradient-to-l md:from-black/60 md:via-transparent md:to-transparent" />
-              
+
               {/* Score badge on image */}
               {anime.score && (
                 <div className="absolute top-3 right-14 md:right-3 bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-lg text-sm shadow-lg">
                   ⭐ {anime.score}
                 </div>
               )}
-              
+
               {/* Rank badge */}
               {anime.rank && (
                 <div className="absolute top-3 left-3 bg-[var(--primary-color)] text-white font-bold px-3 py-1.5 rounded-lg text-sm shadow-lg">
@@ -566,8 +567,11 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
         </div>
 
         {/* Details Panel - Bottom on mobile, Left on desktop */}
-        <div 
-          className="flex-1 md:w-[45%] md:max-w-[800px] md:order-1 overflow-y-auto text-white"
+        <div
+          className="flex-1 md:w-[45%] md:max-w-[800px] md:order-1 overflow-y-auto
+    text-[var(--text-primary)]
+    bg-[var(--panel-bg)]
+  "
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div className="p-4 md:p-6 pb-20 md:pb-6">
@@ -601,9 +605,9 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
               <X size={24} />
             </button>
           </div>
-          
+
           {/* Image */}
-          <div 
+          <div
             className="flex-1 flex items-center justify-center p-4 relative"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -616,13 +620,13 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             >
               <ChevronLeft size={28} />
             </button>
-            
+
             <img
               src={galleryImages[selectedImageIndex].jpg?.large_image_url || galleryImages[selectedImageIndex].jpg?.image_url}
               alt={`Full size ${selectedImageIndex + 1}`}
               className="max-w-full max-h-full object-contain rounded-lg"
             />
-            
+
             {/* Next button */}
             <button
               type="button"
@@ -632,10 +636,10 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
               <ChevronRight size={28} />
             </button>
           </div>
-          
+
           {/* Thumbnail strip */}
           <div className="flex-shrink-0 py-2 px-4 bg-black/80">
-            <div 
+            <div
               className="flex gap-2 overflow-x-auto justify-center"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
@@ -647,11 +651,10 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
                     e.stopPropagation();
                     setSelectedImageIndex(idx);
                   }}
-                  className={`flex-shrink-0 w-12 h-16 rounded overflow-hidden transition ${
-                    idx === selectedImageIndex 
-                      ? 'ring-2 ring-[var(--primary-color)] opacity-100' 
-                      : 'opacity-50 hover:opacity-80'
-                  }`}
+                  className={`flex-shrink-0 w-12 h-16 rounded overflow-hidden transition ${idx === selectedImageIndex
+                    ? 'ring-2 ring-[var(--primary-color)] opacity-100'
+                    : 'opacity-50 hover:opacity-80'
+                    }`}
                 >
                   <img
                     src={img.jpg?.small_image_url || img.jpg?.image_url}
