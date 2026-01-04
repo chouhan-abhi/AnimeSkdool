@@ -5,131 +5,152 @@ import { SlidersHorizontal } from "lucide-react";
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
 import storageManager from "../utils/storageManager";
 
-const globalFilters = ["all", "started", "bookmarked", "upcoming"];
+const FILTERS = ["all", "started", "bookmarked", "upcoming"];
 
 const WatchlistPage = () => {
   const [filter, setFilter] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [watchlist, setWatchlist] = useState([]);
-  const [starredList, setStarredList] = useState([]);
+  const [startedList, setStartedList] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /* ---------------- Responsive ---------------- */
   useEffect(() => {
-    let resizeTimeout;
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
+    let t;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
         setIsMobile(window.innerWidth <= 768);
       }, 150);
     };
-    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
     return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(resizeTimeout);
+      window.removeEventListener("resize", onResize);
+      clearTimeout(t);
     };
   }, []);
 
+  /* ---------------- Load data ---------------- */
   useEffect(() => {
     try {
-      const savedWatchlist = storageManager.get(storageManager.keys.WATCHLIST_KEY, []);
-      setWatchlist(savedWatchlist);
+      setLoading(true);
 
-      const starredIds = storageManager.get(storageManager.keys.STARRED_KEY, []);
-      const animeCache = storageManager.get(storageManager.keys.ANIME_CACHE_KEY, []);
-      const animeCacheMap = new Map(animeCache.map((a) => [a.mal_id, a]));
+      const wl = storageManager.get(
+        storageManager.keys.WATCHLIST_KEY,
+        []
+      );
 
-      const starredAnime = starredIds
-        .map((id) => animeCacheMap.get(id))
-        .filter(Boolean)
-        .map((anime) => ({ ...anime, starred: true }));
+      const started = storageManager.get(
+        storageManager.keys.STARTED_KEY,
+        []
+      );
 
-      setStarredList(starredAnime);
-    } catch (err) {
-      console.error("Failed to load lists", err);
+      setWatchlist(wl);
+      setStartedList(started);
+    } catch (e) {
+      console.error(e);
       setWatchlist([]);
-      setStarredList([]);
+      setStartedList([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /* ---------------- Filter logic ---------------- */
   const filteredAnime = useMemo(() => {
-    if (filter === "all") {
-      const allMap = new Map();
-      [...watchlist, ...starredList].forEach((anime) => allMap.set(anime.mal_id, anime));
-      return Array.from(allMap.values());
-    }
-    if (filter === "started") return starredList;
-    if (filter === "bookmarked") return watchlist.filter((a) => a.isBookmarked);
-    if (filter === "upcoming")
-      return watchlist.filter((a) => a.status?.toLowerCase() === "not yet aired");
-    return watchlist;
-  }, [watchlist, starredList, filter]);
+    switch (filter) {
+      case "started":
+        return startedList;
 
-  // ✅ Group anime by month/year or fallback to "Unknown"
+      case "bookmarked":
+        return watchlist.filter((a) => a.isBookmarked);
+
+      case "upcoming":
+        return watchlist.filter(
+          (a) => a.status?.toLowerCase() === "not yet aired"
+        );
+
+      case "all":
+      default: {
+        const map = new Map();
+        [...startedList, ...watchlist].forEach((a) =>
+          map.set(a.mal_id, a)
+        );
+        return Array.from(map.values());
+      }
+    }
+  }, [filter, watchlist, startedList]);
+
+  /* ---------------- Group by month/year ---------------- */
   const groupedAnime = useMemo(() => {
     const groups = {};
+
     filteredAnime.forEach((anime) => {
-      let dateStr = anime.aired?.from || anime.aired?.prop?.from?.string || null;
+      const dateStr =
+        anime.startedAt ||
+        anime.aired?.from ||
+        anime.aired?.prop?.from?.string;
+
       let key = "Unknown";
+
       if (dateStr) {
-        const date = new Date(dateStr);
-        if (!isNaN(date)) {
-          const month = date.toLocaleString("default", { month: "long" });
-          const year = date.getFullYear();
-          key = `${month} ${year}`;
+        const d = new Date(dateStr);
+        if (!isNaN(d)) {
+          const month = d.toLocaleString("default", {
+            month: "long",
+          });
+          key = `${month} ${d.getFullYear()}`;
         }
       }
+
       if (!groups[key]) groups[key] = [];
       groups[key].push(anime);
     });
 
-    // Sort groups by date descending
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       if (a === "Unknown") return 1;
       if (b === "Unknown") return -1;
-      const da = new Date(a);
-      const db = new Date(b);
-      return db - da;
+      return new Date(b) - new Date(a);
     });
 
     return { groups, sortedKeys };
   }, [filteredAnime]);
 
+  /* ================= UI ================= */
   return (
-    <div className="flex h-screen bg-[var(--bg-color)] text-[var(--text-color)] font-sans">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-[var(--bg-color)] text-[var(--text-color)]">
+      {/* ---------- Sidebar ---------- */}
       {(isSidebarOpen || !isMobile) && (
         <aside
-          className={`bg-[var(--bg-color)] p-4 flex-shrink-0 rounded-r-xl transition-all text-[var(--primary-color)] ${
-            isMobile
-              ? "fixed top-0 left-0 h-full w-full z-50 shadow-lg"
-              : "h-48 w-48"
-          }`}
+          className={`bg-[var(--panel-bg)] p-4 flex-shrink-0
+          ${isMobile ? "fixed inset-0 z-50" : "w-56"}`}
         >
           {isMobile && (
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="absolute top-4 right-4 text-xl font-bold"
+              className="absolute top-4 right-4 text-xl"
             >
               ✕
             </button>
           )}
-          <h2 className="text-lg font-semibold mb-4">Filters</h2>
-          <ul className="flex flex-col gap-2">
-            {globalFilters.map((f) => (
+
+          <h2 className="text-lg font-semibold mb-4">Browse</h2>
+
+          <ul className="space-y-2">
+            {FILTERS.map((f) => (
               <li key={f}>
                 <button
                   onClick={() => {
                     setFilter(f);
                     if (isMobile) setIsSidebarOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded transition text-md ${
-                    filter === f
-                      ? "bg-[var(--primary-color)] text-white"
-                      : "hover:shadow-md"
-                  }`}
+                  className={`w-full px-4 py-2 rounded-lg text-left transition
+                    ${
+                      filter === f
+                        ? "bg-[var(--primary-color)] text-white"
+                        : "hover:bg-white/5"
+                    }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
@@ -141,43 +162,58 @@ const WatchlistPage = () => {
 
       {isMobile && isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40"
+          className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col h-full">
-        <header className="flex items-center justify-between p-4 shadow-md">
-          <h1 className="text-2xl font-bold">Watchlist</h1>
+      {/* ---------- Main ---------- */}
+      <div className="flex-1 flex flex-col">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div>
+            <h1 className="text-2xl font-bold">Your Watchlist</h1>
+            <p className="text-sm text-gray-400 capitalize">
+              {filter} anime
+            </p>
+          </div>
+
           {isMobile && (
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="bg-[var(--primary-color)] p-[6px] rounded-full text-white text-xl shadow-md hover:opacity-90 transition"
+              className="bg-[var(--primary-color)] p-2 rounded-full"
             >
               <SlidersHorizontal size={18} />
             </button>
           )}
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 space-y-10">
+        <main className="flex-1 overflow-y-auto px-6 py-8">
           {loading ? (
-            <div className="text-center py-10">
-              <PageLoader />
+            <PageLoader />
+          ) : groupedAnime.sortedKeys.length ? (
+            <div className="space-y-16 max-w-7xl mx-auto">
+              {groupedAnime.sortedKeys.map((key) => (
+                <section key={key}>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-[var(--primary-color)]">
+                      {key}
+                    </h2>
+                    <div className="h-px bg-white/10 mt-2" />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {groupedAnime.groups[key].map((anime) => (
+                      <AnimeCard
+                        key={anime.mal_id}
+                        anime={anime}
+                        compact
+                        showStatusBadge
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
             </div>
-          ) : groupedAnime.sortedKeys.length > 0 ? (
-            groupedAnime.sortedKeys.map((groupKey) => (
-              <section key={groupKey} className="space-y-3">
-                <h2 className="text-lg font-semibold text-[var(--primary-color)] border-b pb-2">
-                  {groupKey}
-                </h2>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-                  {groupedAnime.groups[groupKey].map((anime) => (
-                    <AnimeCard key={anime.mal_id} anime={anime} showStatusBadge />
-                  ))}
-                </div>
-              </section>
-            ))
           ) : (
             <NoAnimeFound />
           )}

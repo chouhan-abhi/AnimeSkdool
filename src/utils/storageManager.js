@@ -120,6 +120,41 @@ const storageManager = {
     this.set(STORAGE_KEYS.SETTINGS_KEY, { ...current, ...settings });
   },
 
+  // ============================
+  // ▶ STARTED ANIME HELPERS
+  // ============================
+
+  getStartedList() {
+    return this.get(STORAGE_KEYS.STARTED_KEY, []);
+  },
+
+  isInStarted(animeId) {
+    const stored = this.getStartedList();
+    return stored.some((a) => a.mal_id === animeId);
+  },
+
+  addToStarted(anime) {
+    if (!anime?.mal_id) return;
+
+    const stored = this.getStartedList();
+    const exists = stored.some((a) => a.mal_id === anime.mal_id);
+
+    if (exists) return;
+
+    const startedAnime = {
+      ...anime,
+      startedAt: Date.now(), // 🔑 useful for "Continue Watching"
+    };
+
+    this.set(STORAGE_KEYS.STARTED_KEY, [startedAnime, ...stored]);
+  },
+
+  removeFromStarted(animeId) {
+    const stored = this.getStartedList();
+    const updated = stored.filter((a) => a.mal_id !== animeId);
+    this.set(STORAGE_KEYS.STARTED_KEY, updated);
+  },
+
   keys: STORAGE_KEYS,
 };
 

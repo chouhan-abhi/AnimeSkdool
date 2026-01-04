@@ -102,8 +102,8 @@ const AppHome = () => {
             </p>
           ) : (
             results.length > 0 && (
-              <section className="p-4 my-4 w-full bg-gray-900/90 rounded-xl">
-                <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
+              <section className="p-4 my-4 w-full rounded-xl border-1 border-[var(--primary-color)] shadow-md">
+                <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-1">
                   Search Results
                 </h2>
                 <div className="w-full flex flex-wrap justify-start gap-4">
@@ -117,9 +117,9 @@ const AppHome = () => {
 
           {/* Starred Section */}
           {starredAnimes?.length > 0 && (
-            <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
-              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
-                ⭐ Your Starred Animes
+            <section className="p-4 rounded-xl transition-colors mt-8 border-1 border-[var(--primary-color)] shadow-md">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-1">
+                Your Starred Animes
               </h2>
               <div className="w-full flex flex-wrap justify-start gap-4">
                 {starredAnimes.map((anime) => (
@@ -131,9 +131,9 @@ const AppHome = () => {
 
           {/* Watchlist Section */}
           {watchlistAnimes?.length > 0 && (
-            <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
-              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
-                🎬 Your Watchlist
+            <section className="p-4 rounded-xl transition-colors mt-8 border-1 border-[var(--primary-color)] shadow-md">
+              <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-1">
+                Your Watchlist
               </h2>
               <div className="w-full flex flex-wrap justify-start gap-4">
                 {watchlistAnimes.map((anime) => (
@@ -144,9 +144,9 @@ const AppHome = () => {
           )}
 
           {/* Recommendation Section */}
-          <section className="p-4 bg-gray-900/90  rounded-xl bg-surface-variant shadow-sm transition-colors mt-8">
-            <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-3">
-              💡 Anime Recommendations
+          <section className="px-4 py-2 rounded-xl transition-colors mt-8 border-1 border-[var(--primary-color)] shadow-md">
+            <h2 className="text-lg font-semibold text-[var(--primary-color)]">
+              Anime Recommendations
             </h2>
             <Suspense fallback={<GridLoader count={4} className="py-2" />}>
               <RecommendationSection />
@@ -156,11 +156,11 @@ const AppHome = () => {
 
         {/* =================== RIGHT SIDEBAR =================== */}
         <aside
-          className="w-full rounded-2xl bg-gray-900/90 shadow-sm bg-surface p-5 flex flex-col text-left transition-colors
-             mr-4 lg:mr-6 xl:mr-8" // 👈 Added responsive right margin
+          className="w-full rounded-2xl bg-surface p-2 flex flex-col text-left border-1 border-[var(--primary-color)] transition-colors
+             mr-2 lg:mr-2 xl:mr-2" // 👈 Added responsive right margin
         >
-          <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-4">
-            🗨️ Recent Anime Reviews
+          <h2 className="text-lg font-semibold text-[var(--primary-color)] mb-1">
+            Recent Anime Reviews
           </h2>
           <Suspense fallback={<MiniLoader text="Loading reviews..." />}>
             <AnimeReview />

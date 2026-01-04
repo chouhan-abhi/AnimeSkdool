@@ -44,6 +44,10 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   useEffect(() => {
     if (anime?.mal_id) {
       setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
+      
+      if (!storageManager.isInStarted(anime.mal_id)) {
+        storageManager.addToStarted(anime);
+      }
     }
   }, [anime?.mal_id]);
 
@@ -551,14 +555,14 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
 
               {/* Score badge on image */}
               {anime.score && (
-                <div className="absolute top-3 right-14 md:right-3 bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-lg text-sm shadow-lg">
+                <div className="absolute top-3 left-20 bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-full text-sm shadow-lg">
                   ⭐ {anime.score}
                 </div>
               )}
 
               {/* Rank badge */}
               {anime.rank && (
-                <div className="absolute top-3 left-3 bg-[var(--primary-color)] text-white font-bold px-3 py-1.5 rounded-lg text-sm shadow-lg">
+                <div className="absolute top-3 left-3 bg-[var(--primary-color)] text-white font-bold px-3 py-1.5 rounded-full text-sm shadow-lg">
                   #{anime.rank}
                 </div>
               )}
