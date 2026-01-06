@@ -5,7 +5,6 @@ import CalendarView from "./components/CalendarComponent/CalendarView";
 import AppHome from "./components/AppHome";
 import SettingsPage from "./components/SettingsPage";
 import ExploreHome from "./components/explore/ExploreHome";
-import storageManager from "./utils/storageManager";
 
 const App = () => {
   // ✅ Initialize active view from sessionStorage

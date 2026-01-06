@@ -146,10 +146,9 @@ const WatchlistPage = () => {
                     if (isMobile) setIsSidebarOpen(false);
                   }}
                   className={`w-full px-4 py-2 rounded-lg text-left transition
-                    ${
-                      filter === f
-                        ? "bg-[var(--primary-color)] text-white"
-                        : "hover:bg-white/5"
+                    ${filter === f
+                      ? "bg-[var(--primary-color)] text-white"
+                      : "hover:bg-white/5"
                     }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -191,28 +190,45 @@ const WatchlistPage = () => {
           {loading ? (
             <PageLoader />
           ) : groupedAnime.sortedKeys.length ? (
-            <div className="space-y-16 max-w-7xl mx-auto">
-              {groupedAnime.sortedKeys.map((key) => (
-                <section key={key}>
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-[var(--primary-color)]">
-                      {key}
-                    </h2>
-                    <div className="h-px bg-white/10 mt-2" />
-                  </div>
+            <div className="max-w-7xl">
+              {groupedAnime.sortedKeys.map((key) => {
+                const items = groupedAnime.groups[key];
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {groupedAnime.groups[key].map((anime) => (
-                      <AnimeCard
-                        key={anime.mal_id}
-                        anime={anime}
-                        compact
-                        showStatusBadge
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
+                return (
+                  <section
+                    key={key}
+                    className="
+                      rounded-2xl p-6
+                      bg-white/[0.02]
+                      shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_12px_40px_-20px_var(--primary-color)]
+                    "
+                  >
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-5">
+                      <h2 className="text-lg font-semibold text-[var(--primary-color)]">
+                        {key}
+                      </h2>
+
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                        {items.length}
+                      </span>
+                    </div>
+
+                    {/* Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                      {items.map((anime) => (
+                        <AnimeCard
+                          key={anime.mal_id}
+                          anime={anime}
+                          compact
+                          showStatusBadge
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+
             </div>
           ) : (
             <NoAnimeFound />

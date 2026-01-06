@@ -44,7 +44,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   useEffect(() => {
     if (anime?.mal_id) {
       setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
-      
+
       if (!storageManager.isInStarted(anime.mal_id)) {
         storageManager.addToStarted(anime);
       }
@@ -524,7 +524,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       id="anime-details-backdrop"
       open
       className="
-  fixed inset-0 z-[9999] m-0 p-0 max-w-none max-h-none w-full h-full bg-[var(--bg-color)] text-[var(--text-color)]"
+  fixed inset-0 z-[9999] m-0 p-0 max-w-none max-h-none w-full h-screen overflow-auto bg-[var(--bg-color)] text-[var(--text-color)]"
       onClick={handleBackdropClick}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
@@ -537,11 +537,20 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
         <X size={24} />
       </button>
 
-      {/* Layout Container - Stack on mobile, side-by-side on desktop */}
-      <div className="h-full flex flex-col md:flex-row overflow-hidden">
+      {/* Layout Container */}
+      <div className="flex flex-col md:flex-row md:h-full md:overflow-hidden">
 
-        {/* Image Panel - Top on mobile, Right on desktop */}
-        <div className="relative h-[35vh] md:h-full md:flex-1 md:order-2 flex-shrink-0 overflow-hidden">
+        {/* Image Panel */}
+        <div
+          className="
+            relative
+            h-[35vh]
+            md:h-full
+            md:flex-1
+            md:order-2
+            overflow-hidden
+          "
+        >
           {imgUrl && (
             <>
               <img
@@ -552,31 +561,22 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
               />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent md:bg-gradient-to-l md:from-black/60 md:via-transparent md:to-transparent" />
-
-              {/* Score badge on image */}
-              {anime.score && (
-                <div className="absolute top-3 left-20 bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-full text-sm shadow-lg">
-                  ⭐ {anime.score}
-                </div>
-              )}
-
-              {/* Rank badge */}
-              {anime.rank && (
-                <div className="absolute top-3 left-3 bg-[var(--primary-color)] text-white font-bold px-3 py-1.5 rounded-full text-sm shadow-lg">
-                  #{anime.rank}
-                </div>
-              )}
             </>
           )}
         </div>
 
-        {/* Details Panel - Bottom on mobile, Left on desktop */}
+        {/* Details Panel */}
         <div
-          className="flex-1 md:w-[45%] md:max-w-[800px] md:order-1 overflow-y-auto
-    text-[var(--text-primary)]
-    bg-[var(--panel-bg)]
-  "
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="
+            flex-1
+            md:w-[45%]
+            md:max-w-[800px]
+            md:order-1
+            text-[var(--text-primary)]
+            bg-[var(--panel-bg)]
+            md:overflow-y-auto
+            "
+          style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className="p-4 md:p-6 pb-20 md:pb-6">
             <DetailsContent />
