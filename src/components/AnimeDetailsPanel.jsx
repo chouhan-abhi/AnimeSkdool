@@ -42,12 +42,8 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
 
   // Update watchlist status when anime changes
   useEffect(() => {
-    if (anime?.mal_id) {
-      setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
-
-      if (!storageManager.isInStarted(anime.mal_id)) {
-        storageManager.addToStarted(anime);
-      }
+    if (anime?.mal_id && !storageManager.isInStarted(anime.mal_id)) {
+      storageManager.addToStarted(anime);
     }
   }, [anime?.mal_id]);
 
