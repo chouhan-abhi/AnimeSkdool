@@ -1,12 +1,19 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&family=Baloo+2&family=Fredoka+One&family=Press+Start+2P&display=swap');
 
 
 :root {
-  --primary-color: #ff6b6b;
+  --primary-color: #9b5de5;
   --bg-color: #ffffff;
+  --panel-bg: #f6f4fb;
+  --surface-1: #f9f7ff;
+  --surface-2: #ffffff;
   --text-color: #1a1a1a;
-  --font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --text-muted: #6b6b6b;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --glow-color: rgba(155, 93, 229, 0.35);
+  --bg-gradient: linear-gradient(180deg, #ffffff 0%, #f7f4ff 100%);
+  --font-family: "Rajdhani", system-ui, Avenir, Helvetica, Arial, sans-serif;
 
   --primary-red: #ff6b6b;
   --primary-blue: #4dabf7;
@@ -20,20 +27,58 @@
 
 .theme-dark {
   --bg-color: #121212;
+  --panel-bg: #181818;
+  --surface-1: #1b1b1b;
+  --surface-2: #202020;
   --text-color: #f5f5f5;
+  --text-muted: #b5b5b5;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --glow-color: rgba(255, 107, 107, 0.35);
+  --bg-gradient: radial-gradient(1200px 800px at 10% -10%, #1f1a2d 0%, #121212 45%, #0b0b10 100%);
   --primary-color: #ff6b6b;
 }
 
 .theme-light {
   --bg-color: #ffffff;
+  --panel-bg: #f6f4fb;
+  --surface-1: #f9f7ff;
+  --surface-2: #ffffff;
   --text-color: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --glow-color: rgba(155, 93, 229, 0.3);
+  --bg-gradient: linear-gradient(180deg, #ffffff 0%, #f7f4ff 100%);
   --primary-color: #ff6b6b;
 }
 
 .theme-saint {
   --bg-color: #2e3440;   /* Nord palette */
+  --panel-bg: #343c4a;
+  --surface-1: #3b4252;
+  --surface-2: #434c5e;
   --text-color: #d8dee9;
+  --text-muted: #a6b0bf;
+  --border-color: rgba(216, 222, 233, 0.12);
+  --shadow-color: rgba(0, 0, 0, 0.35);
+  --glow-color: rgba(136, 192, 208, 0.35);
+  --bg-gradient: radial-gradient(1200px 800px at 10% -10%, #3c4557 0%, #2e3440 50%, #232833 100%);
   --primary-color: #88c0d0;
+}
+
+.theme-hub {
+  --bg-color: #0f0b14;
+  --panel-bg: rgba(27, 21, 35, 0.9);
+  --surface-1: rgba(28, 22, 38, 0.9);
+  --surface-2: rgba(34, 26, 48, 0.95);
+  --text-color: #f3eefe;
+  --text-muted: #c3b6d8;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --glow-color: rgba(155, 93, 229, 0.5);
+  --bg-gradient: radial-gradient(1200px 800px at 10% -10%, #2f1a45 0%, #140c1f 55%, #0b0712 100%);
+  --primary-color: #a855f7;
 }
 
 /* ===================== */
@@ -41,7 +86,7 @@
 /* ===================== */
 
 .font-basic {
-  --font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family: "Rajdhani", system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .font-funky {
@@ -72,7 +117,7 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-color);
+  background: var(--bg-gradient, var(--bg-color));
   color: var(--text-color);
   transition: background-color 0.3s ease,
               color 0.3s ease,

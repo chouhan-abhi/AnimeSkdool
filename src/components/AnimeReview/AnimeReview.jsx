@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Star, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
 
-const AnimeReviews = ({ animeId }) => {
+const AnimeReviews = ({ animeId, onSelectAnime }) => {
   const [reviews, setReviews] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [loading, setLoading] = useState(false);
@@ -24,14 +24,14 @@ const AnimeReviews = ({ animeId }) => {
 
   if (loading)
     return (
-      <div className="text-gray-400 text-center p-8 animate-pulse">
+      <div className="text-[var(--text-muted)] text-center p-8 animate-pulse">
         Loading reviews...
       </div>
     );
 
   if (!reviews.length)
     return (
-      <div className="text-gray-500 text-center p-8">
+      <div className="text-[var(--text-muted)] text-center p-8">
         No reviews available yet.
       </div>
     );
@@ -41,7 +41,7 @@ const AnimeReviews = ({ animeId }) => {
 
   return (
     // ✅ Scrollable fixed-height container
-    <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
       {reviews.map((review) => {
         const user = review.user;
         const entry = review.entry;
@@ -54,20 +54,20 @@ const AnimeReviews = ({ animeId }) => {
         return (
           <div
             key={review.mal_id}
-            className="bg-gray-900/70 border border-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden"
+            className="bg-[var(--surface-2)]/70 border border-[var(--border-color)] rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] hover:shadow-[0_24px_70px_-45px_var(--glow-color)] transition-all duration-300 overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b border-gray-800">
+            <div className="flex items-center gap-3 p-4 border-b border-[var(--border-color)]">
               <img
                 src={user?.images?.jpg?.image_url}
                 alt={user?.username}
                 className="w-10 h-10 rounded-full object-cover"
               />
               <div className="flex-1">
-                <p className="text-sm text-gray-200 font-medium">
+                <p className="text-sm text-[var(--text-color)] font-medium">
                   {user?.username}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[var(--text-muted)]">
                   {new Date(review.date).toLocaleDateString()}
                 </p>
               </div>
@@ -80,7 +80,11 @@ const AnimeReviews = ({ animeId }) => {
             </div>
 
             {/* Anime Info */}
-            <div className="flex flex-col sm:flex-row gap-3 p-4 bg-gray-800/40">
+            <button
+              type="button"
+              onClick={() => onSelectAnime?.(entry)}
+              className="flex flex-col sm:flex-row gap-3 p-4 bg-white/5 text-left"
+            >
               <img
                 src={
                   entry?.images?.webp?.image_url ||
@@ -90,14 +94,14 @@ const AnimeReviews = ({ animeId }) => {
                 className="w-full sm:w-24 sm:h-32 object-cover rounded-lg"
               />
               <div className="flex-1">
-                <h3 className="text-white font-semibold text-base mb-1">
+                <h3 className="text-[var(--text-color)] font-semibold text-base mb-1 line-clamp-2 min-h-[2.5rem]">
                   {entry?.title}
                 </h3>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {review.tags?.map((tag, i) => (
                     <span
                       key={i}
-                      className="text-[10px] uppercase px-2 py-[2px] bg-red-500/20 text-red-400 rounded-full"
+                      className="text-[10px] uppercase px-2 py-[2px] bg-[var(--primary-color)]/20 text-[var(--primary-color)] rounded-full"
                     >
                       {tag}
                     </span>
@@ -109,14 +113,14 @@ const AnimeReviews = ({ animeId }) => {
                   )}
                 </div>
 
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                <p className="text-[var(--text-muted)] text-sm leading-relaxed whitespace-pre-line">
                   {text}
                 </p>
 
                 {review.review.length > 400 && (
                   <button
                     onClick={() => toggleExpand(review.mal_id)}
-                    className="flex items-center gap-1 mt-2 text-blue-400 text-xs hover:text-blue-300 transition-colors"
+                    className="flex items-center gap-1 mt-2 text-[var(--primary-color)] text-xs hover:opacity-90 transition-colors"
                   >
                     {isExpanded ? (
                       <>
@@ -130,10 +134,10 @@ const AnimeReviews = ({ animeId }) => {
                   </button>
                 )}
               </div>
-            </div>
+            </button>
 
             {/* Footer */}
-            <div className="flex flex-wrap justify-between items-center text-xs text-gray-500 px-4 py-3 border-t border-gray-800">
+            <div className="flex flex-wrap justify-between items-center text-xs text-[var(--text-muted)] px-4 py-3 border-t border-[var(--border-color)]">
               <div className="flex gap-4">
                 <span className="flex items-center gap-1">
                   <MessageSquareText size={12} />
@@ -144,7 +148,7 @@ const AnimeReviews = ({ animeId }) => {
                 href={review.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
+                className="text-[var(--primary-color)] hover:underline"
               >
                 View on MAL
               </a>

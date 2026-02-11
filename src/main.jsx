@@ -37,7 +37,7 @@ const applySavedSettings = () => {
 
     if (saved?.theme) {
       // Remove old theme classes
-      root.classList.remove("theme-light", "theme-dark", "theme-saint");
+      root.classList.remove("theme-light", "theme-dark", "theme-saint", "theme-hub");
       root.classList.add(saved.theme);
     }
 

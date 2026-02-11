@@ -54,7 +54,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
         aria-label={`View details for ${anime.title}`}
       >
 
-        <div className="relative flex items-center gap-2 p-2 bg-[var(--bg-color)]">
+        <div className="relative flex items-center gap-2 p-2 bg-white/5">
         <div className="relative flex-shrink-0">
           <img
             src={image}
@@ -69,7 +69,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
               e.stopPropagation();
               onToggleStar?.();
             }}
-            className="absolute top-1 right-1 bg-[var(--bg-color)] rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform border border-[var(--text-color)]/20"
+            className="absolute top-1 right-1 bg-white/10 rounded-full p-[2px] text-yellow-400 hover:scale-110 transition-transform border border-[var(--border-color)]"
           >
             <Star
               size={13}
@@ -154,7 +154,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="h-[82vh] bg-[var(--bg-color)] border border-[var(--text-color)]/10 rounded-xl shadow-lg p-3 relative flex flex-col overflow-hidden">
+    <div className="h-[82vh] bg-[var(--surface-1)]/70 border border-[var(--border-color)] rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] p-3 relative flex flex-col overflow-hidden">
       {/* Inline animation keyframes */}
       <style>
         {`
@@ -168,7 +168,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
         `}
       </style>
 
-      <h3 className="text-base font-semibold text-[var(--text-color)] mb-3 border-b border-[var(--text-color)]/20 pb-1 text-center">
+      <h3 className="text-base font-semibold text-white mb-3 border-b border-[var(--border-color)] pb-1 text-center">
         {day}
       </h3>
 
@@ -220,7 +220,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
         <button
           type="button"
           onClick={() => onSelectAnime?.(nowOrNext)}
-          className="fixed bottom-4 left-4 right-4 bg-red-500 text-white rounded-md shadow-lg p-2.5 flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.01]"
+          className="fixed bottom-4 left-4 right-4 bg-[var(--primary-color)] text-white rounded-full shadow-[0_0_24px_var(--glow-color)] p-2.5 flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.01]"
           aria-label={`View ${nowOrNext.status} anime: ${nowOrNext.title}`}
         >
           <img

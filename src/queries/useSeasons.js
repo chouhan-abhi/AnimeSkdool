@@ -5,8 +5,8 @@ const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i
 const MAX_PAGES = isMobile ? 4 : 10;
 
 // GET seasons list (years and seasons)
-const fetchSeasonsList = async () => {
-  const res = await fetch("https://api.jikan.moe/v4/seasons");
+const fetchSeasonsList = async ({ signal }) => {
+  const res = await fetch("https://api.jikan.moe/v4/seasons", { signal });
   if (!res.ok) throw new Error("Failed to fetch seasons list");
   const json = await res.json();
   return json.data;
@@ -24,7 +24,7 @@ export const useSeasonsList = () => {
 };
 
 // GET anime by specific season with pagination
-const fetchSeasonAnime = async ({ pageParam = 1, queryKey }) => {
+const fetchSeasonAnime = async ({ pageParam = 1, queryKey, signal }) => {
   const [_key, params] = queryKey;
   const { year, season, sfw } = params;
 
@@ -32,7 +32,7 @@ const fetchSeasonAnime = async ({ pageParam = 1, queryKey }) => {
   search.set("page", String(pageParam));
   if (sfw !== undefined) search.set("sfw", String(sfw));
 
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/${year}/${season}?${search}`);
+  const res = await fetch(`https://api.jikan.moe/v4/seasons/${year}/${season}?${search}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch season anime");
   const json = await res.json();
   return json;
@@ -56,5 +56,4 @@ export const useInfiniteSeasonAnime = (params) => {
     refetchOnMount: isMobile ? 'always' : true,
   });
 };
-
 

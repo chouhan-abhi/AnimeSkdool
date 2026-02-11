@@ -107,9 +107,9 @@ const storageManager = {
   // ✅ Get settings
   getSettings() {
     return this.get(STORAGE_KEYS.SETTINGS_KEY, {
-      theme: "theme-light",
+      theme: "theme-hub",
       font: "font-basic",
-      primaryColor: "primary-red",
+      primaryColor: "primary-purple",
       calendarView: "week",
     });
   },

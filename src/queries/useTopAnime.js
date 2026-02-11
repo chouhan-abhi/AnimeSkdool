@@ -12,14 +12,14 @@ const isMobile =
  * Query: type, filter, rating, sfw, page, limit
  * filter: "airing" | "upcoming" | "bypopularity" | "favorite"
  */
-const fetchTopAnime = async ({ filter = "airing", limit = 1, page = 1, sfw = true } = {}) => {
+const fetchTopAnime = async ({ filter = "airing", limit = 1, page = 1, sfw = true, signal } = {}) => {
     const params = new URLSearchParams();
     params.set("filter", filter);
     if (limit != null) params.set("limit", String(limit));
     params.set("page", String(page));
     if (sfw !== undefined) params.set("sfw", String(sfw));
 
-    const res = await fetch(`${BASE}/top/anime?${params}`);
+    const res = await fetch(`${BASE}/top/anime?${params}`, { signal });
     if (!res.ok) throw new Error("Failed to fetch top anime");
     const json = await res.json();
     const data = json?.data ?? [];
@@ -43,7 +43,7 @@ export const useTopAnime = (params = {}) => {
 
     return useQuery({
         queryKey: ["topAnime", { filter, limit, page, sfw }],
-        queryFn: () => fetchTopAnime({ filter, limit, page, sfw }),
+        queryFn: ({ signal }) => fetchTopAnime({ filter, limit, page, sfw, signal }),
         staleTime: isMobile ? 0 : 1000 * 60 * 5,
         gcTime: isMobile ? 0 : 1000 * 60 * 30,
         retry: 1,

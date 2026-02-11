@@ -8,7 +8,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar }) => {
   return (
     <li
       onClick={() => onSelect?.(anime)}
-      className={`relative overflow-hidden rounded-xl shadow-md cursor-pointer transition-all duration-200 group ${
+      className={`relative overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white/5 shadow-[0_18px_60px_-40px_var(--shadow-color)] cursor-pointer transition-all duration-200 group ${
         isOngoing ? "ring-2 ring-red-500 scale-[1.02]" : "hover:scale-[1.01]"
       }`}
     >

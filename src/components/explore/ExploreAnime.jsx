@@ -1,4 +1,13 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useDeferredValue,
+} from "react";
+import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
+import { useQueryClient } from "@tanstack/react-query";
 import { useInfiniteAnimeRanking } from "../../queries/useInfiniteAnimeRanking";
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
 import { GridLoader, LoadingMore } from "../../helperComponent/PageLoader";
@@ -27,20 +36,20 @@ const usePersistedState = (key, defaultValue) => {
 const SearchBar = ({ value, onChange }) => (
   <div className="mb-6">
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-color)]/60" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
       <input
         type="text"
         placeholder="Search anime..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-10 pr-3 py-3 rounded-lg bg-[var(--bg-color)]/80 text-[var(--text-color)] text-sm shadow-inner border border-[var(--text-color)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 transition"
+        className="w-full pl-10 pr-3 py-3 rounded-full bg-white/10 text-white text-sm shadow-inner border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 transition"
       />
     </div>
   </div>
 );
 
 const ViewModeToggle = ({ viewMode, setViewMode }) => (
-  <div className="mt-6 border border-[var(--text-color)]/20 flex bg-[var(--bg-color)]/50 rounded-full shadow-md">
+  <div className="mt-6 border border-[var(--border-color)] flex bg-white/5 rounded-full shadow-md">
     {[
       { mode: "grid", icon: Grid, title: "Grid view" },
       { mode: "list", icon: List, title: "List view" },
@@ -50,8 +59,8 @@ const ViewModeToggle = ({ viewMode, setViewMode }) => (
         onClick={() => setViewMode(mode)}
         className={`p-2 rounded-full flex-1 flex justify-center transition ${
           viewMode === mode
-            ? "bg-[var(--primary-color)] text-white shadow-md"
-            : "text-[var(--text-color)] hover:shadow-sm hover:bg-[var(--bg-color)]/80"
+            ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
+            : "text-white/70 hover:shadow-sm hover:bg-white/10"
         }`}
         title={title}
       >
@@ -75,9 +84,9 @@ const Sidebar = ({
   viewMode,
   setViewMode,
 }) => (
-  <aside className="w-72 bg-[var(--bg-color)]/90 p-4 sticky top-0 h-screen overflow-y-auto shadow-lg rounded-r-xl border-r border-[var(--text-color)]/10">
+  <aside className="w-72 bg-[var(--panel-bg)]/90 p-4 sticky top-0 h-screen overflow-y-auto shadow-lg rounded-r-2xl border-r border-[var(--border-color)]">
     <SearchBar value={searchQuery} onChange={setSearchQuery} />
-    <div className="rounded-xl bg-[var(--bg-color)]/60 shadow-md p-3">
+    <div className="rounded-2xl bg-white/5 shadow-md p-3 border border-[var(--border-color)]">
       <ExploreFilters
         embedded
         isMobile={false}
@@ -98,24 +107,24 @@ const Sidebar = ({
 );
 
 const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
-  <div className="sticky top-0 z-10 bg-[var(--bg-color)]">
+  <div className="sticky top-0 z-10 bg-[var(--panel-bg)]/90 backdrop-blur">
     <div className="flex items-center justify-between px-4 py-1">
       <div className="flex items-center gap-2">
         <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
-        <h2 className="text-lg font-semibold text-[var(--text-color)]">Explore Anime</h2>
+        <h2 className="text-lg font-semibold text-white">Explore Anime</h2>
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={onOpenSidebar}
           className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
-          <Menu className="w-5 h-5 text-[var(--text-color)]/60" />
+          <Menu className="w-5 h-5 text-white/60" />
         </button>
         <button
           onClick={onRefresh}
           className="p-2 rounded-full hover:text-[var(--primary-color)]"
         >
-          <RefreshCw className="w-5 h-5 text-[var(--text-color)]/60" />
+          <RefreshCw className="w-5 h-5 text-white/60" />
         </button>
       </div>
     </div>
@@ -123,20 +132,34 @@ const MobileHeader = ({ onOpenSidebar, onRefresh }) => (
 );
 
 /* -------------------- MAIN COMPONENT -------------------- */
-const ExploreAnime = () => {
+const ExploreAnime = ({ embedded = false, externalState = null }) => {
   // Persisted filters - using storageManager keys
-  const [type, setType] = usePersistedState(storageManager.keys.type, "");
-  const [filter, setFilter] = usePersistedState(storageManager.keys.filter, "bypopularity");
-  const [rating, setRating] = usePersistedState(storageManager.keys.rating, "");
-  const [sfw, setSfw] = usePersistedState(storageManager.keys.sfw, "true");
+  const [typeState, setTypeState] = usePersistedState(storageManager.keys.type, "");
+  const [filterState, setFilterState] = usePersistedState(storageManager.keys.filter, "bypopularity");
+  const [ratingState, setRatingState] = usePersistedState(storageManager.keys.rating, "");
+  const [sfwState, setSfwState] = usePersistedState(storageManager.keys.sfw, "true");
 
   const isMobile = useResponsive();
   const [showSidebar, setShowSidebar] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [viewModeState, setViewModeState] = useState("grid");
+  const [searchQueryState, setSearchQueryState] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const observerRef = useRef(null);
+  const scrollParentRef = useRef(null);
+  const queryClient = useQueryClient();
+
+  const type = externalState?.type ?? typeState;
+  const setType = externalState?.setType ?? setTypeState;
+  const filter = externalState?.filter ?? filterState;
+  const setFilter = externalState?.setFilter ?? setFilterState;
+  const rating = externalState?.rating ?? ratingState;
+  const setRating = externalState?.setRating ?? setRatingState;
+  const sfw = externalState?.sfw ?? sfwState;
+  const setSfw = externalState?.setSfw ?? setSfwState;
+  const searchQuery = externalState?.searchQuery ?? searchQueryState;
+  const setSearchQuery = externalState?.setSearchQuery ?? setSearchQueryState;
+  const viewMode = externalState?.viewMode ?? viewModeState;
+  const setViewMode = externalState?.setViewMode ?? setViewModeState;
 
   // Fetch data
   const { data, error, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
@@ -148,41 +171,29 @@ const ExploreAnime = () => {
     if (animeList.length > 0 && isInitialLoad) setIsInitialLoad(false);
   }, [animeList.length, isInitialLoad]);
 
-  // Cleanup IntersectionObserver on unmount
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
-  }, []);
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["animeRankingInfinite"] });
+  };
 
-  // Infinite scroll
-  const lastElementRef = useCallback(
-    (node) => {
-      if (isFetchingNextPage) return;
-      if (observerRef.current) observerRef.current.disconnect();
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) fetchNextPage();
-      });
-      if (node) observerRef.current.observe(node);
-    },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
-  );
+  const deferredSearch = useDeferredValue(searchQuery);
 
-  const handleRefresh = () => window.location.reload();
+  const filteredAnimeList = useMemo(() => {
+    const query = deferredSearch.trim().toLowerCase();
+    if (!query) return animeList;
+    return animeList.filter((anime) => {
+      const title = anime.title?.toLowerCase() || "";
+      const titleEnglish = anime.title_english?.toLowerCase() || "";
+      return title.includes(query) || titleEnglish.includes(query);
+    });
+  }, [animeList, deferredSearch]);
 
-  const filteredAnimeList = animeList.filter((anime) =>
-    searchQuery === ""
-      ? true
-      : anime.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        anime.title_english?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <div className="flex h-full bg-[var(--bg-color)] transition-colors">
-      {!isMobile && (
+    <div className={`flex h-full bg-[var(--bg-color)] transition-colors ${embedded ? "rounded-2xl" : ""}`}>
+      {!embedded && !isMobile && (
         <Sidebar
           type={type}
           setType={setType}
@@ -199,46 +210,57 @@ const ExploreAnime = () => {
         />
       )}
 
-      <main className="flex-1 overflow-y-auto">
-        {isMobile && (
+      <main
+        ref={scrollParentRef}
+        className={`flex-1 overflow-y-auto flex flex-col min-h-0 ${embedded ? "p-0" : ""}`}
+      >
+        {!embedded && isMobile && (
           <MobileHeader
             onOpenSidebar={() => setShowSidebar(true)}
             onRefresh={handleRefresh}
           />
         )}
 
-        <div className="p-4 md:p-6">
+        <div className={`${embedded ? "p-0" : "p-4 md:p-6"} flex-1 min-h-0`}>
           {isInitialLoad && isLoading && <GridLoader count={6} />}
 
           {!isLoading && !error && (
-            <div
-              className={`grid gap-4 md:gap-6 ${
-                viewMode === "grid"
-                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                  : "grid-cols-1"
-              }`}
-            >
-              {filteredAnimeList.map((anime, idx) => {
-                const isLastItem = filteredAnimeList.length === idx + 1;
-                return (
-                  <div
-                    key={anime.mal_id}
-                    ref={isLastItem ? lastElementRef : null}
-                    className="rounded-xl overflow-hidden shadow-sm bg-[var(--bg-color)]/50 hover:shadow-lg hover:scale-[1.01] transition"
-                  >
-                    <AnimeDetailCard anime={anime} />
-                  </div>
-                );
-              })}
-            </div>
+            <>
+              {viewMode === "grid" ? (
+                <VirtuosoGrid
+                  data={filteredAnimeList}
+                  endReached={handleEndReached}
+                  customScrollParent={scrollParentRef.current || undefined}
+                  listClassName="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  itemKey={(_index, anime) => anime.mal_id}
+                  itemContent={(_index, anime) => (
+                    <div className="rounded-xl overflow-hidden shadow-sm bg-[var(--bg-color)]/50 hover:shadow-lg hover:scale-[1.01] transition">
+                      <AnimeDetailCard anime={anime} />
+                    </div>
+                  )}
+                />
+              ) : (
+                <Virtuoso
+                  data={filteredAnimeList}
+                  endReached={handleEndReached}
+                  customScrollParent={scrollParentRef.current || undefined}
+                  itemKey={(_index, anime) => anime.mal_id}
+                  itemContent={(_index, anime) => (
+                    <div className="rounded-xl overflow-hidden shadow-sm bg-[var(--bg-color)]/50 hover:shadow-lg hover:scale-[1.01] transition mb-4">
+                      <AnimeDetailCard anime={anime} />
+                    </div>
+                  )}
+                />
+              )}
+            </>
           )}
-          
+
           {isFetchingNextPage && <LoadingMore />}
         </div>
       </main>
 
       {/* Mobile Sidebar */}
-      {isMobile && showSidebar && (
+      {!embedded && isMobile && showSidebar && (
         <>
           <div
             className="fixed inset-0 bg-black/40 z-[70]"

@@ -9,19 +9,17 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "bash deploy.sh",
-    "deploy:surge": "npm run build && surge dist skdool.surge.sh"
+    "deploy:surge": "npm run build && surge dist skdool.surge.sh",
+    "analyze": "ANALYZE=true vite build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
-    "@tanstack/query-sync-storage-persister": "^5.85.5",
     "@tanstack/react-query": "^5.85.5",
-    "@tanstack/react-query-persist-client": "^5.85.5",
     "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-responsive-carousel": "^3.2.23",
+    "react-virtuoso": "^4.12.0",
     "tailwindcss": "^4.1.12"
   },
   "devDependencies": {

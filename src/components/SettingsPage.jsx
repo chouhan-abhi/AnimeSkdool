@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Github } from "lucide-react"; // ✅ Import GitHub icon
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
 import storageManager from "../utils/storageManager";
 
@@ -36,7 +35,7 @@ const PreviewWeekCalendar = ({ schedule }) => {
       {days.map((day) => (
         <div
           key={day}
-          className="flex flex-col items-center p-2 rounded-lg bg-[var(--secondary-color)]"
+          className="flex flex-col items-center p-2 rounded-lg bg-white/10"
         >
           <span className="font-semibold">{day}</span>
           <div className="mt-1 text-center">
@@ -115,7 +114,8 @@ const SettingsPage = () => {
     document.documentElement.classList.remove(
       "theme-light",
       "theme-dark",
-      "theme-saint"
+      "theme-saint",
+      "theme-hub"
     );
     document.documentElement.classList.add(theme);
 
@@ -145,43 +145,43 @@ const SettingsPage = () => {
   }, [theme, font, calendarView, primaryColor]);
 
   const resetSettings = () => {
-    setTheme("theme-light");
+    setTheme("theme-hub");
     setFont("font-basic");
-    setPrimaryColor("primary-red");
+    setPrimaryColor("primary-purple");
     setCalendarView("week");
   };
 
   return (
-    <div className="h-full bg-[var(--bg-color)] text-[var(--text-color)] flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] flex flex-col">
       {/* Header */}
-      <header className="px-4 py-4 border-b border-gray-800 sticky top-0 z-50 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[var(--primary-color)]">
+      <header className="px-6 py-5 border-b border-[var(--border-color)] sticky top-0 z-50 flex justify-between items-center bg-[var(--panel-bg)]/80 backdrop-blur">
+        <h1 className="text-2xl font-bold text-[var(--primary-color)] tracking-wide">
           Settings
         </h1>
         <button
           onClick={resetSettings}
-          className="px-3 py-1 text-sm rounded bg-[var(--primary-color)] hover:opacity-90 transition"
+          className="px-4 py-2 text-sm rounded-full bg-[var(--primary-color)] text-white shadow-[0_0_20px_var(--glow-color)] hover:opacity-90 transition"
         >
           Reset
         </button>
       </header>
 
       {/* Main Layout */}
-      <main className="flex flex-col md:flex-row flex-grow p-4 gap-6 pb-20">
+      <main className="flex flex-col lg:flex-row flex-grow p-6 gap-6 pb-24">
         {/* Controls */}
-        <section className="md:w-1/3 flex flex-col gap-6">
+        <section className="lg:w-1/3 flex flex-col gap-6">
           {/* Theme Selector */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Theme</h2>
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-1)]/70 p-4 shadow-[0_10px_40px_-30px_var(--shadow-color)]">
+            <h2 className="text-lg font-semibold mb-3">Theme</h2>
             <div className="flex gap-2 flex-wrap">
-              {["light", "dark", "saint"].map((t) => (
+              {["hub", "dark", "light", "saint"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTheme(`theme-${t}`)}
-                  className={`px-3 py-1 border rounded transition ${
+                  className={`px-3 py-1.5 border rounded-full text-sm transition ${
                     theme === `theme-${t}`
-                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
-                      : "hover:bg-gray-800 border-gray-600"
+                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_18px_var(--glow-color)]"
+                      : "hover:bg-white/5 border-[var(--border-color)]"
                   }`}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -191,17 +191,17 @@ const SettingsPage = () => {
           </div>
 
           {/* Font Selector */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Font</h2>
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-1)]/70 p-4 shadow-[0_10px_40px_-30px_var(--shadow-color)]">
+            <h2 className="text-lg font-semibold mb-3">Font</h2>
             <div className="flex gap-2 flex-wrap">
               {["basic", "funky", "techy", "cute", "retro"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setFont(`font-${f}`)}
-                  className={`px-3 py-1 border rounded transition ${
+                  className={`px-3 py-1.5 border rounded-full text-sm transition ${
                     font === `font-${f}`
-                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
-                      : "hover:bg-gray-800 border-gray-600"
+                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_18px_var(--glow-color)]"
+                      : "hover:bg-white/5 border-[var(--border-color)]"
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -211,8 +211,8 @@ const SettingsPage = () => {
           </div>
 
           {/* Primary Color Selector */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Primary Color</h2>
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-1)]/70 p-4 shadow-[0_10px_40px_-30px_var(--shadow-color)]">
+            <h2 className="text-lg font-semibold mb-3">Primary Color</h2>
             <div className="flex gap-2 flex-wrap">
               {[
                 "red",
@@ -227,9 +227,9 @@ const SettingsPage = () => {
                 <button
                   key={c}
                   onClick={() => setPrimaryColor(`primary-${c}`)}
-                  className={`w-8 h-8 rounded-full border-2 transition ${
+                  className={`w-9 h-9 rounded-full border-2 transition ${
                     primaryColor === `primary-${c}`
-                      ? "border-[var(--text-color)] scale-110"
+                      ? "border-[var(--text-color)] scale-110 shadow-[0_0_12px_var(--glow-color)]"
                       : "border-transparent"
                   }`}
                   style={{ backgroundColor: `var(--primary-${c})` }}
@@ -239,17 +239,17 @@ const SettingsPage = () => {
           </div>
 
           {/* Calendar View Selector */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Calendar View</h2>
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-1)]/70 p-4 shadow-[0_10px_40px_-30px_var(--shadow-color)]">
+            <h2 className="text-lg font-semibold mb-3">Calendar View</h2>
             <div className="flex gap-2 flex-wrap">
               {["week", "day"].map((view) => (
                 <button
                   key={view}
                   onClick={() => setCalendarView(view)}
-                  className={`px-3 py-1 border rounded transition ${
+                  className={`px-3 py-1.5 border rounded-full text-sm transition ${
                     calendarView === view
-                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]"
-                      : "hover:bg-gray-800 border-gray-600"
+                      ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_18px_var(--glow-color)]"
+                      : "hover:bg-white/5 border-[var(--border-color)]"
                   }`}
                 >
                   {view === "week" ? "Week View" : "Day View"}
@@ -261,22 +261,21 @@ const SettingsPage = () => {
 
         {/* Live Preview */}
         <section
-          className="flex-1 rounded-xl border border-gray-700 p-6 shadow-lg transition-all space-y-4"
-          style={{ background: "var(--bg-color)", color: "var(--text-color)" }}
+          className="flex-1 rounded-3xl border border-[var(--border-color)] bg-[var(--surface-2)]/70 p-6 shadow-[0_18px_60px_-40px_var(--shadow-color)] transition-all space-y-4"
         >
           <h3 className="font-semibold text-xl text-[var(--primary-color)]">
             AniSkdool Preview
           </h3>
-          <div className="p-2 border border-gray-700 rounded-lg flex items-center justify-between">
+          <div className="p-3 border border-[var(--border-color)] rounded-2xl flex items-center justify-between bg-[var(--surface-1)]/70">
             <p className="flex items-center gap-2 justify-center">
               Episode 1:{" "}
               <span className="text-[var(--primary-color)]">The Beginning</span>
             </p>
-            <p className="text-xs text-gray-400">Aired: 01/01/2024 | ⭐ 8.5</p>
+            <p className="text-xs text-[var(--text-muted)]">Aired: 01/01/2024 | ⭐ 8.5</p>
           </div>
 
           {/* Demo Primary Button */}
-          <button className="px-4 text-sm py-2 rounded font-medium shadow-md transition bg-[var(--primary-color)] text-white hover:opacity-90">
+          <button className="px-5 text-sm py-2.5 rounded-full font-medium shadow-[0_0_20px_var(--glow-color)] transition bg-[var(--primary-color)] text-white hover:opacity-90">
             Demo Primary Button
           </button>
           {calendarView === "week" ? (
@@ -287,18 +286,6 @@ const SettingsPage = () => {
         </section>
       </main>
 
-      {/* ✅ Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 px-4 py-3 flex items-center justify-center gap-3 text-sm z-50">
-        <span className="text-gray-400 italic">Made for one anime lover to another 💖</span>
-        <a
-          href="https://github.com/chouhan-abhi/AnimeSkdool"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 px-2 py-1 text-gray-300 hover:text-white transition-colors"
-        >
-          <Github size={16} /> GitHub
-        </a>
-      </footer>
     </div>
   );
 };

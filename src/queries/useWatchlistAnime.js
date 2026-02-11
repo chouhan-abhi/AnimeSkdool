@@ -6,6 +6,6 @@ export const useWatchlistAnime = () => {
     queryKey: ["watchlistAnime"],
     queryFn: () => storageManager.get(storageManager.keys.WATCHLIST_KEY, []),
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 };

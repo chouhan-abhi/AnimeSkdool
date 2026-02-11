@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Play, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, Plus, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import Pill from "./ui/Pill";
+import PrimaryButton from "./ui/PrimaryButton";
 
 const AUTO_ADVANCE_MS = 6000;
 const HERO_CLASS =
     "relative h-[68vh] min-h-[420px] max-h-[820px] w-full overflow-hidden";
+
+const buildSrcSet = (urls, widths) => {
+    const entries = urls
+        .map((url, i) => (url ? `${url} ${widths[i]}w` : null))
+        .filter(Boolean);
+    return entries.length ? entries.join(", ") : undefined;
+};
 
 const HeroCarousel = memo(
     ({
@@ -17,38 +26,60 @@ const HeroCarousel = memo(
         const [heroIndex, setHeroIndex] = useState(0);
         const heroIntervalRef = useRef(null);
 
-        useEffect(() => {
-            if (heroList.length <= 1) return;
+        const stopAutoAdvance = useCallback(() => {
+            if (heroIntervalRef.current) {
+                clearInterval(heroIntervalRef.current);
+                heroIntervalRef.current = null;
+            }
+        }, []);
+
+        const startAutoAdvance = useCallback(() => {
+            if (!visible || heroList.length <= 1 || heroIntervalRef.current) return;
             heroIntervalRef.current = setInterval(() => {
                 setHeroIndex((i) => (i + 1) % heroList.length);
             }, AUTO_ADVANCE_MS);
-            return () => {
-                if (heroIntervalRef.current) clearInterval(heroIntervalRef.current);
+        }, [heroList.length, visible]);
+
+        useEffect(() => {
+            startAutoAdvance();
+            return stopAutoAdvance;
+        }, [startAutoAdvance, stopAutoAdvance]);
+
+        useEffect(() => {
+            if (!visible) stopAutoAdvance();
+        }, [visible, stopAutoAdvance]);
+
+        useEffect(() => {
+            if (heroIndex >= heroList.length) {
+                setHeroIndex(0);
+            }
+        }, [heroIndex, heroList.length]);
+
+        useEffect(() => {
+            const handleVisibility = () => {
+                if (document.hidden) {
+                    stopAutoAdvance();
+                } else {
+                    startAutoAdvance();
+                }
             };
-        }, [heroList.length]);
+            document.addEventListener("visibilitychange", handleVisibility);
+            return () => document.removeEventListener("visibilitychange", handleVisibility);
+        }, [startAutoAdvance, stopAutoAdvance]);
 
         const goToHeroSlide = useCallback((index) => {
             setHeroIndex(index);
-            if (heroIntervalRef.current) clearInterval(heroIntervalRef.current);
-            if (heroList.length > 1) {
-                heroIntervalRef.current = setInterval(() => {
-                    setHeroIndex((i) => (i + 1) % heroList.length);
-                }, AUTO_ADVANCE_MS);
-            }
-        }, [heroList.length]);
+            stopAutoAdvance();
+            startAutoAdvance();
+        }, [startAutoAdvance, stopAutoAdvance]);
 
         const handleMouseEnter = useCallback(() => {
-            if (heroIntervalRef.current) clearInterval(heroIntervalRef.current);
-            heroIntervalRef.current = null;
-        }, []);
+            stopAutoAdvance();
+        }, [stopAutoAdvance]);
 
         const handleMouseLeave = useCallback(() => {
-            if (heroList.length > 1 && !heroIntervalRef.current) {
-                heroIntervalRef.current = setInterval(() => {
-                    setHeroIndex((i) => (i + 1) % heroList.length);
-                }, AUTO_ADVANCE_MS);
-            }
-        }, [heroList.length]);
+            startAutoAdvance();
+        }, [startAutoAdvance]);
 
         if (!visible) return null;
 
@@ -81,23 +112,70 @@ const HeroCarousel = memo(
                     className="flex h-full transition-transform duration-500 ease-out"
                     style={{ transform: `translateX(-${heroIndex * 100}%)` }}
                 >
-                    {heroList.map((anime) => (
+                    {heroList.map((anime, index) => {
+                        const webp = anime.images?.webp || {};
+                        const jpg = anime.images?.jpg || {};
+                        const webpSrcSet = buildSrcSet(
+                            [webp.small_image_url, webp.image_url, webp.large_image_url],
+                            [480, 800, 1200]
+                        );
+                        const jpgSrcSet = buildSrcSet(
+                            [jpg.small_image_url, jpg.image_url, jpg.large_image_url],
+                            [480, 800, 1200]
+                        );
+                        const fallbackSrc =
+                            webp.large_image_url ||
+                            webp.image_url ||
+                            jpg.large_image_url ||
+                            jpg.image_url;
+
+                        return (
                         <div
                             key={anime.mal_id}
                             className="relative flex-shrink-0 w-full h-full"
                         >
-                            <div
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{
-                                    backgroundImage: `url(${anime.images?.jpg?.large_image_url ||
-                                        anime.images?.webp?.image_url ||
-                                        anime.images?.jpg?.image_url
-                                        })`,
-                                }}
-                            />
+                            <picture className="absolute inset-0 block">
+                                {webpSrcSet && (
+                                    <source
+                                        type="image/webp"
+                                        srcSet={webpSrcSet}
+                                        sizes="100vw"
+                                    />
+                                )}
+                                {jpgSrcSet && (
+                                    <source
+                                        type="image/jpeg"
+                                        srcSet={jpgSrcSet}
+                                        sizes="100vw"
+                                    />
+                                )}
+                                <img
+                                    src={fallbackSrc}
+                                    alt={anime.title}
+                                    className="w-full h-full object-cover"
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                    fetchPriority={index === 0 ? "high" : "low"}
+                                    decoding={index === 0 ? "auto" : "async"}
+                                />
+                            </picture>
                             <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-color)] via-[var(--bg-color)]/80 to-transparent" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-color)] via-transparent to-transparent" />
                             <div className="relative h-full flex flex-col justify-end px-4 sm:px-6 md:px-8 lg:px-12 pb-14 md:pb-12">
+                                <div className="flex flex-wrap items-center gap-2 mb-3">
+                                    <Pill className="bg-[var(--primary-color)]/90 text-white">
+                                        Trending #1
+                                    </Pill>
+                                    {anime.season && anime.year && (
+                                        <span className="text-xs text-white/70">
+                                            {anime.season} {anime.year}
+                                        </span>
+                                    )}
+                                    {anime.episodes && (
+                                        <span className="text-xs text-white/70">
+                                            • {anime.episodes} Episodes
+                                        </span>
+                                    )}
+                                </div>
                                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg max-w-2xl">
                                     {anime.title}
                                 </h1>
@@ -108,27 +186,33 @@ const HeroCarousel = memo(
                                             .trim()}
                                     </p>
                                 )}
-                                <div className="mt-4 flex flex-wrap gap-3">
-                                    <button
-                                        type="button"
+                                <div className="mt-5 flex flex-wrap items-center gap-3">
+                                    <PrimaryButton onClick={() => onSelectAnime?.(anime)}>
+                                        <Play size={18} />
+                                        Watch Now
+                                    </PrimaryButton>
+                                    <PrimaryButton
+                                        variant="secondary"
                                         onClick={() => onSelectAnime?.(anime)}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-white text-black font-semibold hover:bg-white/90 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--bg-color)]"
                                     >
-                                        <Play size={20} fill="currentColor" />
-                                        View Details
-                                    </button>
+                                        <Info size={18} />
+                                        More Info
+                                    </PrimaryButton>
                                     <button
                                         type="button"
                                         onClick={() => onAddToWatchlist?.(anime)}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--bg-color)]"
+                                        className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition"
                                     >
-                                        <Plus size={20} />
-                                        {isInWatchlist?.(anime.mal_id) ? "In Watchlist" : "Add to Watchlist"}
+                                        <Plus size={18} />
+                                        {isInWatchlist?.(anime.mal_id)
+                                            ? "In Watchlist"
+                                            : "Add to Watchlist"}
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    );
+                    })}
                 </div>
 
                 {heroList.length > 1 && (

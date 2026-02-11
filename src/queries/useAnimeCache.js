@@ -6,6 +6,6 @@ export const useAnimeCache = () => {
     queryKey: ["animeScheduleCache"],
     queryFn: () => storageManager.get(storageManager.keys.ANIME_CACHE_KEY, []),
     staleTime: Infinity,
-    cacheTime: Infinity,
+    gcTime: Infinity,
   });
 };

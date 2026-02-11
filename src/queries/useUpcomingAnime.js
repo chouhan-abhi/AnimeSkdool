@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // Fetch function with pagination
-const fetchUpcomingAnime = async ({ queryKey }) => {
+const fetchUpcomingAnime = async ({ queryKey, signal }) => {
   const [_key, page] = queryKey;
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/upcoming?page=${page}`);
+  const res = await fetch(`https://api.jikan.moe/v4/seasons/upcoming?page=${page}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch upcoming anime");
 
   const data = await res.json();

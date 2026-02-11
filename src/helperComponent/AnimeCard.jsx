@@ -34,47 +34,47 @@ const AnimeCard = ({ anime }) => {
   return (
     <>
       <div
-        className="relative h-[320px] w-full rounded-xl bg-cover bg-center overflow-hidden shadow-lg flex items-end cursor-pointer text-white"
-        style={{ backgroundImage: `url(${images?.jpg?.image_url})` }}
+        className="relative h-[320px] w-full rounded-2xl overflow-hidden shadow-[0_24px_70px_-45px_var(--shadow-color)] flex items-end cursor-pointer text-white border border-[var(--border-color)] bg-white/5"
+        style={{ backgroundImage: `url(${images?.jpg?.image_url})`, backgroundSize: "cover", backgroundPosition: "center" }}
         onClick={() => setExpanded(true)}
       >
-        <div className="bg-gradient-to-t from-black/85 to-black/10 w-full p-4 flex flex-col justify-between">
+        <div className="bg-gradient-to-t from-black/85 via-black/40 to-transparent w-full p-4 flex flex-col justify-between">
           {/* Title & Basic Info */}
           <div className="flex flex-col max-h-[120px] overflow-hidden">
             <h3 className="text-lg font-semibold m-0 truncate">{title}</h3>
-            <p className="text-sm text-gray-300 truncate">
+            <p className="text-sm text-white/70 truncate">
               {type} • {duration} • {episodes ?? "TBA"} eps
             </p>
-            <p className="text-xs text-gray-400 truncate">
+            <p className="text-xs text-white/60 truncate">
               {status} {year ? `• ${season} ${year}` : ""}
             </p>
-            <p className="text-xs text-gray-400 truncate">{rating}</p>
+            <p className="text-xs text-white/60 truncate">{rating}</p>
           </div>
 
           {/* Studios */}
           {studios?.length > 0 && (
-            <p className="text-xs mt-2 truncate text-gray-300">
+            <p className="text-xs mt-2 truncate text-white/70">
               Studio: {studios.map((s) => s.name).join(", ")}
             </p>
           )}
 
           {/* Genres */}
           {genres?.length > 0 && (
-            <p className="text-xs truncate text-gray-300">
+            <p className="text-xs truncate text-white/70">
               Genres: {genres.map((g) => g.name).join(", ")}
             </p>
           )}
 
           {/* Producers */}
           {producers?.length > 0 && (
-            <p className="text-xs truncate text-gray-300">
+            <p className="text-xs truncate text-white/70">
               Producer: {producers.map((p) => p.name).join(", ")}
             </p>
           )}
 
           {/* Popularity */}
           {popularity && members && (
-            <p className="text-xs truncate text-gray-300">
+            <p className="text-xs truncate text-white/70">
               Popularity: #{popularity} • {members.toLocaleString()} members
             </p>
           )}

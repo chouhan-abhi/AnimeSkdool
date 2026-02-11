@@ -13,8 +13,8 @@ const isMobile =
  * Response: { data: [{ mal_id, entry: [{ mal_id, url, images, title }], content, user }], pagination }
  * Returns a flat, deduped list of anime entries (minimal: mal_id, url, images, title).
  */
-const fetchAnimeRecommendations = async (page = 1) => {
-  const res = await fetch(`${BASE}/recommendations/anime?page=${page}`);
+const fetchAnimeRecommendations = async ({ page = 1, signal }) => {
+  const res = await fetch(`${BASE}/recommendations/anime?page=${page}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch anime recommendations");
   const json = await res.json();
   const data = json?.data ?? [];
@@ -32,13 +32,16 @@ const fetchAnimeRecommendations = async (page = 1) => {
 /**
  * Fetches multiple pages of recommendations and returns a single flat list.
  */
-const fetchAnimeRecommendationsList = async (maxItems = 24) => {
+const fetchAnimeRecommendationsList = async ({ maxItems = 24, signal } = {}) => {
   const all = [];
   let page = 1;
   let hasMore = true;
 
   while (hasMore && all.length < maxItems) {
-    const res = await fetch(`${BASE}/recommendations/anime?page=${page}`);
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+    const res = await fetch(`${BASE}/recommendations/anime?page=${page}`, { signal });
     if (!res.ok) throw new Error("Failed to fetch anime recommendations");
     const json = await res.json();
     const data = json?.data ?? [];
@@ -63,7 +66,7 @@ const fetchAnimeRecommendationsList = async (maxItems = 24) => {
 export const useAnimeRecommendations = (maxItems = 24) => {
   return useQuery({
     queryKey: ["animeRecommendations", maxItems],
-    queryFn: () => fetchAnimeRecommendationsList(maxItems),
+    queryFn: ({ signal }) => fetchAnimeRecommendationsList({ maxItems, signal }),
     staleTime: isMobile ? 0 : 1000 * 60 * 5,
     gcTime: isMobile ? 0 : 1000 * 60 * 30,
     retry: 1,
@@ -74,8 +77,8 @@ export const useAnimeRecommendations = (maxItems = 24) => {
  * Fetches full anime by MAL id (GET /anime/{id}).
  * Use when you have a minimal entry from recommendations and need full data for the details panel.
  */
-export const fetchAnimeById = async (malId) => {
-  const res = await fetch(`${BASE}/anime/${malId}`);
+export const fetchAnimeById = async (malId, signal) => {
+  const res = await fetch(`${BASE}/anime/${malId}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch anime");
   const json = await res.json();
   return json?.data ?? null;

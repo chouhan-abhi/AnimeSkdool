@@ -34,18 +34,30 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
   const isBookmarked = bookmarked.includes(mal_id);
   const nsfw = rating === "Rx - Hentai";
 
+  const webp = images?.webp || {};
+  const jpg = images?.jpg || {};
+  const webpSrcSet = [webp.small_image_url, webp.image_url, webp.large_image_url]
+    .filter(Boolean)
+    .map((url, i) => `${url} ${[120, 240, 360][i]}w`)
+    .join(", ");
+  const jpgSrcSet = [jpg.small_image_url, jpg.image_url, jpg.large_image_url]
+    .filter(Boolean)
+    .map((url, i) => `${url} ${[120, 240, 360][i]}w`)
+    .join(", ");
+  const imgUrl = webp.image_url || jpg.image_url || webp.small_image_url || jpg.small_image_url;
+
   return (
     <>
       <div
-        className="relative w-full rounded-xl overflow-hidden shadow-lg flex cursor-pointer h-[220px]
-                   transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+        className="relative w-full rounded-2xl overflow-hidden border border-[var(--border-color)] bg-white/5 shadow-[0_20px_60px_-40px_var(--shadow-color)] flex cursor-pointer h-[220px]
+                   transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_30px_80px_-40px_var(--glow-color)]"
         onClick={() => setExpanded(true)}
       >
         {/* Background blur - disabled on mobile for performance */}
         <div
           className="absolute inset-0 bg-cover bg-center z-0 hidden md:block"
           style={{ 
-            backgroundImage: `url(${images?.jpg?.image_url})`,
+            backgroundImage: imgUrl ? `url(${imgUrl})` : undefined,
             filter: 'blur(12px)',
             transform: 'scale(1.05)'
           }}
@@ -57,17 +69,36 @@ const AnimeDetailCard = ({ anime, bookmarked = [], toggleBookmark }) => {
         <div className="relative flex flex-row h-full overflow-hidden">
           {/* Left image */}
           <div className="relative w-40 h-full flex-shrink-0 overflow-hidden rounded-l-xl">
-            <img
-              src={images?.jpg?.image_url}
-              alt={title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onError={(e) => {
-                if (e.target) {
-                  e.target.style.display = 'none';
-                }
-              }}
-            />
+            {imgUrl && (
+              <picture>
+                {webpSrcSet && (
+                  <source
+                    type="image/webp"
+                    srcSet={webpSrcSet}
+                    sizes="160px"
+                  />
+                )}
+                {jpgSrcSet && (
+                  <source
+                    type="image/jpeg"
+                    srcSet={jpgSrcSet}
+                    sizes="160px"
+                  />
+                )}
+                <img
+                  src={imgUrl}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    if (e.target) {
+                      e.target.style.display = 'none';
+                    }
+                  }}
+                />
+              </picture>
+            )}
 
             {/* NSFW badge */}
             {nsfw && (

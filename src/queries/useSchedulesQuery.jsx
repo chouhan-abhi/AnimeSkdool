@@ -3,8 +3,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 // Detect mobile
 const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const fetchSchedules = async ({ pageParam = 1 }) => {
-  const res = await fetch(`https://api.jikan.moe/v4/schedules?page=${pageParam}`);
+const fetchSchedules = async ({ pageParam = 1, signal }) => {
+  const res = await fetch(`https://api.jikan.moe/v4/schedules?page=${pageParam}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch schedules");
   return res.json();
 };

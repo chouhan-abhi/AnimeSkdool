@@ -66,15 +66,34 @@ const CalendarView = () => {
 
   // ✅ Auto–fetch ALL pages - calendar needs complete data
   // When isFetchingNextPage goes from true→false (page loaded), effect re-runs
+  const idleFetchRef = useRef(null);
   useEffect(() => {
     // Stop fetching if:
     // - Using cached data
     // - No more pages to fetch
     // - Currently fetching a page (prevents double-fetch)
-    if (useCache || !hasNextPage || isFetchingNextPage) return;
-    
-    // Fetch next page - effect will re-run when isFetchingNextPage changes
-    fetchNextPage();
+    if (useCache || !hasNextPage || isFetchingNextPage || idleFetchRef.current) return;
+
+    const scheduleFetch = () => {
+      fetchNextPage();
+      idleFetchRef.current = null;
+    };
+
+    if ("requestIdleCallback" in window) {
+      idleFetchRef.current = requestIdleCallback(scheduleFetch, { timeout: 1500 });
+    } else {
+      idleFetchRef.current = setTimeout(scheduleFetch, 250);
+    }
+
+    return () => {
+      if (!idleFetchRef.current) return;
+      if ("cancelIdleCallback" in window) {
+        cancelIdleCallback(idleFetchRef.current);
+      } else {
+        clearTimeout(idleFetchRef.current);
+      }
+      idleFetchRef.current = null;
+    };
   }, [hasNextPage, fetchNextPage, useCache, isFetchingNextPage]);
 
   // ✅ Final dataset (either cached or API)
@@ -333,7 +352,7 @@ const CalendarView = () => {
   const totalAnimeCount = filteredList.length;
 
   return (
-    <div className="relative w-full bg-[var(--bg-color)] border border-[var(--text-color)]/10 p-2 my-4 md:p-6 rounded-xl shadow-inner">
+    <div className="relative w-full bg-[var(--surface-1)]/70 border border-[var(--border-color)] p-2 my-4 md:p-6 rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] backdrop-blur">
       {/* Header */}
       <div className="flex flex-col gap-3 mb-4">
         {/* First Row: Title and Action Buttons */}

@@ -6,6 +6,6 @@ export const useStarredAnime = () => {
     queryKey: ["starredAnime"],
     queryFn: () => storageManager.get(storageManager.keys.STARRED_KEY, []),
     staleTime: Infinity,
-    cacheTime: Infinity,
+    gcTime: Infinity,
   });
 };

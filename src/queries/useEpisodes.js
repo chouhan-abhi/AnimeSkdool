@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 // Detect mobile for dynamic data (no caching)
 const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const fetchEpisodes = async (animeId) => {
-  const res = await fetch(`https://api.jikan.moe/v4/anime/${animeId}/episodes`);
+const fetchEpisodes = async ({ animeId, signal }) => {
+  const res = await fetch(`https://api.jikan.moe/v4/anime/${animeId}/episodes`, { signal });
   if (!res.ok) throw new Error("Failed to fetch episodes");
   const data = await res.json();
   return data?.data?.reverse() || []; // reverse so latest is first
@@ -13,7 +13,7 @@ const fetchEpisodes = async (animeId) => {
 export const useEpisodes = (animeId) => {
   return useQuery({
     queryKey: ["episodes", animeId],
-    queryFn: () => fetchEpisodes(animeId),
+    queryFn: ({ signal }) => fetchEpisodes({ animeId, signal }),
     enabled: !!animeId, // only run if animeId exists
     // Mobile: No caching - always fresh data
     staleTime: isMobile ? 0 : 1000 * 60 * 5,

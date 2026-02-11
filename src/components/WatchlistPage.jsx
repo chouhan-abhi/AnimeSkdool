@@ -1,35 +1,19 @@
 import React, { useEffect, useState, useMemo } from "react";
 import AnimeCard from "../helperComponent/AnimeCard";
 import PageLoader from "../helperComponent/PageLoader";
-import { SlidersHorizontal } from "lucide-react";
 import NoAnimeFound from "../helperComponent/NoAnimeFound";
 import storageManager from "../utils/storageManager";
+import GlassCard from "./ui/GlassCard";
+import SectionHeader from "./ui/SectionHeader";
+import Pill from "./ui/Pill";
 
 const FILTERS = ["all", "started", "bookmarked", "upcoming"];
 
 const WatchlistPage = () => {
   const [filter, setFilter] = useState("all");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [watchlist, setWatchlist] = useState([]);
   const [startedList, setStartedList] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  /* ---------------- Responsive ---------------- */
-  useEffect(() => {
-    let t;
-    const onResize = () => {
-      clearTimeout(t);
-      t = setTimeout(() => {
-        setIsMobile(window.innerWidth <= 768);
-      }, 150);
-    };
-    window.addEventListener("resize", onResize, { passive: true });
-    return () => {
-      window.removeEventListener("resize", onResize);
-      clearTimeout(t);
-    };
-  }, []);
 
   /* ---------------- Load data ---------------- */
   useEffect(() => {
@@ -62,15 +46,12 @@ const WatchlistPage = () => {
     switch (filter) {
       case "started":
         return startedList;
-
       case "bookmarked":
         return watchlist.filter((a) => a.isBookmarked);
-
       case "upcoming":
         return watchlist.filter(
           (a) => a.status?.toLowerCase() === "not yet aired"
         );
-
       case "all":
       default: {
         const map = new Map();
@@ -117,124 +98,71 @@ const WatchlistPage = () => {
     return { groups, sortedKeys };
   }, [filteredAnime]);
 
-  /* ================= UI ================= */
   return (
-    <div className="flex h-screen bg-[var(--bg-color)] text-[var(--text-color)]">
-      {/* ---------- Sidebar ---------- */}
-      {(isSidebarOpen || !isMobile) && (
-        <aside
-          className={`bg-[var(--panel-bg)] p-4 flex-shrink-0
-          ${isMobile ? "fixed inset-0 z-50" : "w-56"}`}
-        >
-          {isMobile && (
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="absolute top-4 right-4 text-xl"
-            >
-              ✕
-            </button>
-          )}
-
-          <h2 className="text-lg font-semibold mb-4">Browse</h2>
-
-          <ul className="space-y-2">
-            {FILTERS.map((f) => (
-              <li key={f}>
-                <button
-                  onClick={() => {
-                    setFilter(f);
-                    if (isMobile) setIsSidebarOpen(false);
-                  }}
-                  className={`w-full px-4 py-2 rounded-lg text-left transition
-                    ${filter === f
-                      ? "bg-[var(--primary-color)] text-white"
-                      : "hover:bg-white/5"
-                    }`}
-                >
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
-      )}
-
-      {isMobile && isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* ---------- Main ---------- */}
-      <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-          <div>
-            <h1 className="text-2xl font-bold">Your Watchlist</h1>
-            <p className="text-sm text-gray-400 capitalize">
-              {filter} anime
-            </p>
-          </div>
-
-          {isMobile && (
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="bg-[var(--primary-color)] p-2 rounded-full"
-            >
-              <SlidersHorizontal size={18} />
-            </button>
-          )}
-        </header>
-
-        <main className="flex-1 overflow-y-auto px-6 py-8">
-          {loading ? (
-            <PageLoader />
-          ) : groupedAnime.sortedKeys.length ? (
-            <div className="max-w-7xl">
-              {groupedAnime.sortedKeys.map((key) => {
-                const items = groupedAnime.groups[key];
-
-                return (
-                  <section
-                    key={key}
-                    className="
-                      rounded-2xl p-6
-                      bg-white/[0.02]
-                      shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_12px_40px_-20px_var(--primary-color)]
-                    "
-                  >
-                    {/* Header */}
-                    <div className="flex items-center gap-4 mb-5">
-                      <h2 className="text-lg font-semibold text-[var(--primary-color)]">
-                        {key}
-                      </h2>
-
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-                        {items.length}
-                      </span>
-                    </div>
-
-                    {/* Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                      {items.map((anime) => (
-                        <AnimeCard
-                          key={anime.mal_id}
-                          anime={anime}
-                          compact
-                          showStatusBadge
-                        />
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
-
-            </div>
-          ) : (
-            <NoAnimeFound />
-          )}
-        </main>
+    <div className="min-h-screen px-4 sm:px-6 md:px-8 lg:px-12">
+      <div className="pt-6 pb-4">
+        <SectionHeader title="Your Watchlist" subtitle="Manage all your saved anime in one place." />
       </div>
+
+      <GlassCard className="p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                filter === f
+                  ? "bg-[var(--primary-color)] text-white shadow-[0_0_14px_var(--glow-color)]"
+                  : "bg-white/5 text-white/70 hover:text-white"
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+          <Pill className="ml-auto bg-white/10 text-white/70">
+            {filteredAnime.length} items
+          </Pill>
+        </div>
+      </GlassCard>
+
+      <main className="mt-6 pb-20">
+        {loading ? (
+          <PageLoader />
+        ) : groupedAnime.sortedKeys.length ? (
+          <div className="space-y-8">
+            {groupedAnime.sortedKeys.map((key) => {
+              const items = groupedAnime.groups[key];
+
+              return (
+                <GlassCard key={key} className="p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <h2 className="text-lg font-semibold text-[var(--primary-color)]">
+                      {key}
+                    </h2>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                      {items.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {items.map((anime) => (
+                      <AnimeCard
+                        key={anime.mal_id}
+                        anime={anime}
+                        compact
+                        showStatusBadge
+                      />
+                    ))}
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        ) : (
+          <NoAnimeFound />
+        )}
+      </main>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const MAX_PAGES = isMobile ? 4 : 10;
 
-const fetchAnimeRanking = async ({ pageParam = 1, queryKey }) => {
+const fetchAnimeRanking = async ({ pageParam = 1, queryKey, signal }) => {
   const [_key, params] = queryKey;
   const { type, filter, rating, sfw } = params;
 
@@ -15,7 +15,7 @@ const fetchAnimeRanking = async ({ pageParam = 1, queryKey }) => {
   if (sfw !== undefined) queryParams.set("sfw", sfw.toString());
   queryParams.set("page", pageParam.toString());
 
-  const res = await fetch(`https://api.jikan.moe/v4/top/anime?${queryParams}`);
+  const res = await fetch(`https://api.jikan.moe/v4/top/anime?${queryParams}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch anime rankings");
 
   const data = await res.json();

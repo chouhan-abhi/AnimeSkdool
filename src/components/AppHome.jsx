@@ -12,6 +12,7 @@ import { useAnimeSearch } from "../queries/useAnimeSearch";
 import { useStarredAnime } from "../queries/useStarredAnime";
 import { useWatchlistAnime } from "../queries/useWatchlistAnime";
 import { useTopAnime } from "../queries/useTopAnime";
+import { useUpcomingAnime } from "../queries/useUpcomingAnime";
 import {
   useAnimeRecommendations,
   fetchAnimeById,
@@ -23,41 +24,86 @@ import {
 import { useDebounce } from "../utils/utils";
 import storageManager from "../utils/storageManager";
 import { useToast } from "../utils/toast";
-import { Search, Play, Plus, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Play, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import HeroCarousel from "./HeroCarousel";
+import SectionHeader from "./ui/SectionHeader";
+import GlassCard from "./ui/GlassCard";
+import AnimeDetailCard from "../helperComponent/AnimeDetailCard";
+import DailyScheduleStrip from "./home/DailyScheduleStrip";
 
 const AnimeDetailsPanel = lazy(() => import("./AnimeDetailsPanel"));
 const AnimeReview = lazy(() => import("./AnimeReview/AnimeReview"));
 
+const buildSrcSet = (urls, widths) => {
+  const entries = urls
+    .map((url, i) => (url ? `${url} ${widths[i]}w` : null))
+    .filter(Boolean);
+  return entries.length ? entries.join(", ") : undefined;
+};
+
 // --- Netflix-style poster card (used in rows) ---
-const PosterCard = memo(({ anime, onSelect }) => {
+const PosterCard = memo(({ anime, onSelect, size = "md" }) => {
   if (!anime) return null;
+  const sizeClass =
+    size === "lg"
+      ? "w-[180px] sm:w-[200px] md:w-[220px]"
+      : "w-[150px] sm:w-[170px] md:w-[190px]";
+  const webp = anime.images?.webp || {};
+  const jpg = anime.images?.jpg || {};
+  const webpSrcSet = buildSrcSet(
+    [webp.small_image_url, webp.image_url, webp.large_image_url],
+    [120, 240, 360]
+  );
+  const jpgSrcSet = buildSrcSet(
+    [jpg.small_image_url, jpg.image_url, jpg.large_image_url],
+    [120, 240, 360]
+  );
   const imgUrl =
-    anime.images?.webp?.image_url || anime.images?.jpg?.image_url;
+    webp.image_url ||
+    jpg.image_url ||
+    webp.small_image_url ||
+    jpg.small_image_url;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(anime)}
-      className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px] group text-left focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-offset-2 focus:ring-offset-[var(--bg-color)] rounded"
+      className={`flex-shrink-0 ${sizeClass} group text-left focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-offset-2 focus:ring-offset-[var(--bg-color)] rounded-2xl`}
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-neutral-800 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:z-10 group-hover:shadow-2xl">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-white/5 shadow-[0_20px_60px_-40px_var(--shadow-color)] transition-all duration-300 group-hover:scale-[1.03] group-hover:z-10 group-hover:shadow-[0_30px_80px_-40px_var(--glow-color)] border border-[var(--border-color)]">
         {imgUrl ? (
-          <img
-            src={imgUrl}
-            alt={anime.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => {
-              if (e.target) e.target.style.display = "none";
-            }}
-          />
+          <picture>
+            {webpSrcSet && (
+              <source
+                type="image/webp"
+                srcSet={webpSrcSet}
+                sizes="(min-width: 1024px) 180px, (min-width: 640px) 160px, 140px"
+              />
+            )}
+            {jpgSrcSet && (
+              <source
+                type="image/jpeg"
+                srcSet={jpgSrcSet}
+                sizes="(min-width: 1024px) 180px, (min-width: 640px) 160px, 140px"
+              />
+            )}
+            <img
+              src={imgUrl}
+              alt={anime.title}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              onError={(e) => {
+                if (e.target) e.target.style.display = "none";
+              }}
+            />
+          </picture>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-neutral-500 text-sm">
             No image
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <p className="text-white text-sm font-semibold line-clamp-2 drop-shadow-lg">
             {anime.title}
@@ -69,7 +115,7 @@ const PosterCard = memo(({ anime, onSelect }) => {
           </span>
         </div>
       </div>
-      <p className="mt-1.5 text-sm font-medium text-[var(--text-color)] line-clamp-2 px-0.5 group-hover:text-[var(--primary-color)] transition-colors">
+      <p className="mt-2 min-h-[2.75rem] text-sm font-medium text-white line-clamp-2 px-0.5 leading-snug group-hover:text-[var(--primary-color)] transition-colors">
         {anime.title}
       </p>
     </button>
@@ -109,7 +155,7 @@ const GridSkeleton = memo(({ count = 6 }) => (
 ));
 
 // --- Horizontal scrolling row ---
-const Row = memo(({ title, children, className = "" }) => {
+const Row = memo(({ title, children, className = "", actionLabel, onAction }) => {
   const scrollRef = useRef(null);
 
   const scroll = (dir) => {
@@ -124,9 +170,7 @@ const Row = memo(({ title, children, className = "" }) => {
   return (
     <section className={`relative pl-4 sm:pl-6 md:pl-8 lg:pl-12 ${className}`}>
       <div className="flex items-center justify-between pr-4 sm:pr-6 md:pr-8 lg:pr-12 mb-3">
-        <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-          {title}
-        </h2>
+        <SectionHeader title={title} actionLabel={actionLabel} onAction={onAction} />
         <div className="flex gap-1">
           <button
             type="button"
@@ -157,11 +201,9 @@ const Row = memo(({ title, children, className = "" }) => {
   );
 });
 
-const AppHome = () => {
-  const [search, setSearch] = useState("");
+const AppHome = ({ searchQuery = "", onSearchChange, onNavigate }) => {
   const [selectedAnime, setSelectedAnime] = useState(null);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const debouncedSearch = useDebounce(search);
+  const debouncedSearch = useDebounce(searchQuery);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -187,7 +229,17 @@ const AppHome = () => {
     isRefetching: recommendationsRefetching,
   } = useAnimeRecommendations(24);
 
-  const recommendedRow = recommendedList.slice(0, 24);
+  const recommendedRow = recommendedList.slice(0, 10);
+
+  const {
+    data: upcomingData,
+    isLoading: upcomingLoading,
+    isError: upcomingError,
+  } = useUpcomingAnime({ page: 1 });
+
+  const upcomingList = upcomingData?.data || [];
+  const recentlyAddedList =
+    upcomingList.length > 0 ? upcomingList : recommendedList;
 
   useEffect(() => {
     const preload = () => {
@@ -243,33 +295,16 @@ const AppHome = () => {
     [watchlistAnimes]
   );
 
-  return (
-    <div className="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)]">
-      {/* Top bar: search */}
-      <div className="sticky top-0 z-40 px-4 sm:px-6 md:px-8 lg:px-12 py-4 bg-[var(--bg-color)]/95 supports-[backdrop-filter]:bg-[var(--bg-color)]/80">
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className={`max-w-xl transition-all duration-300 ${searchFocused ? "ring-2 ring-[var(--primary-color)] rounded-lg" : ""
-            }`}
-        >
-          <div className="relative">
-            <Search
-              size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              placeholder="Search anime..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-[var(--text-color)] placeholder-neutral-500 focus:outline-none focus:border-[var(--primary-color)]"
-            />
-          </div>
-        </form>
-      </div>
+  const handleRefreshRecommendations = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["animeRecommendations"],
+      refetchType: "active",
+    });
+    await refetchRecommendations({ cancelRefetch: false });
+  }, [queryClient, refetchRecommendations]);
 
+  return (
+    <div className="min-h-screen text-[var(--text-color)]">
       <main className="pb-16">
         <HeroCarousel
           heroList={heroList?.slice(0, 8)}
@@ -280,9 +315,28 @@ const AppHome = () => {
           isInWatchlist={isInWatchlist}
         />
 
+        <div className="md:hidden px-4 sm:px-6 mt-6">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Search anime..."
+              className="w-full rounded-full border border-[var(--border-color)] bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
+            />
+          </div>
+        </div>
+
+        <div className="mt-8 px-4 sm:px-6 md:px-10">
+          <DailyScheduleStrip
+            onNavigate={onNavigate}
+            onSelectAnime={handleSelectAnime}
+          />
+        </div>
+
         {/* Search results row (when searching) - shown first, other sections move down */}
         {debouncedSearch && (
-          <Row title="Search Results" className="mt-6">
+          <Row title="Search Results" className="mt-10">
             {isFetching ? (
               <RowSkeleton count={8} />
             ) : isError ? (
@@ -303,7 +357,7 @@ const AppHome = () => {
 
         {/* Top Airing Now */}
         {heroList.length > 0 && (
-          <Row title="Top Airing Now" className="mt-6">
+          <Row title="Trending Now" className="mt-10">
             {heroList.map((anime) => (
               <PosterCard
                 key={anime.mal_id}
@@ -316,7 +370,7 @@ const AppHome = () => {
 
         {/* Your List (starred) */}
         {starredAnimes.length > 0 && (
-          <Row title="Your List" className="mt-8">
+          <Row title="Your Favorites" className="mt-10">
             {starredAnimes.map((anime) => (
               <PosterCard
                 key={anime.mal_id}
@@ -329,30 +383,38 @@ const AppHome = () => {
 
         {/* My Watchlist */}
         {watchlistAnimes.length > 0 && (
-          <Row title="My Watchlist" className="mt-8">
-            {watchlistAnimes.map((anime) => (
-              <PosterCard
-                key={anime.mal_id}
-                anime={anime}
-                onSelect={handleSelectAnime}
-              />
-            ))}
-          </Row>
+          <div className="mt-10 px-4 sm:px-6 md:px-8 lg:px-12">
+            <SectionHeader
+              title="Your Watchlist"
+              actionLabel="Manage"
+              onAction={() => onNavigate?.("watchList")}
+            />
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+              {watchlistAnimes.map((anime) => (
+                <PosterCard
+                  key={anime.mal_id}
+                  anime={anime}
+                  onSelect={handleSelectAnime}
+                />
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Recommended for you + Recent Anime Reviews: side-by-side on desktop, stacked on mobile */}
-        <div className="mt-8 px-4 sm:px-6 md:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-          {/* Recommended for you (flex, scrollable, refresh) */}
+        <div className="mt-10 px-4 sm:px-6 md:px-8 lg:px-12 space-y-10">
+          {/* Recommended for you */}
           <section className="flex flex-col min-h-0 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                Recommended for you
-              </h2>
+              <SectionHeader
+                title="Recommended for you"
+                subtitle="Personal picks based on today’s buzz"
+              />
               <button
                 type="button"
-                onClick={() => refetchRecommendations()}
+                onClick={handleRefreshRecommendations}
                 disabled={recommendedLoading || recommendationsRefetching}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
                 aria-label="Refresh recommendations"
                 title="Refresh recommendations"
               >
@@ -365,44 +427,55 @@ const AppHome = () => {
                 </span>
               </button>
             </div>
-            {recommendedLoading ? (
-              <GridSkeleton count={6} />
-            ) : recommendedError ? (
-              <p className="text-neutral-400">Could not load recommendations.</p>
-            ) : recommendedRow.length > 0 ? (
-              <div
-                className="flex flex-wrap gap-3 sm:gap-4 overflow-auto pb-2 -mr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
-                style={{ WebkitOverflowScrolling: "touch", maxHeight: "min(70vh, 640px)" }}
-              >
-                {recommendedRow.map((anime) => (
-                  <div
-                    key={anime.mal_id}
-                    className="m-1 min-w-[120px] sm:min-w-[140px] flex-[1_1_140px] max-w-[180px] lg:max-w-[200px]"
-                  >
-                    <PosterCard
-                      anime={anime}
-                      onSelect={handleSelectAnime}
-                      fillWidth
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-neutral-400">No recommendations yet.</p>
-            )}
+            <GlassCard className="p-4">
+              {recommendedLoading ? (
+                <GridSkeleton count={6} />
+              ) : recommendedError ? (
+                <p className="text-neutral-400">Could not load recommendations.</p>
+              ) : recommendedRow.length > 0 ? (
+                <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                  {recommendedRow.map((anime) => (
+                    <div key={anime.mal_id} className="min-w-[320px] sm:min-w-[360px]">
+                      <AnimeDetailCard anime={anime} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-neutral-400">No recommendations yet.</p>
+              )}
+            </GlassCard>
           </section>
 
           {/* Recent Anime Reviews */}
-          <section className="lg:min-w-0 flex flex-col min-h-0">
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mb-3 sm:mb-4">
-              Recent Anime Reviews
-            </h2>
-            <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden flex-1 min-h-[280px] lg:min-h-[400px]">
+          <section className="flex flex-col min-h-0">
+            <SectionHeader title="Recent Anime Reviews" className="mb-3 sm:mb-4" />
+            <div className="rounded-3xl border border-[var(--border-color)] bg-[radial-gradient(1200px_600px_at_0%_-10%,rgba(168,85,247,0.25),rgba(15,11,20,0.9))] overflow-hidden min-h-[320px]">
               <Suspense fallback={<MiniLoader text="Loading reviews..." />}>
-                <AnimeReview />
+                <AnimeReview onSelectAnime={handleSelectAnime} />
               </Suspense>
             </div>
           </section>
+        </div>
+
+        <div className="mt-12 px-4 sm:px-6 md:px-8 lg:px-12">
+          <SectionHeader title="Recently Added" />
+          <div className="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            {upcomingLoading && recentlyAddedList.length === 0 ? (
+              <RowSkeleton count={6} />
+            ) : upcomingError && recentlyAddedList.length === 0 ? (
+              <p className="text-neutral-400">Could not load recently added.</p>
+            ) : recentlyAddedList.length > 0 ? (
+              recentlyAddedList.slice(0, 12).map((anime) => (
+                <PosterCard
+                  key={anime.mal_id}
+                  anime={anime}
+                  onSelect={handleSelectAnime}
+                />
+              ))
+            ) : (
+              <p className="text-neutral-400">No recent items yet.</p>
+            )}
+          </div>
         </div>
       </main>
 
