@@ -115,14 +115,6 @@ const ExploreHome = () => {
         {/* Left Sidebar */}
         <aside className="hidden lg:block">
           <GlassCard className="p-4 sticky top-24">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-[var(--primary-color)]/20 flex items-center justify-center">
-                <Sparkles size={16} className="text-[var(--primary-color)]" />
-              </div>
-              <span className="text-sm font-semibold text-[var(--text-color)]">
-                AniSkdool
-              </span>
-            </div>
             <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-2">
               Discovery
             </div>
@@ -213,17 +205,6 @@ const ExploreHome = () => {
               ))}
             </div>
           </GlassCard>
-
-          <div className="flex items-center justify-between text-sm text-[var(--text-muted)] mb-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-5 w-1.5 rounded-full bg-[var(--primary-color)]" />
-              <span>Found anime titles</span>
-            </div>
-            <button className="inline-flex items-center gap-1 text-xs">
-              Sort by: <span className="text-[var(--primary-color)]">Popularity</span>
-              <ChevronDown size={12} />
-            </button>
-          </div>
 
           <div className="relative">
             {isTransitioning && (
