@@ -322,7 +322,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
 
       {/* Episodes List */}
       <Suspense fallback={<MiniLoader text="Loading episodes..." />}>
-        <EpisodesList animeId={anime.mal_id} />
+        <EpisodesList animeId={anime.mal_id} animeName={anime.title_english || anime.title} />
       </Suspense>
 
       {/* Genres */}

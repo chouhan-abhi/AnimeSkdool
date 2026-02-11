@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useEpisodes } from "../queries/useEpisodes";
+import { useToast } from "../utils/toast";
 
-const EpisodesList = ({ animeId }) => {
+const EpisodesList = ({ animeId, animeName }) => {
   const [visibleCount, setVisibleCount] = useState(3);
-
+  const { showToast } = useToast();
   const { data: episodes = [], isLoading, isError } = useEpisodes(animeId);
 
   if (isLoading) return <p className="text-gray-400">Loading episodes...</p>;
@@ -20,6 +21,14 @@ const EpisodesList = ({ animeId }) => {
           <div
             key={ep.mal_id}
             className="flex justify-between items-center border border-gray-700 rounded-lg px-3 py-2 hover:bg-gray-700/40 transition"
+            onClick={() => {
+              if(animeName && ep.mal_id){
+                window.open(`https://9anime.org.lv/${animeName.toLowerCase().replace(/\s+/g, "-")}-episode-${ep.mal_id}/`);
+                return;
+              } else {
+                showToast("Episode details are unavailable", "error");
+              }
+            }}
           >
             {/* Left side → Episode number + title */}
             <div className="flex flex-col">
