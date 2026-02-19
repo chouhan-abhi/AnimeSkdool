@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   sfw: "animeSfw",
   WATCHLIST_KEY: "watchlist",
   STARRED_KEY: "starredAnime",
+  STARTED_KEY: "startedAnime",
   SETTINGS_KEY: "appSettings",
   CALENDAR_DATA_KEY: "calendarData",
   ANIME_CACHE_KEY: "animeScheduleCache",

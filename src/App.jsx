@@ -9,24 +9,29 @@ const CalendarView = lazy(() => import("./components/CalendarComponent/CalendarV
 const ExploreHome = lazy(() => import("./components/explore/ExploreHome"));
 const SettingsPage = lazy(() => import("./components/SettingsPage"));
 
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-8 h-8 rounded-full border-2 border-[var(--primary-color)] border-t-transparent animate-spin" />
+      <span className="text-sm text-[var(--text-muted)]">Loading...</span>
+    </div>
+  </div>
+);
+
 const App = () => {
-  // ✅ Initialize active view from sessionStorage
   const [activeView, setActiveView] = useState(() => {
     return sessionStorage.getItem("activeView") || "home";
   });
 
-  // Note: Theme and color settings are applied in SettingsPage and main.jsx
-  // This component doesn't need to handle theme application
-
-  // ✅ Persist activeView in sessionStorage
   useEffect(() => {
     sessionStorage.setItem("activeView", activeView);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [activeView]);
 
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <div className="min-h-screen text-white flex flex-col">
+    <div className="min-h-screen text-[var(--text-color)] flex flex-col">
       <TopNav
         activeView={activeView}
         onNavigate={setActiveView}
@@ -34,15 +39,8 @@ const App = () => {
         onSearchChange={setSearchQuery}
       />
 
-      {/* Main Content */}
-      <main className="flex-grow pt-4 md:pt-6 pb-24">
-        <Suspense
-          fallback={
-            <div className="px-6 py-10 text-sm text-white/70">
-              Loading...
-            </div>
-          }
-        >
+      <main className="flex-grow md:pt-[var(--nav-height)] pb-28 md:pb-8">
+        <Suspense fallback={<PageLoader />}>
           {activeView === "home" && (
             <AppHome
               searchQuery={searchQuery}
