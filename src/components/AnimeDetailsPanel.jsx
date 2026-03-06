@@ -27,6 +27,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryExpanded, setGalleryExpanded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const galleryStripRef = useRef(null);
 
   // Trailer state - loads on demand
   const [trailerData, setTrailerData] = useState(null);
@@ -119,6 +120,15 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
     }
   }, [selectedImageIndex, galleryImages.length]);
+
+  const scrollGalleryStrip = useCallback((dir) => {
+    if (!galleryStripRef.current) return;
+    const amount = galleryStripRef.current.clientWidth * 0.8;
+    galleryStripRef.current.scrollBy({
+      left: dir === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  }, []);
 
   const toggleWatchlist = useCallback(() => {
     if (isInWatchlist) {
@@ -422,32 +432,55 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-300">Gallery</h3>
-          {!galleryExpanded && (
-            <button
-              type="button"
-              onClick={loadGallery}
-              disabled={galleryLoading}
-              className="flex items-center gap-1.5 text-xs bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition disabled:opacity-50"
-            >
-              {galleryLoading ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Images size={14} />
-                  View Gallery
-                </>
-              )}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {galleryExpanded && galleryImages.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => scrollGalleryStrip("left")}
+                  className="p-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition"
+                  aria-label="Scroll gallery left"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollGalleryStrip("right")}
+                  className="p-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition"
+                  aria-label="Scroll gallery right"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </>
+            )}
+            {!galleryExpanded && (
+              <button
+                type="button"
+                onClick={loadGallery}
+                disabled={galleryLoading}
+                className="flex items-center gap-1.5 text-xs bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition disabled:opacity-50"
+              >
+                {galleryLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Images size={14} />
+                    View Gallery
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Gallery thumbnails - horizontal scroll */}
         {galleryExpanded && galleryImages.length > 0 && (
           <div className="relative">
             <div
+              ref={galleryStripRef}
               className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0"
               style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
             >
@@ -540,23 +573,36 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
         <div
           className="
             relative
-            h-[35vh]
+            h-[42vh]
+            sm:h-[45vh]
             md:h-full
             md:flex-1
             md:order-2
             overflow-hidden
+            bg-black
           "
         >
           {imgUrl && (
             <>
+              {/* Backdrop layer keeps immersive full bleed feel */}
               <img
                 src={imgUrl}
                 alt={anime.title}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-50"
                 loading="eager"
               />
+              {/* Foreground image preserves full artwork on desktop */}
+              <div className="absolute inset-0 flex items-center justify-center p-3 md:p-6">
+                <img
+                  src={imgUrl}
+                  alt={anime.title}
+                  className="w-full h-full object-cover md:object-contain rounded-xl md:rounded-2xl shadow-[0_24px_70px_-45px_black] md:shadow-[0_30px_100px_-45px_black]"
+                  loading="eager"
+                />
+              </div>
+              <div className="absolute inset-0 bg-[radial-gradient(900px_420px_at_50%_20%,transparent,rgba(0,0,0,0.55))]" />
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent md:bg-gradient-to-l md:from-black/60 md:via-transparent md:to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent md:bg-gradient-to-l md:from-black/55 md:via-transparent md:to-transparent" />
             </>
           )}
         </div>
@@ -585,13 +631,26 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
         <dialog
           open
           className="fixed inset-0 z-[10000] bg-black flex flex-col m-0 p-0 max-w-none max-h-none w-full h-full border-none"
-          onClick={() => setSelectedImageIndex(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedImageIndex(null);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setSelectedImageIndex(null);
             if (e.key === 'ArrowLeft') prevImage();
             if (e.key === 'ArrowRight') nextImage();
           }}
         >
+          {/* Floating close button */}
+          <button
+            type="button"
+            onClick={() => setSelectedImageIndex(null)}
+            className="absolute top-3 right-3 z-20 inline-flex items-center gap-1 rounded-full bg-black/70 border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/90 transition"
+            aria-label="Close gallery viewer"
+          >
+            <X size={14} />
+            Close
+          </button>
+
           {/* Viewer Header */}
           <div className="flex-shrink-0 flex items-center justify-between p-3 bg-black/80">
             <span className="text-sm text-gray-400">
@@ -600,7 +659,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             <button
               type="button"
               onClick={() => setSelectedImageIndex(null)}
-              className="p-2 hover:bg-white/10 rounded-full transition"
+              className="p-2 hover:bg-white/10 rounded-full transition border border-white/10"
             >
               <X size={24} />
             </button>
@@ -615,8 +674,13 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             {/* Previous button */}
             <button
               type="button"
-              onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/80 transition z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                prevImage();
+              }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 p-2.5 bg-black/70 border border-white/20 rounded-full hover:bg-black/90 transition z-10"
+              aria-label="Previous image"
+              title="Previous"
             >
               <ChevronLeft size={28} />
             </button>
@@ -630,11 +694,50 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
             {/* Next button */}
             <button
               type="button"
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/80 transition z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 p-2.5 bg-black/70 border border-white/20 rounded-full hover:bg-black/90 transition z-10"
+              aria-label="Next image"
+              title="Next"
             >
               <ChevronRight size={28} />
             </button>
+          </div>
+
+          {/* Explicit controls row */}
+          <div className="flex-shrink-0 px-4 pb-2 bg-black/80">
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-white/10 border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedImageIndex(null)}
+                className="inline-flex items-center gap-1 rounded-full bg-red-500/80 border border-red-300/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition"
+              >
+                <X size={14} />
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-white/10 border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
 
           {/* Thumbnail strip */}

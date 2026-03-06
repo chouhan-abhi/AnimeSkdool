@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Sparkles,
   Search,
-  SlidersHorizontal,
   Star,
   ChevronDown,
 } from "lucide-react";
@@ -16,6 +15,7 @@ import storageManager from "../../utils/storageManager";
 import GlassCard from "../ui/GlassCard";
 import Pill from "../ui/Pill";
 import { DetailsPanelLoader } from "../../helperComponent/PageLoader";
+import { RANKING_FILTER_CONFIG } from "../../utils/constants";
 
 const AnimeDetailsPanel = lazy(() => import("../AnimeDetailsPanel"));
 
@@ -87,12 +87,12 @@ const ExploreHome = () => {
   });
 
   const isRanking = viewMode === "ranking";
-
-  const sidebarItems = [
-    { key: "explore", label: "Explore", active: isRanking, onClick: () => handleModeChange("ranking") },
-    { key: "top", label: "Top Airing", active: filter === "airing", onClick: () => { handleModeChange("ranking"); setFilter("airing"); } },
-    { key: "seasonal", label: "Seasonal", active: viewMode === "seasons", onClick: () => handleModeChange("seasons") },
-  ];
+  const hasAdvancedFilters = type || rating || sfw !== "true";
+  const handleResetAdvancedFilters = useCallback(() => {
+    setType("");
+    setRating("");
+    setSfw("true");
+  }, [setType, setRating, setSfw]);
 
   const modes = [
     {
@@ -111,99 +111,156 @@ const ExploreHome = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_280px] gap-6 px-4 sm:px-6 md:px-8 lg:px-10 pt-6 pb-10">
-        {/* Left Sidebar */}
-        <aside className="hidden lg:block">
-          <GlassCard className="p-4 sticky top-24">
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-2">
-              Discovery
-            </div>
-            <div className="space-y-1">
-              {sidebarItems.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={item.onClick}
-                  className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-                    item.active
-                      ? "bg-[var(--primary-color)]/20 text-[var(--primary-color)]"
-                      : "text-[var(--text-color)]/70 hover:text-[var(--text-color)] hover:bg-white/5"
-                  }`}
-                >
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mt-6 mb-2">
-              Categories
-            </div>
-            <div className="space-y-1">
-              {["Action", "Psychological", "Sci-Fi", "Romance", "Comedy"].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className="w-full text-left rounded-lg px-3 py-2 text-sm text-[var(--text-color)]/70 hover:text-[var(--text-color)] hover:bg-white/5 transition"
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mt-6 mb-2">
-              Personal
-            </div>
-            <div className="space-y-1">
-              {["My Watchlist", "History"].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className="w-full text-left rounded-lg px-3 py-2 text-sm text-[var(--text-color)]/70 hover:text-[var(--text-color)] hover:bg-white/5 transition"
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </GlassCard>
-        </aside>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 px-4 sm:px-6 md:px-8 lg:px-10 pt-6 pb-10">
 
         {/* Main Content */}
         <section className="min-w-0">
           <GlassCard className="p-4 mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {modes.map((mode) => {
+                const Icon = mode.icon;
+                const active = viewMode === mode.key;
+                return (
+                  <button
+                    key={mode.key}
+                    type="button"
+                    onClick={() => handleModeChange(mode.key)}
+                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold transition ${
+                      active
+                        ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
+                        : "bg-white/5 text-[var(--text-color)]/75 hover:text-[var(--text-color)]"
+                    }`}
+                    title={mode.description}
+                  >
+                    <Icon size={14} />
+                    {mode.label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[240px]">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search anime, studios, or users..."
-                  className="w-full rounded-full border border-[var(--border-color)] bg-white/10 py-2.5 pl-9 pr-4 text-sm text-[var(--text-color)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/50"
-                />
+                {isRanking ? (
+                  <>
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                    />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search anime, studios, or users..."
+                      className="w-full rounded-full border border-[var(--border-color)] bg-white/10 py-2.5 pl-9 pr-4 text-sm text-[var(--text-color)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/50"
+                    />
+                  </>
+                ) : (
+                  <p className="rounded-full border border-[var(--border-color)] bg-white/5 px-4 py-2.5 text-sm text-[var(--text-color)]/70">
+                    Browse anime by year and season. Switch to Explore for ranking filters.
+                  </p>
+                )}
               </div>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-color)]/20 px-4 py-2 text-xs font-semibold text-[var(--primary-color)]"
-              >
-                <SlidersHorizontal size={14} />
-                Filters
-              </button>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)]">Quick Filters:</span>
-              {quickFilters.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={item.onClick}
-                  className="rounded-full px-3 py-1 text-xs font-semibold border border-[var(--border-color)] bg-white/5 text-[var(--text-color)]/70 hover:text-[var(--text-color)] transition"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            {isRanking && (
+              <>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-[var(--text-muted)]">Quick Filters:</span>
+                  {quickFilters.map((item) => {
+                    const isActive =
+                      (item.key === "all" && !type && filter === "bypopularity") ||
+                      (item.key === "airing" && filter === "airing") ||
+                      (item.key === "upcoming" && filter === "upcoming") ||
+                      (item.key === "tv" && type === "tv" && filter === "bypopularity") ||
+                      (item.key === "movie" && type === "movie" && filter === "bypopularity") ||
+                      (item.key === "ova" && type === "ova" && filter === "bypopularity");
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={item.onClick}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold border transition ${
+                          isActive
+                            ? "border-[var(--primary-color)]/40 bg-[var(--primary-color)]/20 text-[var(--primary-color)]"
+                            : "border-[var(--border-color)] bg-white/5 text-[var(--text-color)]/70 hover:text-[var(--text-color)]"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 rounded-2xl border border-[var(--border-color)] bg-white/5 p-3 sm:p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="text-xs text-[var(--text-muted)]">
+                      Fine tune results
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative min-w-[135px]">
+                        <select
+                          value={type}
+                          onChange={(e) => setType(e.target.value)}
+                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
+                        >
+                          {RANKING_FILTER_CONFIG.type.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+                      </div>
+                      <div className="relative min-w-[150px]">
+                        <select
+                          value={filter}
+                          onChange={(e) => setFilter(e.target.value)}
+                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
+                        >
+                          {RANKING_FILTER_CONFIG.filter.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+                      </div>
+                      <div className="relative min-w-[150px]">
+                        <select
+                          value={rating}
+                          onChange={(e) => setRating(e.target.value)}
+                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
+                        >
+                          {RANKING_FILTER_CONFIG.rating.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSfw((prev) => (prev === "true" ? "false" : "true"))}
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                          sfw === "true"
+                            ? "bg-emerald-500/90 text-white"
+                            : "bg-rose-500/90 text-white"
+                        }`}
+                      >
+                        {sfw === "true" ? "Safe Content" : "All Content"}
+                      </button>
+                      {hasAdvancedFilters && (
+                        <button
+                          type="button"
+                          onClick={handleResetAdvancedFilters}
+                          className="rounded-xl border border-[var(--border-color)] bg-white/10 px-3 py-2 text-xs font-semibold text-[var(--text-color)]/80 hover:bg-white/20 transition"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </GlassCard>
 
           <div className="relative">
@@ -252,7 +309,7 @@ const ExploreHome = () => {
         </section>
 
         {/* Right Sidebar */}
-        <aside className="hidden lg:flex flex-col gap-4">
+        <aside className="hidden xl:flex flex-col gap-4">
           <GlassCard className="p-4">
             <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-2">
               Random Pick

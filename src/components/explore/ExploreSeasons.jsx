@@ -10,12 +10,12 @@ import { useSeasonsList, useInfiniteSeasonAnime } from "../../queries/useSeasons
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
 import { GridLoader, LoadingMore } from "../../helperComponent/PageLoader";
-import { Calendar, ChevronDown, RefreshCw, X, Menu, TrendingUp, Filter } from "lucide-react";
+import { ChevronDown, RefreshCw, X, Menu, TrendingUp, Filter } from "lucide-react";
 import useResponsive from "../../queries/useResponsive";
 
 const SEASONS_ORDER = ["winter", "spring", "summer", "fall"];
 
-const ExploreSeasons = () => {
+const ExploreSeasons = ({ embedded = false }) => {
   const { data: seasons, isLoading: loadingSeasons, error: seasonsError } = useSeasonsList();
   const [selected, setSelected] = useState(null);
   const [sfw, setSfw] = useState(true);
@@ -40,7 +40,7 @@ const ExploreSeasons = () => {
     if (!selected && options.length > 0) setSelected(options[0]);
   }, [options, selected]);
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error } = useInfiniteSeasonAnime({
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } = useInfiniteSeasonAnime({
     year: selected?.year,
     season: selected?.season,
     sfw,
@@ -77,25 +77,25 @@ const ExploreSeasons = () => {
     [isFetchingNextPage, hasNextPage, fetchNextPage]
   );
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsInitialLoad(true);
-    window.location.reload();
+    await refetch({ cancelRefetch: false });
   };
 
   if (loadingSeasons) return <div className="p-4"><GridLoader count={6} /></div>;
   if (seasonsError) return <NoAnimeFound message={seasonsError.message} />;
 
   return (
-    <div className="flex h-full">
+    <div className={`flex h-full bg-[var(--bg-color)] transition-colors ${embedded ? "rounded-2xl" : ""}`}>
       {/* Desktop Sidebar */}
-      {!isMobile && (
+      {!embedded && !isMobile && (
         <div className="hidden lg:block w-72 border-r border-[var(--border-color)]">
           <SidebarContent />
         </div>
       )}
 
       {/* Mobile Sidebar - Only render when open */}
-      {isSidebarOpen && ReactDOM.createPortal(
+      {!embedded && isSidebarOpen && ReactDOM.createPortal(
         <MobileSidebar isOpen={isSidebarOpen} close={() => setIsSidebarOpen(false)} />,
         document.body
       )}
@@ -103,13 +103,61 @@ const ExploreSeasons = () => {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto relative z-0">
         {/* Mobile Header */}
-        {isMobile && (
+        {!embedded && isMobile && (
           <MobileHeader
             onOpenSidebar={() => setIsSidebarOpen(true)}
             onRefresh={handleRefresh}
           />
         )}
         <div className="px-4 pb-4">
+          {embedded && (
+            <div className="mb-4 rounded-2xl border border-[var(--border-color)] bg-white/5 p-3 sm:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="text-xs text-[var(--text-muted)]">
+                  Select season and content safety
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-[170px]">
+                    <select
+                      value={selected ? `${selected.year}-${selected.season}` : ""}
+                      onChange={(e) => {
+                        const [y, s] = e.target.value.split("-");
+                        setSelected({ year: Number(y), season: s });
+                        setIsInitialLoad(true);
+                      }}
+                      className="w-full appearance-none pl-3 pr-9 py-2 rounded-xl border border-[var(--border-color)] bg-white/10 text-sm text-[var(--text-color)] focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
+                    >
+                      {options.map(({ year, season }) => (
+                        <option key={`${year}-${season}`} value={`${year}-${season}`} className="capitalize">
+                          {season} {year}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSfw((p) => !p)}
+                    className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                      sfw
+                        ? "bg-emerald-500/90 text-white"
+                        : "bg-rose-500/90 text-white"
+                    }`}
+                  >
+                    {sfw ? "Safe Content" : "All Content"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRefresh}
+                    className="inline-flex items-center gap-1 rounded-xl border border-[var(--border-color)] bg-white/10 px-3 py-2 text-xs font-semibold text-[var(--text-color)]/80 hover:bg-white/20 transition"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {isInitialLoad && isLoading && <GridLoader count={6} />}
           {!isLoading && error && <NoAnimeFound message={error.message} />}
           {!isLoading && !error && animeList.length > 0 && <AnimeGrid />}
@@ -129,7 +177,7 @@ const ExploreSeasons = () => {
         <div className="flex items-center justify-between px-4 py-1">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
-            <h2 className="text-lg font-semibold text-white">Explore Anime</h2>
+            <h2 className="text-lg font-semibold text-white">Explore Seasons</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -194,7 +242,7 @@ const ExploreSeasons = () => {
             const [y, s] = e.target.value.split("-");
             setSelected({ year: Number(y), season: s });
             setIsInitialLoad(true);
-            if (isMobile) setIsSidebarOpen(false);
+            if (isMobile && !embedded) setIsSidebarOpen(false);
           }}
           className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-[var(--border-color)] bg-white/10 text-white focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
         >
@@ -247,7 +295,7 @@ const ExploreSeasons = () => {
             <div
               key={anime.mal_id}
               ref={isLastItem ? lastElementRef : null}
-              className={`transform transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+              className={`transform transition-all duration-300 hover:scale-[1.015] hover:shadow-lg ${
                 isLastItem ? "animate-fadeInUp" : ""
               }`}
               style={{

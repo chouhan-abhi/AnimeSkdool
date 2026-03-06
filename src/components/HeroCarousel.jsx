@@ -103,8 +103,6 @@ const HeroCarousel = memo(
 
     if (heroList.length === 0) return null;
 
-    const currentAnime = heroList[heroIndex];
-
     return (
       <section
         className={HERO_CLASS}

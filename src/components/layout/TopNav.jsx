@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Bookmark, Search, Settings, Play, X } from "lucide-react";
+import { Bookmark, Search, Settings, Play, X } from "lucide-react";
 import IconButton from "../ui/IconButton";
 
 const TopNav = ({ activeView, onNavigate, searchQuery, onSearchChange }) => {
@@ -129,8 +129,8 @@ const TopNav = ({ activeView, onNavigate, searchQuery, onSearchChange }) => {
               )}
             </div>
 
-            <IconButton label="Notifications">
-              <Bell size={18} />
+            <IconButton label="Watchlist" onClick={() => onNavigate?.("watchList")}>
+              <Bookmark size={18} />
             </IconButton>
             <IconButton label="Settings" onClick={() => onNavigate?.("settings")}>
               <Settings size={18} />
