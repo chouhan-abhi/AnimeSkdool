@@ -41,8 +41,6 @@ function getAnimeTitles(anime) {
 // ---- AnimeCard ----
 const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
   const image =
-    anime.images?.webp?.large_image_url ||
-    anime.images?.jpg?.large_image_url ||
     anime.images?.webp?.image_url ||
     anime.images?.jpg?.image_url ||
     "";
@@ -57,7 +55,7 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
 
   return (
     <li
-      className={`relative overflow-hidden rounded-xl shadow-sm transition-all duration-200 group
+      className={`relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-2)]/70 shadow-sm transition-all duration-200 group
         ${isOngoing ? "ring-2 ring-red-500 scale-[1.01]" : "hover:scale-[1.01]"}
         opacity-0 animate-slideIn
       `}
@@ -69,53 +67,62 @@ const AnimeCard = ({ anime, isOngoing, onSelect, onToggleStar, index }) => {
       <button
         type="button"
         onClick={() => onSelect?.(anime)}
-        className="w-full h-full text-left relative"
+        className="w-full text-left"
         aria-label={`View details for ${anime.title}`}
       >
-        <div className="relative h-56">
+        <div className="flex items-stretch gap-3 p-1">
           <img
             src={image}
             alt={primary}
-            className="w-full h-full object-cover"
+            className="w-16 h-24 sm:w-20 sm:h-28 object-cover rounded-lg shrink-0"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/35" />
-          <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-medium text-white">
-              <Clock size={10} />
-              {localTime}
-            </span>
+          <div className="min-w-0 flex-1 flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--text-color)]/10 px-2 py-1 text-[10px] font-medium text-[var(--text-color)]">
+                <Clock size={10} />
+                {localTime}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleStar?.();
+                }}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition ${
+                  anime.starred
+                    ? "bg-yellow-400/20 text-yellow-300"
+                    : "bg-[var(--text-color)]/10 text-[var(--text-color)]/80 hover:bg-[var(--text-color)]/20"
+                }`}
+              >
+                <Star
+                  size={12}
+                  fill={anime.starred ? "currentColor" : "none"}
+                  strokeWidth={1.8}
+                />
+                {anime.starred ? "Starred" : "Star"}
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleStar?.();
-              }}
-              className="inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold text-yellow-300 hover:bg-black/80 transition"
-            >
-              <Star
-                size={12}
-                fill={anime.starred ? "currentColor" : "none"}
-                strokeWidth={1.8}
-              />
-              {anime.starred ? "Starred" : "Star"}
-            </button>
-          </div>
-
-          {isOngoing && (
-            <span className="absolute top-10 left-2 text-[9px] px-1.5 py-[1px] bg-red-500 text-white rounded-md shadow">
-              Live
-            </span>
-          )}
-
-          <div className="absolute inset-x-0 bottom-0 p-2.5">
-            <p className="text-[14px] font-semibold leading-tight line-clamp-2 text-white">
-              {primary}
-            </p>
-            {secondary && (
-              <p className="text-[10px] text-white/70 mt-0.5 truncate">
-                {secondary}
+            <div className="min-w-0">
+              <p className="text-[13px] sm:text-sm font-semibold leading-tight line-clamp-2 text-[var(--text-color)]">
+                {primary}
               </p>
+              {secondary && (
+                <p className="text-[10px] text-[var(--text-color)]/60 mt-0.5 truncate">
+                  {secondary}
+                </p>
+              )}
+              {anime.status && (
+                <p className="text-[10px] text-[var(--text-color)]/60 mt-1 truncate">
+                  {anime.status}
+                </p>
+              )}
+            </div>
+
+            {isOngoing && (
+              <span className="inline-flex w-fit text-[9px] px-1.5 py-[2px] bg-red-500 text-white rounded-md shadow mt-1">
+                Live
+              </span>
             )}
           </div>
         </div>
@@ -164,7 +171,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
   }, [now, schedule, isToday]);
 
   return (
-    <div className="h-[82vh] bg-[var(--surface-1)]/70 border border-[var(--border-color)] rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] p-3 relative flex flex-col overflow-hidden">
+    <div className="h-[82vh] bg-[var(--surface-1)]/70 border border-[var(--border-color)] rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] p-1 relative flex flex-col overflow-hidden">
       {/* Inline animation keyframes */}
       <style>
         {`
@@ -208,7 +215,7 @@ const MinimalDayView = ({ schedule = [], day, onSelectAnime, isLoading }) => {
             </p>
           </div>
         ) : (
-          <ul className="space-y-2 relative z-10 p-6 pb-24">
+          <ul className="space-y-2 relative z-10 pb-24">
             {schedule.map((anime, i) => (
               <AnimeCard
                 key={anime.mal_id}
