@@ -1,40 +1,43 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { jikanFetch } from "../utils/jikanClient";
 
-// Detect mobile for limiting data
-const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const MAX_PAGES = isMobile ? 4 : 10;
+const MAX_PAGES = 10;
+
+const DEFAULT_SEASONS = [
+  { year: 2025, seasons: ["winter", "spring", "summer", "fall"] },
+  { year: 2024, seasons: ["winter", "spring", "summer", "fall"] },
+  { year: 2023, seasons: ["winter", "spring", "summer", "fall"] },
+  { year: 2022, seasons: ["winter", "spring", "summer", "fall"] },
+  { year: 2021, seasons: ["winter", "spring", "summer", "fall"] },
+];
 
 // GET seasons list (years and seasons)
 const fetchSeasonsList = async ({ signal }) => {
-  const res = await fetch("https://api.jikan.moe/v4/seasons", { signal });
-  if (!res.ok) throw new Error("Failed to fetch seasons list");
-  const json = await res.json();
-  return json.data;
+  const json = await jikanFetch("/seasons", { signal });
+  return (json?.data && json.data.length > 0) ? json.data : DEFAULT_SEASONS;
 };
 
 export const useSeasonsList = () => {
   return useQuery({
     queryKey: ["seasonsList"],
     queryFn: fetchSeasonsList,
-    // Mobile: No caching - always fresh data
-    staleTime: isMobile ? 0 : 1000 * 60 * 60,
-    gcTime: isMobile ? 0 : 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours
+    gcTime: 1000 * 60 * 60 * 48,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 };
 
 // GET anime by specific season with pagination
 const fetchSeasonAnime = async ({ pageParam = 1, queryKey, signal }) => {
   const [_key, params] = queryKey;
-  const { year, season, sfw } = params;
+  const { year, season, sfw } = params || {};
 
   const search = new URLSearchParams();
   search.set("page", String(pageParam));
   if (sfw !== undefined) search.set("sfw", String(sfw));
 
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/${year}/${season}?${search}`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch season anime");
-  const json = await res.json();
+  const json = await jikanFetch(`/seasons/${year}/${season}?${search}`, { signal });
   return json;
 };
 
@@ -43,17 +46,16 @@ export const useInfiniteSeasonAnime = (params) => {
     queryKey: ["seasonAnimeInfinite", params],
     queryFn: fetchSeasonAnime,
     getNextPageParam: (lastPage, allPages) => {
-      // Limit pages to prevent memory issues on mobile
       if (allPages.length >= MAX_PAGES) return undefined;
       return lastPage?.pagination?.has_next_page
         ? lastPage.pagination.current_page + 1
         : undefined;
     },
-    // Mobile: No caching - always fresh data
-    staleTime: isMobile ? 0 : 1000 * 60 * 10,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
-    refetchOnMount: isMobile ? 'always' : true,
+    retry: 2,
   });
 };
 
+export default useSeasonsList;

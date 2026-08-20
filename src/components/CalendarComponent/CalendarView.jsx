@@ -6,6 +6,7 @@ import {
   ChevronRight,
   X,
   Calendar as CalendarIcon,
+  Sparkles,
 } from "lucide-react";
 import { useSchedulesQuery } from "../../queries/useSchedulesQuery";
 import { weekDays, extractGenres } from "./utils";
@@ -14,14 +15,14 @@ import MinimalDayView from "./MinimalDayView";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
 import CalendarLoader from "../../helperComponent/CalendarLoader";
 import PageLoader, { DetailsPanelLoader } from "../../helperComponent/PageLoader";
+import SectionHeader from "../ui/SectionHeader";
 import storageManager from "../../utils/storageManager";
 import { useToast } from "../../utils/toast";
 import { useDebounce } from "../../utils/utils";
 
-// ✅ Lazy load heavy components
 const AnimeDetailsPanel = lazy(() => import("../AnimeDetailsPanel"));
 
-const CalendarView = () => {
+const CalendarView = ({ onSelectAnime }) => {
   const { showToast } = useToast();
   const { data, error, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSchedulesQuery();
@@ -29,14 +30,21 @@ const CalendarView = () => {
   const [selectedAnime, setSelectedAnime] = useState(null);
   const [cachedData, setCachedData] = useState(null);
   const [useCache, setUseCache] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Memoize onClose to prevent re-renders
+  const handleSelect = useCallback(
+    (anime) => {
+      if (onSelectAnime) onSelectAnime(anime);
+      else setSelectedAnime(anime);
+    },
+    [onSelectAnime]
+  );
+
   const handleClosePanel = useCallback(() => {
     setSelectedAnime(null);
   }, []);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ✅ Load from storageManager first
+  // Load from cache first
   useEffect(() => {
     try {
       const stored = storageManager.get(storageManager.keys.CALENDAR_DATA_KEY);
@@ -44,12 +52,12 @@ const CalendarView = () => {
         setCachedData(stored);
         setUseCache(true);
       }
-    } catch {
-      // ignore parse errors
+    } catch (e) {
+      console.warn("Could not load cached calendar data", e);
     }
   }, []);
 
-  // ✅ Cache API data once it's fully loaded (debounced to avoid excessive writes)
+  // Cache data
   const cacheTimeoutRef = useRef(null);
   useEffect(() => {
     if (data && !isLoading && !useCache) {
@@ -59,19 +67,14 @@ const CalendarView = () => {
         if (flat.length > 0) {
           storageManager.set(storageManager.keys.CALENDAR_DATA_KEY, flat);
         }
-      }, 1000); // Debounce cache writes
+      }, 1000);
     }
     return () => clearTimeout(cacheTimeoutRef.current);
   }, [data, isLoading, useCache]);
 
-  // ✅ Auto–fetch ALL pages - calendar needs complete data
-  // When isFetchingNextPage goes from true→false (page loaded), effect re-runs
+  // Auto fetch all pages in background
   const idleFetchRef = useRef(null);
   useEffect(() => {
-    // Stop fetching if:
-    // - Using cached data
-    // - No more pages to fetch
-    // - Currently fetching a page (prevents double-fetch)
     if (useCache || !hasNextPage || isFetchingNextPage || idleFetchRef.current) return;
 
     const scheduleFetch = () => {
@@ -87,35 +90,24 @@ const CalendarView = () => {
 
     return () => {
       if (!idleFetchRef.current) return;
-      if ("cancelIdleCallback" in window) {
-        cancelIdleCallback(idleFetchRef.current);
-      } else {
-        clearTimeout(idleFetchRef.current);
-      }
+      if ("cancelIdleCallback" in window) cancelIdleCallback(idleFetchRef.current);
+      else clearTimeout(idleFetchRef.current);
       idleFetchRef.current = null;
     };
   }, [hasNextPage, fetchNextPage, useCache, isFetchingNextPage]);
 
-  // ✅ Final dataset (either cached or API)
   const allAnime = useMemo(() => {
     if (useCache && cachedData) return cachedData;
     return data?.pages.flatMap((page) => page.data) || [];
   }, [data, cachedData, useCache]);
 
-  // ✅ App settings
-  const appSettings = useMemo(() => {
-    return storageManager.getSettings();
-  }, []);
-  const isDayView = appSettings.calendarView === "day";
-
-  // ✅ Day handling - memoize today calculation
   const todayIndex = useMemo(() => {
     const today = new Date().getDay();
     return today === 0 ? 6 : today - 1;
   }, []);
+
   const [currentDayIndex, setCurrentDayIndex] = useState(todayIndex);
 
-  // ✅ Load saved filters from storage
   const savedFilters = storageManager.get(storageManager.keys.CALENDAR_FILTERS, {
     search: "",
     selectedGenre: "All",
@@ -123,17 +115,13 @@ const CalendarView = () => {
     showStarredOnly: false,
   });
 
-  // ✅ Filters - initialized from storage
-  const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState(savedFilters.search);
   const [selectedGenre, setSelectedGenre] = useState(savedFilters.selectedGenre);
   const [selectedStatus, setSelectedStatus] = useState(savedFilters.selectedStatus);
   const [showStarredOnly, setShowStarredOnly] = useState(savedFilters.showStarredOnly);
-  
-  // ✅ Debounce search for better performance
+
   const debouncedSearch = useDebounce(search, 300);
-  
-  // ✅ Load starred anime from storage on mount - use Set for O(1) lookup
+
   const [starredSet, setStarredSet] = useState(() => {
     const watchlist = storageManager.get(storageManager.keys.WATCHLIST_KEY, []);
     const starredIds = watchlist
@@ -141,20 +129,7 @@ const CalendarView = () => {
       .map((anime) => anime.mal_id);
     return new Set(starredIds);
   });
-  
-  // ✅ Convert Set to array for backward compatibility (only where needed)
-  const starred = useMemo(() => Array.from(starredSet), [starredSet]);
 
-  // ✅ Initial sync of starred state on mount
-  useEffect(() => {
-    const watchlist = storageManager.get(storageManager.keys.WATCHLIST_KEY, []);
-    const starredIds = watchlist
-      .filter((anime) => anime.isStarred)
-      .map((anime) => anime.mal_id);
-    setStarredSet(new Set(starredIds));
-  }, []); // Run once on mount
-
-  // ✅ Persist filters to storage
   useEffect(() => {
     storageManager.set(storageManager.keys.CALENDAR_FILTERS, {
       search,
@@ -164,100 +139,50 @@ const CalendarView = () => {
     });
   }, [search, selectedGenre, selectedStatus, showStarredOnly]);
 
-  // ✅ Sync starred state with storage - runs on mount and when data is loaded
-  const allAnimeLengthRef = useRef(0);
-  useEffect(() => {
-    // Sync when anime data is first loaded or changes
-    if (allAnime.length > 0 && allAnime.length !== allAnimeLengthRef.current) {
-      allAnimeLengthRef.current = allAnime.length;
-      const watchlist = storageManager.get(storageManager.keys.WATCHLIST_KEY, []);
-      const starredIds = watchlist
-        .filter((anime) => anime.isStarred)
-        .map((anime) => anime.mal_id);
-      const newSet = new Set(starredIds);
-      
-      // Only update if there's a change to avoid unnecessary re-renders
-      setStarredSet((prev) => {
-        if (prev.size !== newSet.size || !starredIds.every(id => prev.has(id))) {
-          return newSet;
-        }
-        return prev;
-      });
-    }
-  }, [allAnime.length]);
-
-  // ✅ Memoize genres extraction
   const genres = useMemo(() => extractGenres(allAnime), [allAnime]);
 
-  const toggleStar = useCallback((anime) => {
-    setStarredSet((prev) => {
-      const isCurrentlyStarred = prev.has(anime.mal_id);
-      const willBeStarred = !isCurrentlyStarred;
-      
-      // Update storage immediately
-      storageManager.saveToWatchlist(anime, willBeStarred);
-      
-      // Show toast notification
-      showToast(
-        willBeStarred 
-          ? `⭐ ${anime.title} added to favorites` 
-          : `Removed ${anime.title} from favorites`,
-        willBeStarred ? 'success' : 'info'
-      );
-      
-      // Return updated Set
-      const newSet = new Set(prev);
-      if (willBeStarred) {
-        newSet.add(anime.mal_id);
-      } else {
-        newSet.delete(anime.mal_id);
-      }
-      return newSet;
-    });
-  }, [showToast]);
+  const toggleStar = useCallback(
+    (anime) => {
+      setStarredSet((prev) => {
+        const isCurrentlyStarred = prev.has(anime.mal_id);
+        const willBeStarred = !isCurrentlyStarred;
+        storageManager.saveToWatchlist(anime, willBeStarred);
+        showToast(
+          willBeStarred
+            ? `⭐ Added ${anime.title} to favorites`
+            : `Removed ${anime.title} from favorites`,
+          willBeStarred ? "success" : "info"
+        );
+        const newSet = new Set(prev);
+        if (willBeStarred) newSet.add(anime.mal_id);
+        else newSet.delete(anime.mal_id);
+        return newSet;
+      });
+    },
+    [showToast]
+  );
 
-
-  // ✅ Optimized filter with early returns and cached values
   const filteredList = useMemo(() => {
     if (!allAnime.length) return [];
-    
-    // Cache lowercase search for performance
     const searchLower = debouncedSearch.toLowerCase();
     const hasSearch = searchLower.length > 0;
-    
-    // Pre-compute status check
-    const statusCheck = selectedStatus === "All" 
-      ? null 
-      : selectedStatus === "Upcoming" 
-        ? "Not yet aired" 
+    const statusCheck =
+      selectedStatus === "All"
+        ? null
+        : selectedStatus === "Upcoming"
+        ? "Not yet aired"
         : selectedStatus;
-    
+
     return allAnime.filter((anime) => {
-      // Early return for search
-      if (hasSearch && !anime.title.toLowerCase().includes(searchLower)) {
+      if (hasSearch && !anime.title.toLowerCase().includes(searchLower)) return false;
+      if (selectedGenre !== "All" && !anime.genres?.some((g) => g.name === selectedGenre))
         return false;
-      }
-      
-      // Early return for genre
-      if (selectedGenre !== "All" && !anime.genres?.some((g) => g.name === selectedGenre)) {
-        return false;
-      }
-      
-      // Early return for status
-      if (statusCheck && anime.status !== statusCheck) {
-        return false;
-      }
-      
-      // Early return for starred filter
-      if (showStarredOnly && !starredSet.has(anime.mal_id)) {
-        return false;
-      }
-      
+      if (statusCheck && anime.status !== statusCheck) return false;
+      if (showStarredOnly && !starredSet.has(anime.mal_id)) return false;
       return true;
     });
   }, [allAnime, debouncedSearch, selectedGenre, selectedStatus, showStarredOnly, starredSet]);
 
-  // ✅ Group by day with counts - optimized with Set lookup
   const animeByDay = useMemo(() => {
     const grouped = {};
     const counts = {};
@@ -282,282 +207,121 @@ const CalendarView = () => {
     return { grouped, counts };
   }, [filteredList, starredSet, toggleStar]);
 
-  // ✅ Clear all filters
   const clearAllFilters = useCallback(() => {
     setSearch("");
     setSelectedGenre("All");
     setSelectedStatus("All");
     setShowStarredOnly(false);
-    showToast("All filters cleared", "info");
+    showToast("Filters reset", "info");
   }, [showToast]);
 
-  // ✅ Jump to today
-  const jumpToToday = useCallback(() => {
-    setCurrentDayIndex(todayIndex);
-    showToast("Jumped to today", "info");
-  }, [showToast, todayIndex]);
-
-  // ✅ Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Only handle if no input is focused
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-        return;
-      }
-
-      // Escape to close details panel
-      if (e.key === 'Escape' && selectedAnime) {
-        setSelectedAnime(null);
-        return;
-      }
-
-      // Only handle arrow keys in day view
-      if (!isDayView) return;
-
-      // Left/Right arrows to navigate days
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setCurrentDayIndex((prev) => (prev - 1 + weekDays.length) % weekDays.length);
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setCurrentDayIndex((prev) => (prev + 1) % weekDays.length);
-      } else if (e.key === 't' || e.key === 'T') {
-        // 'T' key to jump to today
-        e.preventDefault();
-        jumpToToday();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDayView, selectedAnime, jumpToToday]);
-
-  if (isLoading && !useCache) return <CalendarLoader />;
-  if (error) {
-    return (
-      <div className="p-8 text-center">
-        <NoAnimeFound message={error.message} />
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-4 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
   const currentDay = weekDays[currentDayIndex];
-  const totalAnimeCount = filteredList.length;
 
   return (
-    <div className="relative w-full bg-[var(--surface-1)]/70 border border-[var(--border-color)] p-2 my-4 md:p-6 rounded-2xl shadow-[0_18px_60px_-40px_var(--shadow-color)] backdrop-blur">
+    <div className="min-h-screen px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto pb-24 text-white">
       {/* Header */}
-      <div className="flex flex-col gap-3 mb-4">
-        {/* First Row: Title and Action Buttons */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl font-semibold text-[var(--text-color)]">
-              Calendar
-            </h2>
-            {totalAnimeCount > 0 && (
-              <span className="px-2 py-1 rounded-full bg-[var(--primary-color)]/20 text-[var(--primary-color)] text-xs font-medium">
-                {totalAnimeCount} anime
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Jump to Today (Day View Only) */}
-            {isDayView && (
-              <button
-                type="button"
-                onClick={jumpToToday}
-                className="flex items-center gap-1 rounded-full text-xs px-3 py-2 shadow-md bg-[var(--text-color)]/10 hover:bg-[var(--text-color)]/20 text-[var(--text-color)] transition"
-                title="Jump to today (Press T)"
-              >
-                <CalendarIcon size={14} />
-                Today
-              </button>
-            )}
-            
-            <button
-              type="button"
-              onClick={async () => {
-                setIsRefreshing(true);
-                setUseCache(false);
-                try {
-                  await refetch();
-                  showToast("Calendar refreshed", "success");
-                } catch (err) {
-                  showToast("Failed to refresh", "error");
-                } finally {
-                  setIsRefreshing(false);
-                }
-              }}
-              disabled={isRefreshing}
-              className="flex items-center rounded-full text-xs p-2 shadow-md bg-[var(--text-color)]/10 hover:bg-[var(--text-color)]/20 text-[var(--text-color)] transition disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refresh calendar data"
-            >
-              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setShowFilters(true)}
-              className="md:hidden p-2 bg-[var(--primary-color)] text-white rounded-full hover:opacity-90 transition"
-              aria-label="Open filters"
-            >
-              <SlidersHorizontal size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Second Row: Desktop Filters */}
-        <div className="hidden md:block">
-          <FiltersBar
-            search={search}
-            setSearch={setSearch}
-            genres={genres}
-            selectedGenre={selectedGenre}
-            setSelectedGenre={setSelectedGenre}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            showStarredOnly={showStarredOnly}
-            setShowStarredOnly={setShowStarredOnly}
-            onClearFilters={clearAllFilters}
-          />
-        </div>
+      <div className="pt-8 pb-6">
+        <SectionHeader
+          title="Weekly Airing Guide"
+          subtitle="Explore broadcast television release times across Japan and worldwide"
+          badge="Live Guide"
+        />
       </div>
 
-      {/* Empty State for No Results */}
-      {totalAnimeCount === 0 && allAnime.length > 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <div className="text-[var(--text-color)]/50 mb-4">
-            <SlidersHorizontal size={64} className="opacity-50" />
-          </div>
-          <h3 className="text-xl font-semibold text-[var(--text-color)]/80 mb-2">
-            No anime match your filters
-          </h3>
-          <p className="text-sm text-[var(--text-color)]/60 mb-4">
-            Try adjusting your search, genre, or status filters
-          </p>
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition"
-          >
-            Clear All Filters
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Day / Week View */}
-          {isDayView ? (
-            <div className="relative">
-              <div className="flex justify-between items-center mb-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentDayIndex(
-                      (prev) => (prev - 1 + weekDays.length) % weekDays.length
-                    )
-                  }
-                  className="p-2 rounded-full bg-[var(--text-color)]/10 hover:bg-[var(--text-color)]/20 text-[var(--text-color)] transition"
-                  title="Previous day (←)"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-[var(--primary-color)]">
-                    {currentDay}
-                  </h3>
-                  {animeByDay.counts[currentDay] > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--primary-color)]/20 text-[var(--primary-color)] text-xs font-medium">
-                      {animeByDay.counts[currentDay]}
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentDayIndex((prev) => (prev + 1) % weekDays.length)
-                  }
-                  className="p-2 rounded-full bg-[var(--text-color)]/10 hover:bg-[var(--text-color)]/20 text-[var(--text-color)] transition"
-                  title="Next day (→)"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-              <MinimalDayView
-                schedule={animeByDay.grouped[currentDay] || []}
-                day={currentDay}
-                onSelectAnime={setSelectedAnime}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
-              {weekDays.map((day) => (
-                <div key={day} className="relative">
-                  <div className="absolute top-2 right-2 z-10">
-                    {animeByDay.counts[day] > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-[var(--primary-color)]/90 text-white text-xs font-medium shadow-lg">
-                        ({animeByDay.counts[day]})
-                      </span>
-                    )}
-                  </div>
-                  <MinimalDayView
-                    schedule={animeByDay.grouped[day] || []}
-                    day={day}
-                    onSelectAnime={setSelectedAnime}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      {/* Apple TV Day Switcher Pill Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 scrollbar-hide">
+        {weekDays.map((day, idx) => {
+          const active = currentDayIndex === idx;
+          const isToday = idx === todayIndex;
+          const count = animeByDay.counts[day] || 0;
 
-      {/* Filters Overlay */}
-      {showFilters && (
-        <div className="fixed inset-0 bg-[var(--bg-color)] z-50 flex flex-col">
-          <div className="flex justify-between items-center p-4 bg-[var(--bg-color)] border-b border-[var(--text-color)]/20">
-            <h3 className="text-lg font-bold text-[var(--text-color)]">Filters</h3>
+          return (
             <button
+              key={day}
               type="button"
-              onClick={() => setShowFilters(false)}
-              className="text-[var(--text-color)]/60 hover:text-[var(--text-color)] transition"
+              onClick={() => setCurrentDayIndex(idx)}
+              className={`flex-1 min-w-[100px] sm:min-w-[120px] p-3.5 rounded-2xl backdrop-blur-2xl border transition-all duration-200 select-none text-center ${
+                active
+                  ? "bg-white text-black border-white shadow-[0_4px_24px_rgba(255,255,255,0.2)] scale-[1.03]"
+                  : "bg-white/[0.05] text-white/80 border-white/10 hover:bg-white/10 hover:text-white"
+              }`}
             >
-              <X size={24} />
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider">{day}</span>
+                {isToday && (
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      active ? "bg-black" : "bg-[var(--primary-color)]"
+                    }`}
+                  />
+                )}
+              </div>
+              <span
+                className={`text-[11px] font-semibold ${
+                  active ? "text-black/60" : "text-white/40"
+                }`}
+              >
+                {count} {count === 1 ? "Show" : "Shows"}
+              </span>
             </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <FiltersBar
-              search={search}
-              setSearch={setSearch}
-              genres={genres}
-              selectedGenre={selectedGenre}
-              setSelectedGenre={setSelectedGenre}
-              selectedStatus={selectedStatus}
-              setSelectedStatus={setSelectedStatus}
-              showStarredOnly={showStarredOnly}
-              setShowStarredOnly={setShowStarredOnly}
-              onClearFilters={clearAllFilters}
-            />
-          </div>
-        </div>
+          );
+        })}
+      </div>
+
+      {/* Filters Toolbar */}
+      <div className="p-4 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl mb-8 flex flex-wrap items-center justify-between gap-4">
+        <FiltersBar
+          search={search}
+          setSearch={setSearch}
+          genres={genres}
+          selectedGenre={selectedGenre}
+          setSelectedGenre={setSelectedGenre}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          showStarredOnly={showStarredOnly}
+          setShowStarredOnly={setShowStarredOnly}
+          onClearFilters={clearAllFilters}
+        />
+
+        <button
+          type="button"
+          onClick={async () => {
+            setIsRefreshing(true);
+            setUseCache(false);
+            try {
+              await refetch();
+              showToast("Guide updated", "success");
+            } finally {
+              setIsRefreshing(false);
+            }
+          }}
+          disabled={isRefreshing}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/15 border border-white/10 text-xs font-semibold text-white/80 hover:text-white transition-all disabled:opacity-40"
+        >
+          <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
+          <span>Sync</span>
+        </button>
+      </div>
+
+      {/* Day Content View */}
+      {isLoading && !useCache ? (
+        <CalendarLoader />
+      ) : error ? (
+        <NoAnimeFound message={error.message} />
+      ) : (
+        <MinimalDayView
+          schedule={animeByDay.grouped[currentDay] || []}
+          day={currentDay}
+          onSelectAnime={handleSelect}
+        />
       )}
 
-      {/* Details Panel - Lazy Loaded */}
+      {/* Details Sheet Modal */}
       {selectedAnime && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 bg-black/90 z-[9999] flex flex-col md:flex-row">
-              <div className="h-[35vh] md:h-full md:flex-1 bg-gray-900 animate-pulse" />
-              <div className="flex-1 md:w-[45%] p-4 md:p-6 text-white">
-                <DetailsPanelLoader />
-              </div>
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
+              <DetailsPanelLoader />
             </div>
           }
         >

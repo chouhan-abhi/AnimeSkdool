@@ -27,20 +27,12 @@ const AnimeDetailCard = ({ anime }) => {
 
   const webp = images?.webp || {};
   const jpg = images?.jpg || {};
-  const webpSrcSet = [webp.small_image_url, webp.image_url, webp.large_image_url]
-    .filter(Boolean)
-    .map((url, i) => `${url} ${[120, 240, 360][i]}w`)
-    .join(", ");
-  const jpgSrcSet = [jpg.small_image_url, jpg.image_url, jpg.large_image_url]
-    .filter(Boolean)
-    .map((url, i) => `${url} ${[120, 240, 360][i]}w`)
-    .join(", ");
   const imgUrl = webp.image_url || jpg.image_url || webp.small_image_url || jpg.small_image_url;
 
   return (
     <>
       <div
-        className="relative w-full rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--surface-1)]/40 flex cursor-pointer h-[200px] transition-all duration-300 hover:border-[var(--primary-color)]/25 hover:shadow-[0_12px_36px_-12px_var(--glow-color)] group"
+        className="relative w-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#14141d]/90 flex cursor-pointer h-[190px] transition-all duration-300 hover:border-white/25 hover:shadow-[0_20px_45px_rgba(0,0,0,0.85),0_0_25px_-5px_var(--glow-color)] hover:scale-[1.02] group select-none"
         onClick={() => setExpanded(true)}
         role="button"
         tabIndex={0}
@@ -48,69 +40,78 @@ const AnimeDetailCard = ({ anime }) => {
           if (e.key === "Enter" || e.key === " ") setExpanded(true);
         }}
       >
-        <div className="relative w-[140px] h-full flex-shrink-0 overflow-hidden">
+        <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
+
+        {/* Poster Image */}
+        <div className="relative w-[130px] sm:w-[145px] h-full flex-shrink-0 overflow-hidden bg-black/50">
           {imgUrl && (
-            <picture>
-              {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="140px" />}
-              {jpgSrcSet && <source type="image/jpeg" srcSet={jpgSrcSet} sizes="140px" />}
-              <img
-                src={imgUrl}
-                alt={title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-                decoding="async"
-                onError={(e) => { if (e.target) e.target.style.display = "none"; }}
-              />
-            </picture>
+            <img
+              src={imgUrl}
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                if (e.target) e.target.style.display = "none";
+              }}
+            />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[var(--surface-1)]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-[#14141d]/90" />
 
           {score && (
-            <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 glass text-yellow-400 px-1.5 py-0.5 rounded-md">
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/70 backdrop-blur-md text-yellow-400 px-2 py-0.5 rounded-full border border-white/10 text-[11px] font-bold">
               <Star size={10} fill="currentColor" />
-              <span className="text-xs font-bold">{score}</span>
+              <span>{score}</span>
             </div>
           )}
 
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <span className="rounded-full bg-[var(--primary-color)]/70 p-2 shadow-lg">
-              <Play size={18} className="text-white" fill="white" />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
+            <span className="rounded-full bg-white text-black p-2.5 shadow-lg">
+              <Play size={16} className="fill-black translate-x-0.5" />
             </span>
           </div>
         </div>
 
-        <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+        {/* Content Info */}
+        <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between min-w-0">
           <div>
-            <h3 className="text-base font-bold text-[var(--text-color)] truncate group-hover:text-[var(--primary-color)] transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">
+                {type || "TV"}
+              </span>
+              {status && (
+                <span className="text-[10px] uppercase font-bold tracking-wider text-green-400">
+                  {status === "Currently Airing" ? "Airing Now" : status}
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-[var(--primary-color)] transition-colors">
               {title}
             </h3>
+
             <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
-              {[type, episodes && `${episodes} eps`, season && year && `${season} ${year}`]
+              {[episodes ? `${episodes} episodes` : null, season && year ? `${season} ${year}` : year]
                 .filter(Boolean)
                 .join(" · ")}
             </p>
-            {status && (
-              <span className={`inline-block mt-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${
-                status === "Currently Airing"
-                  ? "bg-green-500/15 text-green-400"
-                  : "bg-[var(--surface-1)] text-[var(--text-muted)]"
-              }`}>
-                {status === "Currently Airing" ? "Airing" : status}
-              </span>
-            )}
           </div>
 
-          <div className="space-y-1 text-[11px] text-[var(--text-muted)]">
+          <div className="space-y-2">
             {studios?.length > 0 && (
-              <p className="truncate">
-                {studios.map((s) => s.name).join(", ")}
+              <p className="text-[11px] text-[var(--text-muted)] truncate">
+                <span className="text-white/40">Studio:</span> {studios.map((s) => s.name).join(", ")}
               </p>
             )}
+
             {genres?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {genres.slice(0, 3).map((g) => (
-                  <span key={g.mal_id} className="px-1.5 py-px rounded bg-white/5 border border-[var(--border-color)] text-[10px]">
+                  <span
+                    key={g.mal_id}
+                    className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[10px] text-white/80 font-medium"
+                  >
                     {g.name}
                   </span>
                 ))}
@@ -123,8 +124,8 @@ const AnimeDetailCard = ({ anime }) => {
       {expanded && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-[9999]">
-              <div className="w-8 h-8 rounded-full border-2 border-[var(--primary-color)] border-t-transparent animate-spin" />
+            <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-[9999]">
+              <div className="w-10 h-10 rounded-full border-2 border-white border-t-transparent animate-spin" />
             </div>
           }
         >

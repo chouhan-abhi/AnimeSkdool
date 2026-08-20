@@ -40,7 +40,7 @@ function installSurge() {
     execSync('npm install -g surge', { stdio: 'inherit' });
     log.success('Surge CLI installed successfully!');
     return true;
-  } catch (error) {
+  } catch (_error) {
     log.error('Failed to install Surge CLI. Please install it manually: npm install -g surge');
     return false;
   }
@@ -52,7 +52,7 @@ function buildProject() {
     execSync('npm run build', { stdio: 'inherit' });
     log.success('Build completed successfully!');
     return true;
-  } catch (error) {
+  } catch (_error) {
     log.error('Build failed. Please fix the errors and try again.');
     return false;
   }
@@ -74,7 +74,7 @@ function deploy() {
     log.success('Deployment successful!');
     console.log(`\n${colors.green}🌐 Your site is live at: https://${DOMAIN}${colors.reset}\n`);
     return true;
-  } catch (error) {
+  } catch (_error) {
     log.error('Deployment failed.');
     return false;
   }

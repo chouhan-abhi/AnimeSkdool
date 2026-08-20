@@ -25,52 +25,30 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const ToastIcon = ({ type }) => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle size={20} className="text-green-400" />;
-      case 'error':
-        return <XCircle size={20} className="text-red-400" />;
-      default:
-        return <Info size={20} className="text-blue-400" />;
-    }
-  };
-
   return (
     <ToastContext.Provider value={{ showToast, removeToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[10000] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[10000] flex flex-col gap-2.5 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-[400px] pointer-events-auto animate-slideInRight"
-            style={{
-              animation: 'slideInRight 0.3s ease-out forwards',
-            }}
+            className="bg-[#161622]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.8)] px-4 py-3 flex items-center gap-3 min-w-[260px] max-w-[380px] pointer-events-auto text-white animate-fadeInUp"
           >
-            <ToastIcon type={toast.type} />
-            <p className="flex-1 text-sm text-white">{toast.message}</p>
+            {toast.type === 'success' ? (
+              <CheckCircle size={18} className="text-green-400 flex-shrink-0" />
+            ) : toast.type === 'error' ? (
+              <XCircle size={18} className="text-red-400 flex-shrink-0" />
+            ) : (
+              <Info size={18} className="text-[var(--primary-color)] flex-shrink-0" />
+            )}
+            <p className="flex-1 text-xs font-semibold leading-tight">{toast.message}</p>
             <button
               type="button"
               onClick={() => removeToast(toast.id)}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
             >
-              <X size={16} />
+              <X size={13} />
             </button>
-            <style>
-              {`
-                @keyframes slideInRight {
-                  from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                  }
-                  to {
-                    transform: translateX(0);
-                    opacity: 1;
-                  }
-                }
-              `}
-            </style>
           </div>
         ))}
       </div>
@@ -86,3 +64,4 @@ export const useToast = () => {
   return context;
 };
 
+export default ToastProvider;

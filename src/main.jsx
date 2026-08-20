@@ -12,13 +12,12 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Mobile: No caching - always fetch fresh data
-      // Desktop: Normal caching behavior
-      staleTime: isMobile ? 0 : 1000 * 60 * 5, // 0 on mobile, 5 min on desktop
-      gcTime: isMobile ? 0 : 1000 * 60 * 30, // 0 on mobile (no cache), 30 min on desktop
-      retry: isMobile ? 1 : 3, // Fewer retries on mobile
-      refetchOnWindowFocus: false, // Don't refetch when tab becomes active
-      refetchOnMount: isMobile ? 'always' : true, // Always refetch on mobile
+      staleTime: 1000 * 60 * 15, // 15 minutes fresh cache
+      gcTime: 1000 * 60 * 60,    // 1 hour in memory
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      refetchOnWindowFocus: false, // Don't refetch on window focus to avoid rate limits
+      refetchOnMount: false,       // Use cache on remount
     },
   },
 });

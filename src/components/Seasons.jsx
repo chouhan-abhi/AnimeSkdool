@@ -4,21 +4,19 @@ import NoAnimeFound from "../helperComponent/NoAnimeFound";
 import PageLoader from "../helperComponent/PageLoader";
 import AnimeDetailCard from "../helperComponent/AnimeDetailCard";
 
+import { jikanFetch } from "../utils/jikanClient";
+
 // Fetch seasons list
 const fetchSeasonsList = async () => {
-  const res = await fetch("https://api.jikan.moe/v4/seasons");
-  if (!res.ok) throw new Error("Failed to fetch seasons list");
-  const json = await res.json();
-  return json.data;
+  const json = await jikanFetch("/seasons");
+  return json?.data || [];
 };
 
 // Fetch anime for a specific season
 const fetchSeasonAnime = async ({ queryKey }) => {
   const [_key, { year, season }] = queryKey;
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/${year}/${season}`);
-  if (!res.ok) throw new Error("Failed to fetch season anime");
-  const json = await res.json();
-  return json.data;
+  const json = await jikanFetch(`/seasons/${year}/${season}`);
+  return json?.data || [];
 };
 
 const SeasonsExplorer = () => {

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Bookmark, Search, Settings, Play, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bookmark, Search, Settings, Play, Sparkles } from "lucide-react";
 import IconButton from "../ui/IconButton";
+import SpotlightModal from "./SpotlightModal";
 
-const TopNav = ({ activeView, onNavigate, searchQuery, onSearchChange }) => {
+const TopNav = ({ activeView, onNavigate, onSelectAnime }) => {
   const [scrolled, setScrolled] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const inputRef = useRef(null);
+  const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -26,119 +26,111 @@ const TopNav = ({ activeView, onNavigate, searchQuery, onSearchChange }) => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        inputRef.current?.focus();
-        onNavigate?.("home");
-      }
-      if (e.key === "Escape" && searchFocused) {
-        inputRef.current?.blur();
-        onSearchChange?.("");
+        setIsSpotlightOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [searchFocused, onNavigate, onSearchChange]);
+  }, []);
 
   const navItems = [
     { key: "home", label: "Home" },
     { key: "calendar", label: "Schedule" },
     { key: "explore", label: "Browse" },
-    { key: "watchList", label: "Watchlist" },
+    { key: "watchList", label: "Up Next" },
   ];
 
   return (
-    <header
-      className={`hidden md:block fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-[var(--panel-bg)]/90 glass shadow-[0_1px_0_var(--border-color),0_8px_32px_-12px_var(--shadow-color)]"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="mx-auto w-full max-w-[1800px] px-6 lg:px-10">
-        <div className="flex items-center justify-between h-[var(--nav-height)]">
-          <div className="flex items-center gap-10">
-            <button
-              type="button"
-              onClick={() => onNavigate?.("home")}
-              className="flex items-center gap-2.5 text-[var(--text-color)] group"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary-color)] text-white shadow-[0_0_20px_var(--glow-color)] transition-transform duration-200 group-hover:scale-105">
-                <Play size={18} />
-              </span>
-              <span className="text-lg font-bold tracking-wide">AniSkdool</span>
-            </button>
+    <>
+      <header
+        className={`hidden md:block fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
+          scrolled
+            ? "bg-[var(--bg-color)]/80 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+            : "bg-gradient-to-b from-black/80 via-black/40 to-transparent"
+        }`}
+      >
+        <div className="mx-auto w-full max-w-[1800px] px-6 lg:px-12">
+          <div className="flex items-center justify-between h-[var(--nav-height)]">
+            {/* Logo & Main Nav Pill Group */}
+            <div className="flex items-center gap-8 lg:gap-12">
+              <button
+                type="button"
+                onClick={() => onNavigate?.("home")}
+                className="flex items-center gap-2.5 text-white group focus:outline-none"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--primary-color)] to-white/30 text-white shadow-[0_0_24px_var(--glow-color)] transition-transform duration-300 group-hover:scale-105">
+                  <Play size={16} className="fill-white translate-x-0.5" />
+                </span>
+                <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1">
+                  Ani<span className="text-[var(--primary-color)] font-black">tv</span>
+                </span>
+              </button>
 
-            <nav className="flex items-center gap-1">
-              {navItems.map((item) => {
-                const active = activeView === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => onNavigate?.(item.key)}
-                    className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      active
-                        ? "text-[var(--primary-color)] bg-[var(--primary-color)]/10"
-                        : "text-[var(--text-muted)] hover:text-[var(--text-color)] hover:bg-white/5"
-                    }`}
-                  >
-                    {item.label}
-                    {active && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-[var(--primary-color)]" />
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div
-              className={`relative hidden lg:flex items-center transition-all duration-300 ${
-                searchFocused ? "w-80" : "w-64"
-              }`}
-            >
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none"
-              />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                onFocus={() => {
-                  setSearchFocused(true);
-                  onNavigate?.("home");
-                }}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="Search anime..."
-                className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-1)]/60 py-2 pl-9 pr-16 text-sm text-[var(--text-color)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)]/40 transition-all"
-              />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  onClick={() => onSearchChange?.("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-color)]"
-                >
-                  <X size={14} />
-                </button>
-              ) : (
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-muted)] border border-[var(--border-color)] rounded px-1.5 py-0.5 bg-[var(--surface-1)]/80 pointer-events-none">
-                  ⌘K
-                </kbd>
-              )}
+              {/* Apple TV Segmented Nav Pill Container */}
+              <nav className="flex items-center p-1 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] shadow-inner">
+                {navItems.map((item) => {
+                  const active = activeView === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => onNavigate?.(item.key)}
+                      className={`relative px-4 lg:px-5 py-1.5 rounded-full text-xs lg:text-sm font-semibold transition-all duration-300 ${
+                        active
+                          ? "text-white bg-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] scale-[1.02]"
+                          : "text-[var(--text-muted)] hover:text-white hover:bg-white/[0.06]"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
 
-            <IconButton label="Watchlist" onClick={() => onNavigate?.("watchList")}>
-              <Bookmark size={18} />
-            </IconButton>
-            <IconButton label="Settings" onClick={() => onNavigate?.("settings")}>
-              <Settings size={18} />
-            </IconButton>
+            {/* Right Action Icons & Spotlight Search Button */}
+            <div className="flex items-center gap-3">
+              {/* Apple TV Spotlight Search Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsSpotlightOpen(true)}
+                className="flex items-center gap-3 rounded-full border border-white/[0.1] bg-white/[0.07] hover:bg-white/[0.12] backdrop-blur-2xl py-2 pl-3.5 pr-3 text-xs lg:text-sm text-[var(--text-muted)] hover:text-white transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] group"
+              >
+                <Search size={15} className="group-hover:text-white transition-colors" />
+                <span className="pr-4 hidden sm:inline">Search anime, cast, studios...</span>
+                <span className="pr-2 sm:hidden">Search</span>
+                <kbd className="text-[10px] font-semibold text-white/50 border border-white/15 rounded-md px-1.5 py-0.5 bg-white/10 group-hover:border-white/30">
+                  ⌘K
+                </kbd>
+              </button>
+
+              <IconButton
+                label="Up Next Watchlist"
+                active={activeView === "watchList"}
+                onClick={() => onNavigate?.("watchList")}
+              >
+                <Bookmark size={17} />
+              </IconButton>
+
+              <IconButton
+                label="Settings"
+                active={activeView === "settings"}
+                onClick={() => onNavigate?.("settings")}
+              >
+                <Settings size={17} />
+              </IconButton>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Spotlight Command Palette Modal */}
+      <SpotlightModal
+        isOpen={isSpotlightOpen}
+        onClose={() => setIsSpotlightOpen(false)}
+        onSelectAnime={onSelectAnime}
+      />
+    </>
   );
 };
 

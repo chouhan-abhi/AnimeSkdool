@@ -50,23 +50,30 @@ const SearchBar = ({ value, onChange }) => (
 
 const ViewModeToggle = ({ viewMode, setViewMode }) => (
   <div className="mt-6 border border-[var(--border-color)] flex bg-white/5 rounded-full shadow-md">
-    {[
-      { mode: "grid", icon: Grid, title: "Grid view" },
-      { mode: "list", icon: List, title: "List view" },
-    ].map(({ mode, icon: Icon, title }) => (
-      <button
-        key={mode}
-        onClick={() => setViewMode(mode)}
-        className={`p-2 rounded-full flex-1 flex justify-center transition ${
-          viewMode === mode
-            ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
-            : "text-white/70 hover:shadow-sm hover:bg-white/10"
-        }`}
-        title={title}
-      >
-        <Icon className="w-5 h-5" />
-      </button>
-    ))}
+    <button
+      type="button"
+      onClick={() => setViewMode("grid")}
+      className={`p-2 rounded-full flex-1 flex justify-center transition ${
+        viewMode === "grid"
+          ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
+          : "text-white/70 hover:shadow-sm hover:bg-white/10"
+      }`}
+      title="Grid view"
+    >
+      <Grid className="w-5 h-5" />
+    </button>
+    <button
+      type="button"
+      onClick={() => setViewMode("list")}
+      className={`p-2 rounded-full flex-1 flex justify-center transition ${
+        viewMode === "list"
+          ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
+          : "text-white/70 hover:shadow-sm hover:bg-white/10"
+      }`}
+      title="List view"
+    >
+      <List className="w-5 h-5" />
+    </button>
   </div>
 );
 
@@ -165,7 +172,10 @@ const ExploreAnime = ({ embedded = false, externalState = null }) => {
   const { data, error, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useInfiniteAnimeRanking({ type, filter, rating, sfw });
 
-  const animeList = data?.pages.flatMap((page) => page.data) || [];
+  const animeList = useMemo(
+    () => data?.pages.flatMap((page) => page.data) || [],
+    [data]
+  );
 
   useEffect(() => {
     if (animeList.length > 0 && isInitialLoad) setIsInitialLoad(false);

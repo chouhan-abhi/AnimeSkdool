@@ -1,31 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
+import { jikanFetch } from "../utils/jikanClient";
 
-// Detect mobile for dynamic data (no caching)
-const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-// Fetch function with pagination
 const fetchUpcomingAnime = async ({ queryKey, signal }) => {
   const [_key, page] = queryKey;
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/upcoming?page=${page}`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch upcoming anime");
-
-  const data = await res.json();
-
+  const data = await jikanFetch(`/seasons/upcoming?page=${page}`, { signal });
   return {
-    data: data.data,          // list of anime
-    pagination: data.pagination, // pagination info
+    data: data?.data || [],
+    pagination: data?.pagination || {},
   };
 };
 
-// React Query hook
 export const useUpcomingAnime = ({ page = 1 } = {}) => {
   return useQuery({
     queryKey: ["upcomingAnime", page],
     queryFn: fetchUpcomingAnime,
-    keepPreviousData: !isMobile, // Disable on mobile to save memory
-    // Mobile: No caching - always fresh data
-    staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 };
+
+export default useUpcomingAnime;

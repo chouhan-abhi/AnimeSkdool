@@ -1,12 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-
-// Detect mobile for dynamic data (no caching)
-const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+import { jikanFetch } from "../utils/jikanClient";
 
 const fetchEpisodes = async ({ animeId, signal }) => {
-  const res = await fetch(`https://api.jikan.moe/v4/anime/${animeId}/episodes`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch episodes");
-  const data = await res.json();
+  const data = await jikanFetch(`/anime/${animeId}/episodes`, { signal });
   return data?.data?.reverse() || []; // reverse so latest is first
 };
 
@@ -14,10 +10,11 @@ export const useEpisodes = (animeId) => {
   return useQuery({
     queryKey: ["episodes", animeId],
     queryFn: ({ signal }) => fetchEpisodes({ animeId, signal }),
-    enabled: !!animeId, // only run if animeId exists
-    // Mobile: No caching - always fresh data
-    staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
-    retry: 1,
+    enabled: !!animeId,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 2,
+    retry: 2,
   });
 };
+
+export default useEpisodes;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Star, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
+import { jikanFetch } from "../../utils/jikanClient";
 
 const ReviewSkeleton = () => (
   <div className="p-5 animate-shimmer">
@@ -31,10 +32,9 @@ const AnimeReviews = ({ onSelectAnime }) => {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        const res = await fetch("https://api.jikan.moe/v4/reviews/anime", {
+        const data = await jikanFetch("/reviews/anime", {
           signal: controller.signal,
         });
-        const data = await res.json();
         setReviews(data?.data || []);
       } catch (err) {
         if (err.name !== "AbortError") {

@@ -1,12 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-
-// Detect mobile
-const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+import { jikanFetch } from "../utils/jikanClient";
 
 const fetchSchedules = async ({ pageParam = 1, signal }) => {
-  const res = await fetch(`https://api.jikan.moe/v4/schedules?page=${pageParam}`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch schedules");
-  return res.json();
+  const data = await jikanFetch(`/schedules?page=${pageParam}`, { signal });
+  return data;
 };
 
 export const useSchedulesQuery = () =>
@@ -14,15 +11,15 @@ export const useSchedulesQuery = () =>
     queryKey: ["schedules"],
     queryFn: fetchSchedules,
     getNextPageParam: (lastPage) => {
-      // Calendar needs ALL data - no page limit
-      // The data is essential for showing the full week schedule
-      return lastPage.pagination?.has_next_page
+      return lastPage?.pagination?.has_next_page
         ? lastPage.pagination.current_page + 1
         : undefined;
     },
-    // Mobile: Fresh data, desktop: 5 min cache
-    staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 1000 * 60 * 2 : 1000 * 60 * 30, // Keep minimal cache on mobile
+    staleTime: 1000 * 60 * 60 * 4, // 4 hours
+    gcTime: 1000 * 60 * 60 * 12,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 2,
   });
+
+export default useSchedulesQuery;

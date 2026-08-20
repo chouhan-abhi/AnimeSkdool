@@ -2,6 +2,8 @@ import React from "react";
 
 const FilterSelect = ({ label, value, onChange, options }) => (
   <select
+    aria-label={label}
+    title={label}
     value={value}
     onChange={(e) => onChange(e.target.value)}
     className="w-full p-2 rounded bg-[var(--secondary-color)] border border-[var(--border-color)] text-sm"

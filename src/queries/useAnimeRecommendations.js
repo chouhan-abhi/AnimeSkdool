@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-const BASE = "https://api.jikan.moe/v4";
-
-// Detect mobile for dynamic data (no caching)
-const isMobile =
-  typeof navigator !== "undefined" &&
-  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+import { jikanFetch } from "../utils/jikanClient";
 
 /**
  * Fetches recent anime recommendations from Jikan API.
@@ -13,12 +7,11 @@ const isMobile =
  * Response: { data: [{ mal_id, entry: [{ mal_id, url, images, title }], content, user }], pagination }
  * Returns a flat, deduped list of anime entries (minimal: mal_id, url, images, title).
  */
-const fetchAnimeRecommendations = async ({ page = 1, signal }) => {
-  const res = await fetch(`${BASE}/recommendations/anime?page=${page}`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch anime recommendations");
-  const json = await res.json();
+export const fetchAnimeRecommendations = async ({ page = 1, signal } = {}) => {
+  const json = await jikanFetch(`/recommendations/anime?page=${page}`, { signal });
   const data = json?.data ?? [];
   const entries = data.flatMap((rec) => rec?.entry ?? []).filter(Boolean);
+
   // Dedupe by mal_id (same anime can appear in multiple recommendations)
   const seen = new Set();
   return entries.filter((e) => {
@@ -29,58 +22,24 @@ const fetchAnimeRecommendations = async ({ page = 1, signal }) => {
   });
 };
 
-/**
- * Fetches multiple pages of recommendations and returns a single flat list.
- */
-const fetchAnimeRecommendationsList = async ({ maxItems = 24, signal } = {}) => {
-  const all = [];
-  let page = 1;
-  let hasMore = true;
-
-  while (hasMore && all.length < maxItems) {
-    if (signal?.aborted) {
-      throw new DOMException("Aborted", "AbortError");
-    }
-    const res = await fetch(`${BASE}/recommendations/anime?page=${page}`, { signal });
-    if (!res.ok) throw new Error("Failed to fetch anime recommendations");
-    const json = await res.json();
-    const data = json?.data ?? [];
-    const pagination = json?.pagination ?? {};
-
-    const entries = data.flatMap((rec) => rec?.entry ?? []).filter(Boolean);
-    const seen = new Set(all.map((e) => e.mal_id));
-    for (const e of entries) {
-      if (seen.has(e.mal_id)) continue;
-      seen.add(e.mal_id);
-      all.push(e);
-      if (all.length >= maxItems) break;
-    }
-
-    hasMore = pagination.has_next_page === true && all.length < maxItems;
-    page += 1;
-  }
-
-  return all;
-};
-
 export const useAnimeRecommendations = (maxItems = 24) => {
   return useQuery({
     queryKey: ["animeRecommendations", maxItems],
-    queryFn: ({ signal }) => fetchAnimeRecommendationsList({ maxItems, signal }),
-    staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
-    retry: 1,
+    queryFn: async ({ signal }) => {
+      const list = await fetchAnimeRecommendations({ page: 1, signal });
+      return list.slice(0, maxItems);
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60,
+    retry: 2,
   });
 };
 
 /**
  * Fetches full anime by MAL id (GET /anime/{id}).
- * Use when you have a minimal entry from recommendations and need full data for the details panel.
  */
 export const fetchAnimeById = async (malId, signal) => {
-  const res = await fetch(`${BASE}/anime/${malId}`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch anime");
-  const json = await res.json();
+  const json = await jikanFetch(`/anime/${malId}`, { signal });
   return json?.data ?? null;
 };
 

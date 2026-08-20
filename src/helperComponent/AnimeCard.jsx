@@ -26,7 +26,6 @@ const AnimeCard = ({ anime }) => {
     rating,
     studios,
     genres,
-    producers,
     popularity,
     members,
   } = anime;

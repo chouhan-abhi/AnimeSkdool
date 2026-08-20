@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Play, Plus, Check, ChevronLeft, ChevronRight, Info, Star } from "lucide-react";
+import { Play, Plus, Check, ChevronLeft, ChevronRight, Info, Star, Sparkles, Volume2 } from "lucide-react";
 import Pill from "./ui/Pill";
 import PrimaryButton from "./ui/PrimaryButton";
 
-const AUTO_ADVANCE_MS = 7000;
-const HERO_CLASS =
-  "relative h-[70vh] min-h-[480px] max-h-[860px] w-full overflow-hidden";
+const AUTO_ADVANCE_MS = 8000;
+const HERO_CLASS = "relative h-[74vh] min-h-[540px] max-h-[920px] w-full overflow-hidden select-none";
 
 const buildSrcSet = (urls, widths) => {
   const entries = urls
@@ -26,7 +25,6 @@ const HeroCarousel = memo(
     const [heroIndex, setHeroIndex] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const heroIntervalRef = useRef(null);
-    const progressRef = useRef(null);
 
     const stopAutoAdvance = useCallback(() => {
       if (heroIntervalRef.current) {
@@ -73,7 +71,7 @@ const HeroCarousel = memo(
         setHeroIndex(index);
         stopAutoAdvance();
         startAutoAdvance();
-        setTimeout(() => setIsTransitioning(false), 600);
+        setTimeout(() => setIsTransitioning(false), 500);
       },
       [startAutoAdvance, stopAutoAdvance, isTransitioning]
     );
@@ -85,16 +83,16 @@ const HeroCarousel = memo(
 
     if (heroLoading) {
       return (
-        <section className={`${HERO_CLASS} bg-[var(--bg-color)]`}>
+        <section className={`${HERO_CLASS} bg-[#060608]`}>
           <div className="absolute inset-0 animate-shimmer" />
-          <div className="relative h-full flex flex-col justify-end px-6 sm:px-8 md:px-12 lg:px-16 pb-20 md:pb-16">
-            <div className="h-4 w-20 rounded-full bg-white/10 mb-4" />
-            <div className="h-12 w-3/4 max-w-xl rounded-lg bg-white/8" />
-            <div className="mt-3 h-5 w-full max-w-lg rounded bg-white/6" />
-            <div className="mt-2 h-5 w-2/3 max-w-md rounded bg-white/6" />
-            <div className="mt-6 flex gap-3">
-              <div className="h-11 w-32 rounded-full bg-white/10" />
-              <div className="h-11 w-36 rounded-full bg-white/6" />
+          <div className="relative h-full flex flex-col justify-end px-6 sm:px-10 md:px-16 lg:px-20 pb-20 md:pb-24 max-w-[1800px] mx-auto">
+            <div className="h-5 w-28 rounded-full bg-white/10 mb-4" />
+            <div className="h-14 w-3/4 max-w-2xl rounded-2xl bg-white/10" />
+            <div className="mt-4 h-5 w-full max-w-xl rounded-lg bg-white/5" />
+            <div className="mt-2 h-5 w-2/3 max-w-md rounded-lg bg-white/5" />
+            <div className="mt-8 flex gap-4">
+              <div className="h-12 w-36 rounded-full bg-white/15" />
+              <div className="h-12 w-36 rounded-full bg-white/10" />
             </div>
           </div>
         </section>
@@ -109,8 +107,9 @@ const HeroCarousel = memo(
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Slides Track */}
         <div
-          className="flex h-full transition-transform duration-[600ms] ease-out will-change-transform"
+          className="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
           style={{ transform: `translateX(-${heroIndex * 100}%)` }}
         >
           {heroList.map((anime, index) => {
@@ -118,19 +117,21 @@ const HeroCarousel = memo(
             const jpg = anime.images?.jpg || {};
             const webpSrcSet = buildSrcSet(
               [webp.small_image_url, webp.image_url, webp.large_image_url],
-              [480, 800, 1400]
+              [600, 1200, 2000]
             );
             const jpgSrcSet = buildSrcSet(
               [jpg.small_image_url, jpg.image_url, jpg.large_image_url],
-              [480, 800, 1400]
+              [600, 1200, 2000]
             );
             const fallbackSrc =
-              webp.large_image_url || webp.image_url || jpg.large_image_url || jpg.image_url;
+              anime.banner_image || webp.large_image_url || webp.image_url || jpg.large_image_url || jpg.image_url;
 
             const inWatchlist = isInWatchlist?.(anime.mal_id);
+            const isActiveSlide = heroIndex === index;
 
             return (
-              <div key={anime.mal_id} className="relative flex-shrink-0 w-full h-full">
+              <div key={anime.mal_id || index} className="relative flex-shrink-0 w-full h-full overflow-hidden">
+                {/* Backdrop Image with Ken Burns Zoom */}
                 <picture className="absolute inset-0 block">
                   {webpSrcSet && (
                     <source type="image/webp" srcSet={webpSrcSet} sizes="100vw" />
@@ -141,83 +142,107 @@ const HeroCarousel = memo(
                   <img
                     src={fallbackSrc}
                     alt={anime.title}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover object-center filter brightness-90 contrast-[1.08] transition-transform duration-1000 ${
+                      isActiveSlide ? "scale-105" : "scale-100"
+                    }`}
                     loading={index === 0 ? "eager" : "lazy"}
                     fetchPriority={index === 0 ? "high" : "low"}
                     decoding={index === 0 ? "auto" : "async"}
                   />
                 </picture>
 
-                <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-color)] via-[var(--bg-color)]/70 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-color)] via-[var(--bg-color)]/20 to-transparent" />
+                {/* Cinematic Ambient Glow & Vignette Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#060608] via-[#060608]/80 to-transparent w-full md:w-3/4" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-color)] via-[var(--bg-color)]/40 to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/80 to-transparent" />
 
-                <div className="relative h-full flex flex-col justify-end px-6 sm:px-8 md:px-12 lg:px-16 pb-20 md:pb-16">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Pill variant="accent" className="bg-[var(--primary-color)]/90 text-white border-transparent">
-                      #{index + 1} Trending
-                    </Pill>
-                    {anime.score && (
-                      <Pill className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                        <Star size={10} fill="currentColor" />
-                        {anime.score}
-                      </Pill>
-                    )}
-                    {anime.season && anime.year && (
-                      <span className="text-xs text-white/60 font-medium">
-                        {anime.season} {anime.year}
+                {/* Hero Info Container */}
+                <div className="relative h-full flex flex-col justify-end px-6 sm:px-10 md:px-16 lg:px-20 pb-20 md:pb-24 max-w-[1800px] mx-auto z-10">
+                  {/* Apple TV Badges Strip */}
+                  <div className="flex flex-wrap items-center gap-2.5 mb-3">
+                    <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl text-white text-[11px] font-bold tracking-wider uppercase border border-white/25 shadow-sm">
+                      Apple TV Showcase
+                    </span>
+
+                    {anime.rating && (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-widest bg-white/10 backdrop-blur-xl text-white/90 border border-white/15 uppercase">
+                        {anime.rating.split(" ")[0] || "TV-14"}
                       </span>
                     )}
-                    {anime.episodes && (
-                      <span className="text-xs text-white/60">
-                        {anime.episodes} Episodes
+
+                    <span className="px-2 py-0.5 rounded text-[9px] font-extrabold tracking-widest bg-white/10 backdrop-blur-md text-white/80 border border-white/15">
+                      4K HDR
+                    </span>
+
+                    <span className="px-2 py-0.5 rounded text-[9px] font-extrabold tracking-widest bg-white/10 backdrop-blur-md text-white/80 border border-white/15">
+                      DOLBY ATMOS
+                    </span>
+
+                    {anime.score && (
+                      <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-xs font-bold shadow-sm">
+                        <Star size={11} fill="currentColor" />
+                        {anime.score}
+                      </span>
+                    )}
+
+                    {anime.season && anime.year && (
+                      <span className="text-xs text-white/70 font-medium capitalize ml-1">
+                        {anime.season} {anime.year}
                       </span>
                     )}
                   </div>
 
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] max-w-2xl leading-tight">
+                  {/* Title */}
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight drop-shadow-[0_4px_28px_rgba(0,0,0,0.9)] max-w-3xl leading-[1.08]">
                     {anime.title}
                   </h1>
 
-                  {anime.genres?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {anime.genres.slice(0, 4).map((g) => (
-                        <span
-                          key={g.mal_id}
-                          className="text-[11px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 border border-white/10"
-                        >
-                          {g.name}
-                        </span>
-                      ))}
-                    </div>
+                  {/* Japanese / Alt Title */}
+                  {anime.title_japanese && (
+                    <p className="text-sm font-medium text-white/50 mt-1 tracking-wide">
+                      {anime.title_japanese}
+                    </p>
                   )}
 
+                  {/* Synopsis */}
                   {anime.synopsis && (
-                    <p className="mt-3 text-sm sm:text-base text-white/80 line-clamp-2 max-w-xl leading-relaxed">
+                    <p className="mt-3 text-sm sm:text-base text-white/85 line-clamp-2 sm:line-clamp-3 max-w-2xl leading-relaxed font-normal drop-shadow-md">
                       {anime.synopsis.replace(/\[Written by.*?\]/gi, "").trim()}
                     </p>
                   )}
 
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <PrimaryButton onClick={() => onSelectAnime?.(anime)}>
-                      <Play size={18} fill="white" />
-                      Watch Now
+                  {/* Apple TV Action Buttons */}
+                  <div className="mt-6 flex flex-wrap items-center gap-3.5">
+                    <PrimaryButton
+                      variant="white"
+                      size="lg"
+                      onClick={() => onSelectAnime?.(anime)}
+                    >
+                      <Play size={18} fill="currentColor" />
+                      Watch Episode 1
                     </PrimaryButton>
-                    <PrimaryButton variant="secondary" onClick={() => onSelectAnime?.(anime)}>
-                      <Info size={18} />
-                      More Info
-                    </PrimaryButton>
+
                     <button
                       type="button"
                       onClick={() => onAddToWatchlist?.(anime)}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold backdrop-blur-2xl transition-all duration-200 active:scale-95 border ${
                         inWatchlist
-                          ? "border-[var(--primary-color)]/40 bg-[var(--primary-color)]/15 text-[var(--primary-color)]"
-                          : "border-white/15 bg-white/8 text-white hover:bg-white/15"
+                          ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_24px_var(--glow-color)]"
+                          : "bg-white/12 text-white border-white/20 hover:bg-white/20 hover:border-white/30"
                       }`}
                     >
                       {inWatchlist ? <Check size={18} /> : <Plus size={18} />}
-                      {inWatchlist ? "In Watchlist" : "Watchlist"}
+                      {inWatchlist ? "In Up Next" : "Add to Up Next"}
                     </button>
+
+                    <PrimaryButton
+                      variant="glass"
+                      size="lg"
+                      onClick={() => onSelectAnime?.(anime)}
+                    >
+                      <Info size={18} />
+                      Details & Stills
+                    </PrimaryButton>
                   </div>
                 </div>
               </div>
@@ -225,64 +250,51 @@ const HeroCarousel = memo(
           })}
         </div>
 
+        {/* Carousel Navigation Chevron Arrows */}
         {heroList.length > 1 && (
           <>
             <button
               type="button"
-              onClick={() =>
-                goToHeroSlide((heroIndex - 1 + heroList.length) % heroList.length)
-              }
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/30 text-white/80 hover:bg-black/50 hover:text-white transition-all duration-200 glass"
-              aria-label="Previous slide"
+              onClick={() => goToHeroSlide((heroIndex - 1 + heroList.length) % heroList.length)}
+              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/75 border border-white/15 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-95"
+              aria-label="Previous Slide"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft size={22} />
             </button>
+
             <button
               type="button"
               onClick={() => goToHeroSlide((heroIndex + 1) % heroList.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/30 text-white/80 hover:bg-black/50 hover:text-white transition-all duration-200 glass"
-              aria-label="Next slide"
+              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/75 border border-white/15 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-95"
+              aria-label="Next Slide"
             >
-              <ChevronRight size={24} />
+              <ChevronRight size={22} />
             </button>
-
-            <div className="absolute bottom-4 left-6 sm:left-8 md:left-12 lg:left-16 z-10 flex items-center gap-3">
-              <div className="flex gap-1.5">
-                {heroList.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => goToHeroSlide(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                    aria-current={i === heroIndex ? "true" : undefined}
-                    className={`h-1.5 rounded-full transition-all duration-400 ${
-                      i === heroIndex
-                        ? "w-8 bg-[var(--primary-color)]"
-                        : "w-1.5 bg-white/30 hover:bg-white/50"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-white/50 font-medium tabular-nums">
-                {heroIndex + 1} / {heroList.length}
-              </span>
-            </div>
-
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/5">
-              <div
-                ref={progressRef}
-                key={heroIndex}
-                className="h-full bg-[var(--primary-color)]/60 rounded-full"
-                style={{ animation: `progressBar ${AUTO_ADVANCE_MS}ms linear` }}
-              />
-            </div>
           </>
+        )}
+
+        {/* Apple TV Segmented Slide Indicator Bars */}
+        {heroList.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur-2xl border border-white/10">
+            {heroList.slice(0, 10).map((_, idx) => {
+              const active = idx === heroIndex;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => goToHeroSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    active ? "w-8 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]" : "w-2 bg-white/30 hover:bg-white/60"
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              );
+            })}
+          </div>
         )}
       </section>
     );
   }
 );
-
-HeroCarousel.displayName = "HeroCarousel";
 
 export default HeroCarousel;

@@ -8,8 +8,6 @@ const RecommendationSection = () => {
   const {
     data: randomAnimeList = [],
     isLoading,
-    isFetching,
-    refetch,
     isError,
   } = useRandomAnimeList(8);
 

@@ -13,10 +13,12 @@ const STORAGE_KEYS = {
   ANIME_CACHE_KEY: "animeScheduleCache",
   PRIMARY_COLOR_KEY: "primaryColor",
   CALENDAR_FILTERS: "calendarFilters",
+  PROGRESS_KEY: "animeProgressMap_v1",
+  RECENT_SEARCHES_KEY: "recentSearches_v1",
 };
 
 const storageManager = {
-  // ✅ Save a value
+  // Save a value
   set(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -25,7 +27,7 @@ const storageManager = {
     }
   },
 
-  // ✅ Get a value
+  // Get a value
   get(key, defaultValue = null) {
     try {
       const raw = localStorage.getItem(key);
@@ -36,7 +38,7 @@ const storageManager = {
     }
   },
 
-  // ✅ Remove a value
+  // Remove a value
   remove(key) {
     try {
       localStorage.removeItem(key);
@@ -45,12 +47,11 @@ const storageManager = {
     }
   },
 
-  // ✅ Clear all anime-related storage
   clearAll() {
     Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
   },
 
-  // ✅ Save to watchlist (now uses set method for consistency)
+  // Watchlist methods
   saveToWatchlist(anime, isStarred) {
     const WATCHLIST_KEY = STORAGE_KEYS.WATCHLIST_KEY;
     try {
@@ -58,7 +59,6 @@ const storageManager = {
       let updated;
 
       if (isStarred) {
-        // Add or update with isStarred true
         const exists = stored.find((a) => a.mal_id === anime.mal_id);
         if (exists) {
           updated = stored.map((a) =>
@@ -68,7 +68,6 @@ const storageManager = {
           updated = [...stored, { ...anime, isStarred: true }];
         }
       } else {
-        // Unstar → update or remove isStarred
         updated = stored.map((a) =>
           a.mal_id === anime.mal_id ? { ...a, isStarred: false } : a
         );
@@ -80,7 +79,6 @@ const storageManager = {
     }
   },
 
-  // ✅ Add anime to watchlist
   addToWatchlist(anime) {
     const WATCHLIST_KEY = STORAGE_KEYS.WATCHLIST_KEY;
     const stored = this.get(WATCHLIST_KEY, []);
@@ -90,7 +88,6 @@ const storageManager = {
     }
   },
 
-  // ✅ Remove anime from watchlist
   removeFromWatchlist(animeId) {
     const WATCHLIST_KEY = STORAGE_KEYS.WATCHLIST_KEY;
     const stored = this.get(WATCHLIST_KEY, []);
@@ -98,33 +95,28 @@ const storageManager = {
     this.set(WATCHLIST_KEY, updated);
   },
 
-  // ✅ Check if anime is in watchlist
   isInWatchlist(animeId) {
     const WATCHLIST_KEY = STORAGE_KEYS.WATCHLIST_KEY;
     const stored = this.get(WATCHLIST_KEY, []);
     return stored.some((a) => a.mal_id === animeId);
   },
 
-  // ✅ Get settings
+  // Settings
   getSettings() {
     return this.get(STORAGE_KEYS.SETTINGS_KEY, {
-      theme: "theme-hub",
+      theme: "theme-dark",
       font: "font-basic",
-      primaryColor: "primary-purple",
+      primaryColor: "primary-blue",
       calendarView: "week",
     });
   },
 
-  // ✅ Save settings
   saveSettings(settings) {
     const current = this.getSettings();
     this.set(STORAGE_KEYS.SETTINGS_KEY, { ...current, ...settings });
   },
 
-  // ============================
-  // ▶ STARTED ANIME HELPERS
-  // ============================
-
+  // Started / Continue Watching
   getStartedList() {
     return this.get(STORAGE_KEYS.STARTED_KEY, []);
   },
@@ -136,17 +128,14 @@ const storageManager = {
 
   addToStarted(anime) {
     if (!anime?.mal_id) return;
-
     const stored = this.getStartedList();
     const exists = stored.some((a) => a.mal_id === anime.mal_id);
-
     if (exists) return;
 
     const startedAnime = {
       ...anime,
-      startedAt: Date.now(), // 🔑 useful for "Continue Watching"
+      startedAt: Date.now(),
     };
-
     this.set(STORAGE_KEYS.STARTED_KEY, [startedAnime, ...stored]);
   },
 
@@ -154,6 +143,71 @@ const storageManager = {
     const stored = this.getStartedList();
     const updated = stored.filter((a) => a.mal_id !== animeId);
     this.set(STORAGE_KEYS.STARTED_KEY, updated);
+  },
+
+  // ============================
+  // Episode Progress Tracking
+  // ============================
+
+  getProgressMap() {
+    return this.get(STORAGE_KEYS.PROGRESS_KEY, {});
+  },
+
+  getAnimeProgress(animeId) {
+    if (!animeId) return { episode: 0, status: "plan_to_watch", updated: Date.now() };
+    const map = this.getProgressMap();
+    return map[animeId] || { episode: 0, status: "plan_to_watch", updated: Date.now() };
+  },
+
+  setAnimeProgress(animeId, progressData) {
+    if (!animeId) return;
+    const map = this.getProgressMap();
+    const current = map[animeId] || {};
+    map[animeId] = {
+      ...current,
+      ...progressData,
+      updated: Date.now(),
+    };
+    this.set(STORAGE_KEYS.PROGRESS_KEY, map);
+  },
+
+  incrementEpisode(animeId, totalEpisodes = null) {
+    const current = this.getAnimeProgress(animeId);
+    const nextEp = current.episode + 1;
+    const maxEp = totalEpisodes ? Math.min(nextEp, totalEpisodes) : nextEp;
+    const isCompleted = totalEpisodes ? maxEp >= totalEpisodes : false;
+
+    this.setAnimeProgress(animeId, {
+      episode: maxEp,
+      status: isCompleted ? "completed" : "watching",
+    });
+    return maxEp;
+  },
+
+  // ============================
+  // Recent Searches
+  // ============================
+
+  getRecentSearches() {
+    return this.get(STORAGE_KEYS.RECENT_SEARCHES_KEY, [
+      "Frieren",
+      "Solo Leveling",
+      "Jujutsu Kaisen",
+      "Demon Slayer",
+    ]);
+  },
+
+  addRecentSearch(query) {
+    if (!query || typeof query !== "string") return;
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    const current = this.getRecentSearches();
+    const filtered = current.filter((q) => q.toLowerCase() !== trimmed.toLowerCase());
+    this.set(STORAGE_KEYS.RECENT_SEARCHES_KEY, [trimmed, ...filtered].slice(0, 8));
+  },
+
+  clearRecentSearches() {
+    this.set(STORAGE_KEYS.RECENT_SEARCHES_KEY, []);
   },
 
   keys: STORAGE_KEYS,

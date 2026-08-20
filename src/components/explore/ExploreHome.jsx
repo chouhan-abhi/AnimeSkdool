@@ -8,14 +8,18 @@ import {
   Search,
   Star,
   ChevronDown,
+  Compass,
+  Play,
 } from "lucide-react";
 import { useRandomAnimeList } from "../../queries/useRandomAnimeList";
 import { useQuery } from "@tanstack/react-query";
 import storageManager from "../../utils/storageManager";
 import GlassCard from "../ui/GlassCard";
 import Pill from "../ui/Pill";
+import SectionHeader from "../ui/SectionHeader";
 import { DetailsPanelLoader } from "../../helperComponent/PageLoader";
 import { RANKING_FILTER_CONFIG } from "../../utils/constants";
+import { jikanFetch } from "../../utils/jikanClient";
 
 const AnimeDetailsPanel = lazy(() => import("../AnimeDetailsPanel"));
 
@@ -29,11 +33,19 @@ const usePersistedState = (key, defaultValue) => {
   return [state, setState];
 };
 
-const ExploreHome = () => {
+const ExploreHome = ({ onSelectAnime }) => {
   const [viewMode, setViewMode] = useState("seasons");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAnime, setSelectedAnime] = useState(null);
+
+  const handleSelect = useCallback(
+    (anime) => {
+      if (onSelectAnime) onSelectAnime(anime);
+      else setSelectedAnime(anime);
+    },
+    [onSelectAnime]
+  );
 
   const [type, setType] = usePersistedState(storageManager.keys.type, "");
   const [filter, setFilter] = usePersistedState(
@@ -46,24 +58,68 @@ const ExploreHome = () => {
   );
   const [sfw, setSfw] = usePersistedState(storageManager.keys.sfw, "true");
 
-  const handleModeChange = useCallback((mode) => {
-    if (mode === viewMode || isTransitioning) return;
-
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setViewMode(mode);
-      setIsTransitioning(false);
-    }, 200);
-  }, [viewMode, isTransitioning]);
+  const handleModeChange = useCallback(
+    (mode) => {
+      if (mode === viewMode || isTransitioning) return;
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setViewMode(mode);
+        setIsTransitioning(false);
+      }, 150);
+    },
+    [viewMode, isTransitioning]
+  );
 
   const quickFilters = useMemo(
     () => [
-      { key: "all", label: "All Media", onClick: () => { setType(""); setFilter("bypopularity"); } },
-      { key: "airing", label: "Airing Now", onClick: () => { setFilter("airing"); setType(""); } },
-      { key: "upcoming", label: "Upcoming", onClick: () => { setFilter("upcoming"); setType(""); } },
-      { key: "tv", label: "TV Series", onClick: () => { setType("tv"); setFilter("bypopularity"); } },
-      { key: "movie", label: "Movies", onClick: () => { setType("movie"); setFilter("bypopularity"); } },
-      { key: "ova", label: "OVAs", onClick: () => { setType("ova"); setFilter("bypopularity"); } },
+      {
+        key: "all",
+        label: "All Catalog",
+        onClick: () => {
+          setType("");
+          setFilter("bypopularity");
+        },
+      },
+      {
+        key: "airing",
+        label: "Airing Now",
+        onClick: () => {
+          setFilter("airing");
+          setType("");
+        },
+      },
+      {
+        key: "upcoming",
+        label: "Upcoming",
+        onClick: () => {
+          setFilter("upcoming");
+          setType("");
+        },
+      },
+      {
+        key: "tv",
+        label: "TV Series",
+        onClick: () => {
+          setType("tv");
+          setFilter("bypopularity");
+        },
+      },
+      {
+        key: "movie",
+        label: "Feature Films",
+        onClick: () => {
+          setType("movie");
+          setFilter("bypopularity");
+        },
+      },
+      {
+        key: "ova",
+        label: "OVAs & Specials",
+        onClick: () => {
+          setType("ova");
+          setFilter("bypopularity");
+        },
+      },
     ],
     [setType, setFilter]
   );
@@ -75,15 +131,11 @@ const ExploreHome = () => {
   const { data: recentReviews = [], isLoading: reviewsLoading } = useQuery({
     queryKey: ["recentReviewsLite"],
     queryFn: async ({ signal }) => {
-      const res = await fetch("https://api.jikan.moe/v4/reviews/anime", {
-        signal,
-      });
-      if (!res.ok) throw new Error("Failed to load reviews");
-      const json = await res.json();
+      const json = await jikanFetch("/reviews/anime", { signal });
       return (json?.data || []).slice(0, 3);
     },
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 2,
   });
 
   const isRanking = viewMode === "ranking";
@@ -97,73 +149,80 @@ const ExploreHome = () => {
   const modes = [
     {
       key: "seasons",
-      label: "Seasons",
+      label: "Seasonal Catalog",
       icon: Calendar,
-      description: "Browse by season",
+      description: "Browse anime by year and premiere season",
     },
     {
       key: "ranking",
-      label: "Explore",
+      label: "Charts & Rankings",
       icon: TrendingUp,
-      description: "Top ranked anime",
+      description: "Top rated and most popular anime",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-color)]">
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 px-4 sm:px-6 md:px-8 lg:px-10 pt-6 pb-10">
+    <div className="min-h-screen text-white px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto pb-24">
+      {/* Header */}
+      <div className="pt-8 pb-6">
+        <SectionHeader
+          title="Browse Catalog"
+          subtitle="Discover anime across premier seasons, top charts, and curated genres"
+          badge="Discovery"
+        />
+      </div>
 
-        {/* Main Content */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8">
+        {/* Main Section */}
         <section className="min-w-0">
-          <GlassCard className="p-4 mb-4">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {modes.map((mode) => {
-                const Icon = mode.icon;
-                const active = viewMode === mode.key;
-                return (
-                  <button
-                    key={mode.key}
-                    type="button"
-                    onClick={() => handleModeChange(mode.key)}
-                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold transition ${
-                      active
-                        ? "bg-[var(--primary-color)] text-white shadow-[0_0_18px_var(--glow-color)]"
-                        : "bg-white/5 text-[var(--text-color)]/75 hover:text-[var(--text-color)]"
-                    }`}
-                    title={mode.description}
-                  >
-                    <Icon size={14} />
-                    {mode.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[240px]">
-                {isRanking ? (
-                  <>
-                    <Search
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                    />
-                    <input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search anime, studios, or users..."
-                      className="w-full rounded-full border border-[var(--border-color)] bg-white/10 py-2.5 pl-9 pr-4 text-sm text-[var(--text-color)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/50"
-                    />
-                  </>
-                ) : (
-                  <p className="rounded-full border border-[var(--border-color)] bg-white/5 px-4 py-2.5 text-sm text-[var(--text-color)]/70">
-                    Browse anime by year and season. Switch to Explore for ranking filters.
-                  </p>
-                )}
+          {/* Apple TV Segmented Switcher & Search Filter Bar */}
+          <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl mb-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Apple TV Segmented Switcher */}
+              <div className="flex items-center p-1 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/10">
+                {modes.map((mode) => {
+                  const Icon = mode.icon;
+                  const active = viewMode === mode.key;
+                  return (
+                    <button
+                      key={mode.key}
+                      type="button"
+                      onClick={() => handleModeChange(mode.key)}
+                      className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 ${
+                        active
+                          ? "bg-white text-black shadow-md scale-[1.02]"
+                          : "text-white/70 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      <Icon size={14} />
+                      <span>{mode.label}</span>
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Search Bar for Rankings */}
+              {isRanking && (
+                <div className="relative flex-1 min-w-[220px] max-w-md">
+                  <Search
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
+                  />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by title, studio, author..."
+                    className="w-full rounded-full border border-white/10 bg-white/[0.07] backdrop-blur-xl py-2 pl-10 pr-4 text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+                  />
+                </div>
+              )}
             </div>
+
+            {/* Quick Filter Pills */}
             {isRanking && (
-              <>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-[var(--text-muted)]">Quick Filters:</span>
+              <div className="space-y-4 pt-2 border-t border-white/[0.06]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-white/50 mr-1">Filter:</span>
                   {quickFilters.map((item) => {
                     const isActive =
                       (item.key === "all" && !type && filter === "bypopularity") ||
@@ -177,10 +236,10 @@ const ExploreHome = () => {
                         key={item.key}
                         type="button"
                         onClick={item.onClick}
-                        className={`rounded-full px-3 py-1 text-xs font-semibold border transition ${
+                        className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
                           isActive
-                            ? "border-[var(--primary-color)]/40 bg-[var(--primary-color)]/20 text-[var(--primary-color)]"
-                            : "border-[var(--border-color)] bg-white/5 text-[var(--text-color)]/70 hover:text-[var(--text-color)]"
+                            ? "bg-white text-black shadow-sm scale-[1.02]"
+                            : "bg-white/[0.06] text-white/70 border border-white/10 hover:text-white hover:bg-white/[0.12]"
                         }`}
                       >
                         {item.label}
@@ -188,183 +247,177 @@ const ExploreHome = () => {
                     );
                   })}
                 </div>
-                <div className="mt-4 rounded-2xl border border-[var(--border-color)] bg-white/5 p-3 sm:p-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="text-xs text-[var(--text-muted)]">
-                      Fine tune results
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="relative min-w-[135px]">
-                        <select
-                          value={type}
-                          onChange={(e) => setType(e.target.value)}
-                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
-                        >
-                          {RANKING_FILTER_CONFIG.type.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
-                      </div>
-                      <div className="relative min-w-[150px]">
-                        <select
-                          value={filter}
-                          onChange={(e) => setFilter(e.target.value)}
-                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
-                        >
-                          {RANKING_FILTER_CONFIG.filter.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
-                      </div>
-                      <div className="relative min-w-[150px]">
-                        <select
-                          value={rating}
-                          onChange={(e) => setRating(e.target.value)}
-                          className="w-full appearance-none rounded-xl border border-[var(--border-color)] bg-white/10 py-2 pl-3 pr-8 text-xs text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40"
-                        >
-                          {RANKING_FILTER_CONFIG.rating.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setSfw((prev) => (prev === "true" ? "false" : "true"))}
-                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                          sfw === "true"
-                            ? "bg-emerald-500/90 text-white"
-                            : "bg-rose-500/90 text-white"
-                        }`}
-                      >
-                        {sfw === "true" ? "Safe Content" : "All Content"}
-                      </button>
-                      {hasAdvancedFilters && (
-                        <button
-                          type="button"
-                          onClick={handleResetAdvancedFilters}
-                          className="rounded-xl border border-[var(--border-color)] bg-white/10 px-3 py-2 text-xs font-semibold text-[var(--text-color)]/80 hover:bg-white/20 transition"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </GlassCard>
 
-          <div className="relative">
-            {isTransitioning && (
-              <div className="absolute inset-0 bg-[var(--bg-color)]/90 z-10 flex items-center justify-center rounded-2xl">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <Sparkles
-                      className="w-8 h-8 text-[var(--primary-color)] animate-spin"
-                      style={{ animationDuration: "1.5s" }}
-                    />
-                    <div className="absolute inset-0 w-8 h-8 rounded-full bg-[var(--primary-color)]/20 animate-ping" />
+                {/* Advanced Filter Dropdowns */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative min-w-[130px]">
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full appearance-none rounded-full border border-white/10 bg-white/[0.07] py-1.5 pl-3.5 pr-8 text-xs text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                    >
+                      {RANKING_FILTER_CONFIG.type.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-[#12121a] text-white">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
                   </div>
-                  <span className="text-xs text-[var(--text-color)]/50 font-medium tracking-wide">
-                    Loading...
-                  </span>
+
+                  <div className="relative min-w-[140px]">
+                    <select
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
+                      className="w-full appearance-none rounded-full border border-white/10 bg-white/[0.07] py-1.5 pl-3.5 pr-8 text-xs text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                    >
+                      {RANKING_FILTER_CONFIG.filter.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-[#12121a] text-white">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSfw((prev) => (prev === "true" ? "false" : "true"))}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                      sfw === "true"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                    }`}
+                  >
+                    {sfw === "true" ? "✓ SFW Safe" : "All Content"}
+                  </button>
+
+                  {hasAdvancedFilters && (
+                    <button
+                      type="button"
+                      onClick={handleResetAdvancedFilters}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/60 hover:text-white hover:bg-white/10 transition"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
                 </div>
               </div>
             )}
-            <div
-              className={`transition-all duration-300 ease-out ${
-                isTransitioning ? "opacity-0 scale-[0.99]" : "opacity-100 scale-100"
-              }`}
-            >
-              {viewMode === "seasons" ? (
-                <ExploreSeasons embedded />
-              ) : (
-                <ExploreAnime
-                  embedded
-                  externalState={{
-                    type,
-                    setType,
-                    filter,
-                    setFilter,
-                    rating,
-                    setRating,
-                    sfw,
-                    setSfw,
-                    searchQuery,
-                    setSearchQuery,
-                  }}
-                />
-              )}
-            </div>
+          </div>
+
+          {/* Catalog Content Grid */}
+          <div className="relative">
+            {isTransitioning ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-8 h-8 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              </div>
+            ) : viewMode === "seasons" ? (
+              <ExploreSeasons embedded />
+            ) : (
+              <ExploreAnime
+                embedded
+                externalState={{
+                  type,
+                  setType,
+                  filter,
+                  setFilter,
+                  rating,
+                  setRating,
+                  sfw,
+                  setSfw,
+                  searchQuery,
+                  setSearchQuery,
+                }}
+              />
+            )}
           </div>
         </section>
 
-        {/* Right Sidebar */}
-        <aside className="hidden xl:flex flex-col gap-4">
-          <GlassCard className="p-4">
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-2">
-              Random Pick
-            </div>
-            {randomLoading ? (
-              <div className="h-40 rounded-xl bg-white/5 animate-pulse" />
-            ) : randomPick ? (
-              <button
-                type="button"
-                onClick={() => setSelectedAnime(randomPick)}
-                className="w-full rounded-2xl border border-[var(--border-color)] bg-white/5 p-3 text-left transition hover:shadow-[0_18px_50px_-35px_var(--glow-color)]"
-              >
-                <img
-                  src={
-                    randomPick.images?.webp?.image_url ||
-                    randomPick.images?.jpg?.image_url
-                  }
-                  alt={randomPick.title}
-                  className="h-32 w-full rounded-xl object-cover"
-                />
-                <div className="mt-3 flex items-center gap-2">
-                  <Pill className="bg-[var(--primary-color)]/20 text-[var(--primary-color)]">
-                    Must Watch
-                  </Pill>
-                  {randomPick.score && (
-                    <span className="text-xs text-yellow-400">★ {randomPick.score}</span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm font-semibold text-[var(--text-color)] line-clamp-2">
-                  {randomPick.title}
-                </p>
-              </button>
-            ) : (
-              <p className="text-xs text-[var(--text-muted)]">No pick yet.</p>
-            )}
-          </GlassCard>
+        {/* Apple TV Right Discovery Sidebar */}
+        <aside className="hidden xl:flex flex-col gap-6">
+          {/* Spotlight Spotlight Card */}
+          <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-3">
+            <p className="text-xs uppercase font-bold tracking-wider text-white/50">
+              Spotlight of the Day
+            </p>
 
-          <GlassCard className="p-4">
-            <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-3">
-              Recent Reviews
-            </div>
+            {randomLoading ? (
+              <div className="h-48 rounded-2xl bg-white/5 animate-shimmer" />
+            ) : randomPick ? (
+              <div
+                onClick={() => handleSelect(randomPick)}
+                className="group relative rounded-2xl overflow-hidden bg-[#14141d] border border-white/10 cursor-pointer transition-all hover:scale-[1.02]"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") handleSelect(randomPick);
+                }}
+              >
+                <div className="relative aspect-[16/9] w-full overflow-hidden">
+                  <img
+                    src={
+                      randomPick.images?.webp?.large_image_url ||
+                      randomPick.images?.jpg?.large_image_url ||
+                      randomPick.images?.webp?.image_url
+                    }
+                    alt={randomPick.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="rounded-full bg-white text-black p-2.5 shadow-lg">
+                      <Play size={16} className="fill-black translate-x-0.5" />
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3.5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-white/90">
+                      Must Watch
+                    </span>
+                    {randomPick.score && (
+                      <span className="text-xs text-yellow-400 font-bold flex items-center gap-0.5">
+                        <Star size={10} fill="currentColor" /> {randomPick.score}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold text-white line-clamp-1 group-hover:text-[var(--primary-color)] transition-colors">
+                    {randomPick.title}
+                  </h4>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-white/40">No pick available.</p>
+            )}
+          </div>
+
+          {/* Critic & Community Reviews Sidebar */}
+          <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-4">
+            <p className="text-xs uppercase font-bold tracking-wider text-white/50">
+              Community Reviews
+            </p>
+
             <div className="space-y-3">
               {reviewsLoading && (
                 <div className="space-y-2">
-                  <div className="h-16 rounded-xl bg-white/5 animate-pulse" />
-                  <div className="h-16 rounded-xl bg-white/5 animate-pulse" />
+                  <div className="h-16 rounded-2xl bg-white/5 animate-shimmer" />
+                  <div className="h-16 rounded-2xl bg-white/5 animate-shimmer" />
                 </div>
               )}
+
               {!reviewsLoading &&
                 recentReviews.map((review) => (
-                  <button
+                  <div
                     key={review.mal_id}
-                    type="button"
-                    onClick={() => setSelectedAnime(review.entry)}
-                    className="flex items-start gap-3 rounded-xl border border-[var(--border-color)] bg-white/5 p-3 text-left hover:bg-white/10 transition"
+                    onClick={() => handleSelect(review.entry)}
+                    className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 cursor-pointer transition-all group"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") handleSelect(review.entry);
+                    }}
                   >
                     <img
                       src={
@@ -372,32 +425,30 @@ const ExploreHome = () => {
                         review.entry?.images?.jpg?.image_url
                       }
                       alt={review.entry?.title}
-                      className="h-12 w-9 rounded-md object-cover"
+                      className="w-11 h-14 rounded-xl object-cover flex-shrink-0"
                     />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[var(--text-color)] line-clamp-2">
+                    <div className="min-w-0 flex-1">
+                      <h5 className="text-xs font-semibold text-white truncate group-hover:text-[var(--primary-color)] transition-colors">
                         {review.entry?.title}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                        <Star size={10} className="text-yellow-400" />
-                        <span>{review.score || "?"}</span>
+                      </h5>
+                      <div className="flex items-center gap-1 text-[11px] text-yellow-400 font-semibold mt-1">
+                        <Star size={10} fill="currentColor" />
+                        <span>Score: {review.score || "8.5"}</span>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
             </div>
-          </GlassCard>
+          </div>
         </aside>
       </div>
 
+      {/* Details Sheet Modal */}
       {selectedAnime && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 bg-black/90 z-[9999] flex">
-              <div className="hidden md:block md:flex-1 bg-gray-900" />
-              <div className="flex-1 p-6 text-white">
-                <DetailsPanelLoader />
-              </div>
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
+              <DetailsPanelLoader />
             </div>
           }
         >

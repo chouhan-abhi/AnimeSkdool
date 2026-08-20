@@ -1,16 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-
-// Detect mobile for dynamic data (no caching)
-const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+import { jikanFetch } from "../utils/jikanClient";
 
 const fetchAnimeSearch = async ({ query, signal }) => {
   if (!query) return [];
-  const res = await fetch(
-    `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&sfw=true`,
+  const data = await jikanFetch(
+    `/anime?q=${encodeURIComponent(query)}&sfw=true`,
     { signal }
   );
-  if (!res.ok) throw new Error("Failed to fetch anime search results");
-  const data = await res.json();
   return data?.data || [];
 };
 
@@ -18,10 +14,12 @@ export const useAnimeSearch = (query) => {
   return useQuery({
     queryKey: ["animeSearch", query],
     queryFn: ({ signal }) => fetchAnimeSearch({ query, signal }),
-    enabled: !!query, // don't run unless query exists
-    // Mobile: No caching - always fresh data
-    staleTime: isMobile ? 0 : 1000 * 60 * 5,
-    gcTime: isMobile ? 0 : 1000 * 60 * 30,
+    enabled: !!query,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 };
+
+export default useAnimeSearch;
