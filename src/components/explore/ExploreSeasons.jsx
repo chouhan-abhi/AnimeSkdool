@@ -4,334 +4,489 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  memo,
+  lazy,
+  Suspense,
 } from "react";
-import ReactDOM from "react-dom";
 import { useSeasonsList, useInfiniteSeasonAnime } from "../../queries/useSeasons";
 import AnimeDetailCard from "../../helperComponent/AnimeDetailCard";
 import NoAnimeFound from "../../helperComponent/NoAnimeFound";
-import { GridLoader, LoadingMore } from "../../helperComponent/PageLoader";
-import { ChevronDown, RefreshCw, X, Menu, TrendingUp, Filter } from "lucide-react";
-import useResponsive from "../../queries/useResponsive";
+import { GridLoader, LoadingMore, DetailsPanelLoader } from "../../helperComponent/PageLoader";
+import {
+  ChevronDown,
+  RefreshCw,
+  Star,
+  Play,
+  Grid,
+  List,
+  Calendar,
+  ArrowDown,
+  ArrowUp,
+  Layers,
+  Sparkles,
+} from "lucide-react";
+
+const AnimeDetailsPanel = lazy(() => import("../AnimeDetailsPanel"));
 
 const SEASONS_ORDER = ["winter", "spring", "summer", "fall"];
 
-const ExploreSeasons = ({ embedded = false }) => {
+// Standard 2:3 Portrait Poster Card
+const SeasonPosterCard = memo(({ anime, onSelect }) => {
+  if (!anime) return null;
+  const webp = anime.images?.webp || {};
+  const jpg = anime.images?.jpg || {};
+  const imgUrl =
+    webp.large_image_url || webp.image_url || jpg.large_image_url || jpg.image_url;
+
+  return (
+    <div
+      onClick={() => onSelect(anime)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSelect(anime);
+      }}
+      className="group relative rounded-2xl overflow-hidden bg-[#08080c] border border-white/[0.06] hover:border-white/20 transition-all duration-300 hover:scale-[1.025] hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] cursor-pointer flex flex-col justify-between p-2.5 sm:p-3 select-none"
+    >
+      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-black/60 mb-2.5">
+        {imgUrl && (
+          <img
+            src={imgUrl}
+            alt={anime.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            onError={(e) => {
+              e.target.parentElement.style.display = "none";
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+        {anime.score && (
+          <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-black/75 backdrop-blur-md text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/10">
+            <Star size={9} fill="currentColor" /> {anime.score}
+          </div>
+        )}
+
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="rounded-full bg-white text-black p-2.5 shadow-lg">
+            <Play size={14} className="fill-black translate-x-0.5" />
+          </span>
+        </div>
+      </div>
+
+      <div className="min-w-0">
+        <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-[var(--primary-color)] transition-colors">
+          {anime.title}
+        </h4>
+        <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+          {anime.genres?.[0]?.name || "Series"} ·{" "}
+          {anime.episodes ? `${anime.episodes} eps` : "Airing"}
+        </p>
+      </div>
+    </div>
+  );
+});
+SeasonPosterCard.displayName = "SeasonPosterCard";
+
+const SPECIAL_SEASON_OPTIONS = [
+  { year: "upcoming", season: "upcoming", label: "🌟 Upcoming Releases" },
+  { year: "now", season: "now", label: "🟢 Airing This Season" },
+];
+
+const ExploreSeasons = ({ onSelectAnime }) => {
   const { data: seasons, isLoading: loadingSeasons, error: seasonsError } = useSeasonsList();
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState({ year: "now", season: "now" });
   const [sfw, setSfw] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const isMobile = useResponsive();
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "cards"
+  const [selectedAnime, setSelectedAnime] = useState(null);
+  const [autoLoadOnScroll, setAutoLoadOnScroll] = useState(true);
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
 
-  const options = useMemo(() => {
-    if (!seasons) return [];
-    return seasons
-      .slice()
+  const handleSelect = useCallback(
+    (anime) => {
+      if (onSelectAnime) onSelectAnime(anime);
+      else setSelectedAnime(anime);
+    },
+    [onSelectAnime]
+  );
+
+  const seasonalArchiveOptions = useMemo(() => {
+    if (!Array.isArray(seasons) || seasons.length === 0) return [];
+    const regular = seasons
+      .filter((item) => item && typeof item.year === "number" && Array.isArray(item.seasons))
       .sort((a, b) => b.year - a.year)
-      .flatMap(({ year, seasons: seasonList }) =>
-        seasonList
+      .flatMap(({ year, seasons: seasonList = [] }) =>
+        (Array.isArray(seasonList) ? seasonList : [])
           .slice()
           .sort((a, b) => SEASONS_ORDER.indexOf(b) - SEASONS_ORDER.indexOf(a))
-          .map((season) => ({ year, season }))
+          .map((season) => ({
+            year,
+            season,
+            label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${year}`,
+          }))
       );
+
+    return [...SPECIAL_SEASON_OPTIONS, ...regular];
   }, [seasons]);
 
-  useEffect(() => {
-    if (!selected && options.length > 0) setSelected(options[0]);
-  }, [options, selected]);
+  const quickPillOptions = useMemo(() => {
+    return seasonalArchiveOptions.slice(0, 10);
+  }, [seasonalArchiveOptions]);
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } = useInfiniteSeasonAnime({
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+    refetch,
+    isRefetching,
+  } = useInfiniteSeasonAnime({
     year: selected?.year,
     season: selected?.season,
     sfw,
   });
 
-  const animeList = data?.pages.flatMap((p) => p?.data ?? []) ?? [];
+  const animeList = useMemo(() => {
+    return data?.pages.flatMap((p) => p?.data ?? []) ?? [];
+  }, [data]);
+
+  const currentPageCount = data?.pages?.length || 1;
+  const lastPageData = data?.pages?.[data.pages.length - 1];
+  const lastVisiblePage = lastPageData?.pagination?.last_visible_page;
 
   useEffect(() => {
     if (animeList.length > 0 && isInitialLoad) setIsInitialLoad(false);
   }, [animeList.length, isInitialLoad]);
 
-  // Infinite scroll observer
-  const observerRef = useRef(null);
-  
-  // Cleanup IntersectionObserver on unmount
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
-  }, []);
+  // Infinite Scroll Sentinel Observer
+  const sentinelRef = useRef(null);
 
-  const lastElementRef = useCallback(
-    (node) => {
-      if (isFetchingNextPage) return;
-      if (observerRef.current) observerRef.current.disconnect();
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) fetchNextPage();
-      });
-      if (node) observerRef.current.observe(node);
-    },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
-  );
+  useEffect(() => {
+    if (!autoLoadOnScroll) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage &&
+          !isBatchLoading
+        ) {
+          fetchNextPage();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "450px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, isBatchLoading, fetchNextPage, autoLoadOnScroll]);
+
+  // Batch load 3 pages
+  const handleLoadMultiplePages = async (count = 3) => {
+    if (!hasNextPage || isFetchingNextPage || isBatchLoading) return;
+    setIsBatchLoading(true);
+    try {
+      for (let i = 0; i < count; i++) {
+        const res = await fetchNextPage();
+        if (!res?.data?.pages?.[res.data.pages.length - 1]?.pagination?.has_next_page) {
+          break;
+        }
+      }
+    } finally {
+      setIsBatchLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setIsInitialLoad(true);
     await refetch({ cancelRefetch: false });
   };
 
-  if (loadingSeasons) return <div className="p-4"><GridLoader count={6} /></div>;
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (loadingSeasons)
+    return (
+      <div className="p-4">
+        <GridLoader count={6} />
+      </div>
+    );
   if (seasonsError) return <NoAnimeFound message={seasonsError.message} />;
 
   return (
-    <div className={`flex h-full bg-[var(--bg-color)] transition-colors ${embedded ? "rounded-2xl" : ""}`}>
-      {/* Desktop Sidebar */}
-      {!embedded && !isMobile && (
-        <div className="hidden lg:block w-72 border-r border-[var(--border-color)]">
-          <SidebarContent />
+    <div className="w-full space-y-6">
+      {/* Seasons Controls & Filter Toolbar */}
+      <div className="p-5 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-4 shadow-xl">
+        {/* Quick Season Select Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-xs font-bold uppercase tracking-wider text-white/50 mr-1 flex-shrink-0 flex items-center gap-1.5">
+            <Calendar size={13} className="text-[var(--primary-color)]" />
+            <span>Season:</span>
+          </span>
+
+          {quickPillOptions.map((opt) => {
+            const isCurrent =
+              String(selected?.year) === String(opt.year) &&
+              String(selected?.season) === String(opt.season);
+            return (
+              <button
+                key={`${opt.year}-${opt.season}`}
+                type="button"
+                onClick={() => {
+                  setSelected({ year: opt.year, season: opt.season });
+                  setIsInitialLoad(true);
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                  isCurrent
+                    ? "bg-white text-black shadow-md scale-[1.02]"
+                    : "bg-white/[0.05] text-white/70 hover:text-white hover:bg-white/[0.12] border border-white/[0.06]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      {/* Mobile Sidebar - Only render when open */}
-      {!embedded && isSidebarOpen && ReactDOM.createPortal(
-        <MobileSidebar isOpen={isSidebarOpen} close={() => setIsSidebarOpen(false)} />,
-        document.body
-      )}
-
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto relative z-0">
-        {/* Mobile Header */}
-        {!embedded && isMobile && (
-          <MobileHeader
-            onOpenSidebar={() => setIsSidebarOpen(true)}
-            onRefresh={handleRefresh}
-          />
-        )}
-        <div className="px-4 pb-4">
-          {embedded && (
-            <div className="mb-4 rounded-2xl border border-[var(--border-color)] bg-white/5 p-3 sm:p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="text-xs text-[var(--text-muted)]">
-                  Select season and content safety
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="relative min-w-[170px]">
-                    <select
-                      value={selected ? `${selected.year}-${selected.season}` : ""}
-                      onChange={(e) => {
-                        const [y, s] = e.target.value.split("-");
-                        setSelected({ year: Number(y), season: s });
-                        setIsInitialLoad(true);
-                      }}
-                      className="w-full appearance-none pl-3 pr-9 py-2 rounded-xl border border-[var(--border-color)] bg-white/10 text-sm text-[var(--text-color)] focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
-                    >
-                      {options.map(({ year, season }) => (
-                        <option key={`${year}-${season}`} value={`${year}-${season}`} className="capitalize">
-                          {season} {year}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSfw((p) => !p)}
-                    className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                      sfw
-                        ? "bg-emerald-500/90 text-white"
-                        : "bg-rose-500/90 text-white"
-                    }`}
+        {/* Secondary Options Bar: Year/Season Archive Dropdown + SFW + Layout + Refresh */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/[0.06]">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Full Archive Dropdown */}
+            <div className="relative min-w-[200px]">
+              <select
+                value={selected ? `${selected.year}-${selected.season}` : "now-now"}
+                onChange={(e) => {
+                  const [y, s] = e.target.value.split("-");
+                  setSelected({ year: y === "upcoming" || y === "now" ? y : Number(y), season: s });
+                  setIsInitialLoad(true);
+                }}
+                className="w-full appearance-none rounded-full border border-white/10 bg-white/[0.07] backdrop-blur-xl py-2 pl-4 pr-9 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20 capitalize cursor-pointer"
+              >
+                {seasonalArchiveOptions.map((opt) => (
+                  <option
+                    key={`${opt.year}-${opt.season}`}
+                    value={`${opt.year}-${opt.season}`}
+                    className="bg-[#12121a] text-white"
                   >
-                    {sfw ? "Safe Content" : "All Content"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRefresh}
-                    className="inline-flex items-center gap-1 rounded-xl border border-[var(--border-color)] bg-white/10 px-3 py-2 text-xs font-semibold text-[var(--text-color)]/80 hover:bg-white/20 transition"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Refresh
-                  </button>
-                </div>
-              </div>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50" />
             </div>
-          )}
-          {isInitialLoad && isLoading && <GridLoader count={6} />}
-          {!isLoading && error && <NoAnimeFound message={error.message} />}
-          {!isLoading && !error && animeList.length > 0 && <AnimeGrid />}
-          {!isLoading && isFetchingNextPage && <LoadingMore />}
-          {!isLoading && animeList.length === 0 && !isInitialLoad && (
-            <NoAnimeFound message="No anime found for this season." />
-          )}
+
+            {/* SFW Safe Content Button */}
+            <button
+              type="button"
+              onClick={() => setSfw((p) => !p)}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+                sfw
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+              }`}
+            >
+              {sfw ? "✓ SFW Safe" : "All Content"}
+            </button>
+
+            {/* Refresh Button */}
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefetching}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] hover:bg-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:text-white transition-all disabled:opacity-40"
+            >
+              <RefreshCw
+                size={13}
+                className={isRefetching ? "animate-spin" : ""}
+              />
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          {/* Grid vs Cards Layout Switcher */}
+          <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/10">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-full transition-all ${
+                viewMode === "grid"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-white/60 hover:text-white"
+              }`}
+              title="Poster Grid View"
+            >
+              <Grid size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("cards")}
+              className={`p-1.5 rounded-full transition-all ${
+                viewMode === "cards"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-white/60 hover:text-white"
+              }`}
+              title="Detailed Cards View"
+            >
+              <List size={15} />
+            </button>
+          </div>
         </div>
-      </main>
+      </div>
+
+      {/* Main Catalog Anime Content */}
+      <div className="relative">
+        {isInitialLoad && isLoading ? (
+          <GridLoader count={6} />
+        ) : error ? (
+          <NoAnimeFound message={error.message} />
+        ) : animeList.length > 0 ? (
+          viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
+              {animeList.map((anime, idx) => (
+                <SeasonPosterCard
+                  key={`${anime.mal_id || idx}-${idx}`}
+                  anime={anime}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {animeList.map((anime, idx) => (
+                <AnimeDetailCard
+                  key={`${anime.mal_id || idx}-${idx}`}
+                  anime={anime}
+                />
+              ))}
+            </div>
+          )
+        ) : !isInitialLoad && (
+          <NoAnimeFound message="No anime found for this season." />
+        )}
+
+        {/* Infinite Scroll Trigger Sentinel (When autoLoadOnScroll is true) */}
+        {autoLoadOnScroll && <div ref={sentinelRef} className="h-10 w-full" />}
+
+        {/* Dynamic Pagination & Load More Controls Hub */}
+        {animeList.length > 0 && (
+          <div className="mt-10 p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-5 shadow-2xl">
+            {/* Query Stats Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-white/60 pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-semibold text-white">
+                  Loaded {animeList.length} Titles
+                </span>
+                <span>•</span>
+                <span>
+                  Page {currentPageCount}
+                  {lastVisiblePage ? ` of ${lastVisiblePage}` : ""}
+                </span>
+              </div>
+
+              {/* Auto-load toggle */}
+              <button
+                type="button"
+                onClick={() => setAutoLoadOnScroll((prev) => !prev)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                  autoLoadOnScroll
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "bg-white/10 text-white/70 border border-white/10"
+                }`}
+              >
+                <span>Auto-load on scroll:</span>
+                <span className="font-bold">{autoLoadOnScroll ? "ON" : "OFF"}</span>
+              </button>
+            </div>
+
+            {/* Load Next Page & Batch Loading Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              {hasNextPage ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage || isBatchLoading}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-bold text-xs sm:text-sm hover:scale-105 shadow-xl transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
+                  >
+                    <ArrowDown
+                      size={15}
+                      className={isFetchingNextPage ? "animate-bounce" : ""}
+                    />
+                    <span>
+                      {isFetchingNextPage
+                        ? `Loading Page ${currentPageCount + 1}...`
+                        : `Load Next Page (+24 Titles)`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleLoadMultiplePages(3)}
+                    disabled={isFetchingNextPage || isBatchLoading}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white font-semibold text-xs sm:text-sm hover:scale-105 shadow-lg transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
+                  >
+                    <Layers
+                      size={15}
+                      className={isBatchLoading ? "animate-spin text-[var(--primary-color)]" : "text-[var(--primary-color)]"}
+                    />
+                    <span>
+                      {isBatchLoading
+                        ? "Loading 3 Pages..."
+                        : "Load 3 Pages (+72 Titles)"}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <div className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 py-2">
+                  <Sparkles size={14} className="text-[var(--primary-color)]" />
+                  <span>You&apos;ve reached the end of this season ({animeList.length} titles loaded)</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/[0.06] text-white/70 hover:text-white text-xs font-semibold transition-all hover:scale-105"
+              >
+                <ArrowUp size={13} />
+                <span>Back to Top</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Fallback Details Modal if not passed from parent */}
+      {selectedAnime && !onSelectAnime && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
+              <DetailsPanelLoader />
+            </div>
+          }
+        >
+          <AnimeDetailsPanel
+            anime={selectedAnime}
+            onClose={() => setSelectedAnime(null)}
+            onSelectAnime={setSelectedAnime}
+          />
+        </Suspense>
+      )}
     </div>
   );
-
-  // --- Subcomponents ---
-  function MobileHeader({ onOpenSidebar, onRefresh }) {
-    return (
-      <div className="sticky top-0 z-10 bg-[var(--panel-bg)]/90 backdrop-blur">
-        <div className="flex items-center justify-between px-4 py-1">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-[var(--primary-color)]" />
-            <h2 className="text-lg font-semibold text-white">Explore Seasons</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenSidebar}
-              className="p-2 rounded-full hover:text-[var(--primary-color)]"
-            >
-              <Menu className="w-5 h-5 text-white/60" />
-            </button>
-            <button
-              onClick={onRefresh}
-              className="p-2 rounded-full hover:text-[var(--primary-color)]"
-            >
-              <RefreshCw className="w-5 h-5 text-white/60" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function SidebarContent({ closeOnMobile = false }) {
-    return (
-      <div className={`h-full rounded-2xl w-full ${isMobile ? "max-w-full" : "max-w-sm lg:max-w-xs"} bg-[var(--panel-bg)]/90 border border-[var(--border-color)] shadow-xl p-4 overflow-y-auto`}>
-        <SidebarHeader closeOnMobile={closeOnMobile} />
-        <SeasonDropdown />
-        <SfwToggle />
-        <RefreshButton />
-      </div>
-    );
-  }
-
-  function SidebarHeader({ closeOnMobile }) {
-    return (
-      <div className="flex items-center justify-between w-full mb-4 lg:hidden">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[var(--primary-color)]/10 rounded-lg">
-            <Filter className="w-5 h-5 text-[var(--primary-color)]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Filters</h2>
-            <p className="text-xs text-white/60">Customize discovery</p>
-          </div>
-        </div>
-        {closeOnMobile && (
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="p-2 rounded-lg hover:bg-white/10 text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  function SeasonDropdown() {
-    return (
-      <div className="mb-4 relative">
-        <select
-          value={selected ? `${selected.year}-${selected.season}` : ""}
-          onChange={(e) => {
-            const [y, s] = e.target.value.split("-");
-            setSelected({ year: Number(y), season: s });
-            setIsInitialLoad(true);
-            if (isMobile && !embedded) setIsSidebarOpen(false);
-          }}
-          className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-[var(--border-color)] bg-white/10 text-white focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] capitalize"
-        >
-          {options.map(({ year, season }) => (
-            <option key={`${year}-${season}`} value={`${year}-${season}`} className="capitalize">
-              {season} {year}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" />
-      </div>
-    );
-  }
-
-  function SfwToggle() {
-    return (
-      <button
-        onClick={() => setSfw((p) => !p)}
-        className={`relative w-full flex items-center justify-between px-4 py-2 rounded-xl font-medium transition mb-4 ${
-          sfw ? "bg-green-500/90 text-white shadow-md" : "bg-red-500/90 text-white shadow-md"
-        }`}
-      >
-        {sfw ? "Safe For Work" : "NSFW Mode"}
-        <div
-          className={`absolute border right-2 w-5 h-5 rounded-full bg-white/80 transition ${
-            sfw ? "translate-x-0" : "translate-x-[-1rem]"
-          }`}
-        />
-      </button>
-    );
-  }
-
-  function RefreshButton() {
-    return (
-      <button
-        onClick={handleRefresh}
-        className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-[var(--border-color)] rounded-xl text-white/80 hover:bg-white/10 transition"
-      >
-        <RefreshCw className="w-4 h-4" /> Reset
-      </button>
-    );
-  }
-
-  function AnimeGrid() {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {animeList.map((anime, idx) => {
-          const isLastItem = animeList.length === idx + 1;
-          return (
-            <div
-              key={anime.mal_id}
-              ref={isLastItem ? lastElementRef : null}
-              className={`transform transition-all duration-300 hover:scale-[1.015] hover:shadow-lg ${
-                isLastItem ? "animate-fadeInUp" : ""
-              }`}
-              style={{
-                animationDelay: `${idx * 0.05}s`,
-                animationFillMode: "both",
-              }}
-            >
-              <AnimeDetailCard anime={anime} />
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  function MobileSidebar({ isOpen, close }) {
-    return (
-      <div
-        className={`fixed inset-0 z-40 transform transition-transform duration-300 lg:hidden ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Backdrop */}
-        <div
-          className={`absolute inset-0 bg-black/60 transition-opacity ${
-            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={close}
-        />
-        {/* Sidebar content */}
-        <div className="absolute top-0 left-0 h-full w-full bg-[var(--panel-bg)] shadow-xl">
-          <SidebarContent closeOnMobile />
-        </div>
-      </div>
-    );
-  }
 };
 
 export default ExploreSeasons;

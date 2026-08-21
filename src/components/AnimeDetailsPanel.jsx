@@ -16,6 +16,8 @@ import {
   Users,
   Sparkles,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { contentProvider, formatNumber } from "../utils/utils";
 import { MiniLoader } from "../helperComponent/PageLoader";
@@ -25,9 +27,18 @@ import { jikanFetch } from "../utils/jikanClient";
 
 const EpisodesList = lazy(() => import("../helperComponent/EpisodeList"));
 
-const AnimeDetailsPanel = memo(({ anime, onClose }) => {
+const AnimeDetailsPanel = memo(({ anime: initialAnime, onClose, onSelectAnime }) => {
   const { showToast } = useToast();
   const [portalRoot, setPortalRoot] = useState(null);
+  const [activeAnime, setActiveAnime] = useState(initialAnime);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    setActiveAnime(initialAnime);
+  }, [initialAnime]);
+
+  const anime = activeAnime;
+
   const [isInWatchlist, setIsInWatchlist] = useState(() =>
     storageManager.isInWatchlist(anime?.mal_id)
   );
@@ -63,7 +74,22 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
   }, []);
 
   useEffect(() => {
-    if (anime?.mal_id && !storageManager.isInStarted(anime.mal_id)) {
+    if (!anime?.mal_id) return;
+    setIsInWatchlist(storageManager.isInWatchlist(anime.mal_id));
+    setProgress(storageManager.getAnimeProgress(anime.mal_id));
+    setActiveTab("overview");
+    setSynopsisExpanded(false);
+    setGalleryImages([]);
+    setTrailerData(null);
+    setCharacters([]);
+    setRecommendations([]);
+    setSelectedImageIndex(null);
+
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    if (!storageManager.isInStarted(anime.mal_id)) {
       storageManager.addToStarted(anime);
     }
   }, [anime]);
@@ -81,21 +107,65 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
     };
   }, []);
 
-  // Fetch gallery
+  // Fetch gallery with resilient fallback images
   const loadGallery = useCallback(async () => {
     if (galleryImages.length > 0 || galleryLoading || !anime?.mal_id) return;
     setGalleryLoading(true);
     try {
       const data = await jikanFetch(`/anime/${anime.mal_id}/pictures`);
+      const apiPictures = (data?.data || [])
+        .map((img) => ({
+          url:
+            img.webp?.large_image_url ||
+            img.jpg?.large_image_url ||
+            img.webp?.image_url ||
+            img.jpg?.image_url ||
+            img.url,
+          thumb:
+            img.webp?.image_url ||
+            img.jpg?.image_url ||
+            img.webp?.small_image_url ||
+            img.jpg?.small_image_url ||
+            img.url,
+        }))
+        .filter((p) => Boolean(p.url));
+
+      // Build rich fallback list from anime's own images
+      const fallbackList = [];
+      if (anime.banner_image) {
+        fallbackList.push({ url: anime.banner_image, thumb: anime.banner_image });
+      }
+      const coverLarge =
+        anime.images?.webp?.large_image_url ||
+        anime.images?.jpg?.large_image_url ||
+        anime.images?.webp?.image_url ||
+        anime.images?.jpg?.image_url;
+      if (coverLarge) {
+        fallbackList.push({ url: coverLarge, thumb: coverLarge });
+      }
+
+      const finalPictures = apiPictures.length > 0 ? apiPictures : fallbackList;
       if (isMountedRef.current) {
-        setGalleryImages(data?.data || []);
+        setGalleryImages(finalPictures);
       }
     } catch {
-      if (isMountedRef.current) showToast("Failed to load stills", "error");
+      const fallbackList = [];
+      if (anime?.banner_image) {
+        fallbackList.push({ url: anime.banner_image, thumb: anime.banner_image });
+      }
+      const coverLarge =
+        anime?.images?.webp?.large_image_url ||
+        anime?.images?.jpg?.large_image_url ||
+        anime?.images?.webp?.image_url ||
+        anime?.images?.jpg?.image_url;
+      if (coverLarge) {
+        fallbackList.push({ url: coverLarge, thumb: coverLarge });
+      }
+      if (isMountedRef.current) setGalleryImages(fallbackList);
     } finally {
       if (isMountedRef.current) setGalleryLoading(false);
     }
-  }, [anime?.mal_id, galleryImages.length, galleryLoading, showToast]);
+  }, [anime, galleryImages.length, galleryLoading]);
 
   // Fetch trailer
   const loadTrailer = useCallback(async () => {
@@ -150,6 +220,26 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
     }
   }, [anime?.mal_id, recommendations.length]);
 
+  const handleSelectRecommendation = useCallback(
+    async (entry) => {
+      if (!entry?.mal_id) return;
+      try {
+        const fullData = await jikanFetch(`/anime/${entry.mal_id}`);
+        const resolvedAnime = fullData?.data || entry;
+        if (isMountedRef.current) {
+          setActiveAnime(resolvedAnime);
+          onSelectAnime?.(resolvedAnime);
+        }
+      } catch {
+        if (isMountedRef.current) {
+          setActiveAnime(entry);
+          onSelectAnime?.(entry);
+        }
+      }
+    },
+    [onSelectAnime]
+  );
+
   useEffect(() => {
     loadRecommendations();
   }, [loadRecommendations]);
@@ -202,7 +292,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       navigator
         .share({
           title: anime.title,
-          text: `Check out ${anime.title} on AniSkdool!`,
+          text: `Check out ${anime.title} on AnimeSkdool!`,
           url: window.location.href,
         })
         .catch(() => {});
@@ -246,6 +336,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
 
   return ReactDOM.createPortal(
     <dialog
+      ref={containerRef}
       open
       className="fixed inset-0 z-[9999] m-0 h-full w-full max-h-none max-w-none bg-black/90 backdrop-blur-3xl overflow-y-auto scrollbar-thin border-0 p-0 animate-fadeIn"
     >
@@ -253,14 +344,14 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       <button
         type="button"
         onClick={onClose}
-        className="fixed top-6 right-6 z-50 p-3 rounded-full bg-black/60 hover:bg-white text-white hover:text-black border border-white/20 backdrop-blur-2xl transition-all hover:scale-105 active:scale-95 shadow-xl"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 p-2.5 sm:p-3 rounded-full bg-black/70 hover:bg-white text-white hover:text-black border border-white/20 backdrop-blur-2xl transition-all hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
         aria-label="Close details"
       >
-        <X size={20} />
+        <X size={18} className="sm:w-5 sm:h-5" />
       </button>
 
       {/* Cinematic Hero Backdrop Showcase */}
-      <div className="relative h-[65vh] min-h-[460px] max-h-[700px] w-full overflow-hidden">
+      <div className="relative h-[55vh] sm:h-[65vh] min-h-[380px] sm:min-h-[460px] max-h-[700px] w-full overflow-hidden">
         {backdropUrl && (
           <img
             src={backdropUrl}
@@ -273,7 +364,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-color)] via-black/40 to-transparent" />
 
         {/* Hero Meta Info */}
-        <div className="absolute inset-x-0 bottom-0 max-w-[1800px] mx-auto px-6 sm:px-10 md:px-16 lg:px-20 pb-8 z-10">
+        <div className="absolute inset-x-0 bottom-0 max-w-[1800px] mx-auto px-4 sm:px-10 md:px-16 lg:px-20 pb-6 sm:pb-8 z-10">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
             {/* Portrait Cover */}
             <div className="relative w-36 sm:w-44 md:w-52 aspect-[2/3] rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/20 flex-shrink-0 hidden sm:block">
@@ -391,9 +482,9 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       </div>
 
       {/* Main Body */}
-      <div className="max-w-[1800px] w-full mx-auto px-6 sm:px-10 md:px-16 lg:px-20 py-8">
-        {/* Apple TV Segmented Tabs */}
-        <div className="flex items-center gap-2 p-1.5 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/10 max-w-fit mb-8 overflow-x-auto">
+      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-10 md:px-16 lg:px-20 py-6 sm:py-8">
+        {/* Segmented Navigation Tabs */}
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/10 max-w-full overflow-x-auto scrollbar-none mb-6 sm:mb-8">
           {tabs.map((tab) => {
             const active = activeTab === tab.key;
             return (
@@ -483,26 +574,44 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
                     <Sparkles size={16} className="text-[var(--primary-color)]" />
                     More Like This
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3.5">
                     {recommendations.map((rec) => {
                       const entry = rec.entry;
                       const rImg =
+                        entry?.images?.webp?.large_image_url ||
                         entry?.images?.webp?.image_url ||
+                        entry?.images?.jpg?.large_image_url ||
                         entry?.images?.jpg?.image_url;
 
                       return (
                         <div
                           key={entry?.mal_id}
-                          className="group relative aspect-[2/3] rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all hover:scale-105"
+                          onClick={() => handleSelectRecommendation(entry)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              handleSelectRecommendation(entry);
+                            }
+                          }}
+                          className="group relative aspect-[2/3] rounded-2xl overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-white/30 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg select-none"
                         >
                           <img
                             src={rImg}
                             alt={entry?.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
+                            onError={(e) => {
+                              e.target.parentElement.style.display = "none";
+                            }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                          <p className="absolute bottom-2 inset-x-2 text-[11px] font-semibold text-white truncate">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="p-2.5 rounded-full bg-white text-black shadow-lg">
+                              <Play size={12} className="fill-black translate-x-0.5" />
+                            </span>
+                          </div>
+                          <p className="absolute bottom-2.5 inset-x-2.5 text-[11px] font-bold text-white truncate drop-shadow-md group-hover:text-[var(--primary-color)] transition-colors">
                             {entry?.title}
                           </p>
                         </div>
@@ -513,7 +622,7 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
               )}
             </div>
 
-            {/* Apple TV Specs Sidebar */}
+            {/* Anime Specs Sidebar */}
             <div className="space-y-4">
               <div className="p-6 rounded-3xl bg-white/[0.05] border border-white/10 backdrop-blur-2xl space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-white/50">
@@ -603,21 +712,46 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
               {galleryLoading ? (
                 <MiniLoader text="Loading gallery..." />
               ) : galleryImages.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                  {galleryImages.map((img, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className="aspect-[2/3] rounded-2xl overflow-hidden bg-[#14141d] border border-white/10 hover:border-white/30 cursor-pointer transition-all hover:scale-105 group"
-                    >
-                      <img
-                        src={img.jpg?.image_url || img.webp?.image_url}
-                        alt={`Still ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+                  {galleryImages.map((img, idx) => {
+                    const imgSrc =
+                      img.url ||
+                      img.thumb ||
+                      img.jpg?.large_image_url ||
+                      img.jpg?.image_url ||
+                      img.webp?.large_image_url ||
+                      img.webp?.image_url ||
+                      img;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className="aspect-[16/10] sm:aspect-[2/3] rounded-2xl overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-white/25 cursor-pointer transition-all hover:scale-105 group relative shadow-md select-none"
+                      >
+                        <img
+                          src={imgSrc}
+                          alt={`${anime.title} Still ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          onError={(e) => {
+                            if (
+                              anime.images?.webp?.large_image_url &&
+                              e.target.src !== anime.images.webp.large_image_url
+                            ) {
+                              e.target.src = anime.images.webp.large_image_url;
+                            } else {
+                              e.target.parentElement.style.display = "none";
+                            }
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="p-2 rounded-full bg-white text-black shadow-lg">
+                            <Play size={12} className="fill-black translate-x-0.5" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-white/50 text-sm">No photo stills found.</p>
@@ -646,6 +780,9 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
                         src={char?.images?.webp?.image_url || char?.images?.jpg?.image_url}
                         alt={char?.name}
                         className="w-12 h-12 rounded-full object-cover border border-white/15 flex-shrink-0"
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <h4 className="text-xs font-bold text-white truncate">{char?.name}</h4>
@@ -702,25 +839,68 @@ const AnimeDetailsPanel = memo(({ anime, onClose }) => {
       {/* Lightbox */}
       {selectedImageIndex !== null && galleryImages[selectedImageIndex] && (
         <div
-          className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4"
           onClick={() => setSelectedImageIndex(null)}
         >
           <button
             type="button"
             onClick={() => setSelectedImageIndex(null)}
-            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl"
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl transition-all border border-white/15 z-20"
+            aria-label="Close image preview"
           >
             <X size={20} />
           </button>
 
-          <img
-            src={
-              galleryImages[selectedImageIndex]?.jpg?.large_image_url ||
-              galleryImages[selectedImageIndex]?.jpg?.image_url
-            }
-            alt="Fullscreen Still"
-            className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
-          />
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((prev) =>
+                  prev === 0 ? galleryImages.length - 1 : prev - 1
+                );
+              }}
+              className="absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl transition-all border border-white/15 z-20 cursor-pointer active:scale-95"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          )}
+
+          <div
+            className="relative max-h-[85vh] max-w-[90vw] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={
+                galleryImages[selectedImageIndex]?.url ||
+                galleryImages[selectedImageIndex]?.jpg?.large_image_url ||
+                galleryImages[selectedImageIndex]?.jpg?.image_url ||
+                galleryImages[selectedImageIndex]
+              }
+              alt="Fullscreen Still"
+              className="max-h-[80vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl border border-white/10"
+            />
+            <div className="absolute bottom-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-white text-xs font-semibold border border-white/10">
+              {selectedImageIndex + 1} / {galleryImages.length}
+            </div>
+          </div>
+
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((prev) =>
+                  prev === galleryImages.length - 1 ? 0 : prev + 1
+                );
+              }}
+              className="absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl transition-all border border-white/15 z-20 cursor-pointer active:scale-95"
+              aria-label="Next image"
+            >
+              <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          )}
         </div>
       )}
     </dialog>,

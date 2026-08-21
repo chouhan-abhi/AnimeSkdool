@@ -1,9 +1,8 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { jikanFetch } from "../utils/jikanClient";
 
-const MAX_PAGES = 10;
-
 const DEFAULT_SEASONS = [
+  { year: 2026, seasons: ["winter"] },
   { year: 2025, seasons: ["winter", "spring", "summer", "fall"] },
   { year: 2024, seasons: ["winter", "spring", "summer", "fall"] },
   { year: 2023, seasons: ["winter", "spring", "summer", "fall"] },
@@ -13,8 +12,21 @@ const DEFAULT_SEASONS = [
 
 // GET seasons list (years and seasons)
 const fetchSeasonsList = async ({ signal }) => {
-  const json = await jikanFetch("/seasons", { signal });
-  return (json?.data && json.data.length > 0) ? json.data : DEFAULT_SEASONS;
+  try {
+    const json = await jikanFetch("/seasons", { signal });
+    const list = json?.data;
+    if (Array.isArray(list) && list.length > 0 && Array.isArray(list[0]?.seasons)) {
+      const has2025 = list.some((item) => item.year === 2025);
+      const has2026 = list.some((item) => item.year === 2026);
+      const merged = [...list];
+      if (!has2026) merged.unshift({ year: 2026, seasons: ["winter"] });
+      if (!has2025) merged.unshift({ year: 2025, seasons: ["winter", "spring", "summer", "fall"] });
+      return merged;
+    }
+    return DEFAULT_SEASONS;
+  } catch {
+    return DEFAULT_SEASONS;
+  }
 };
 
 export const useSeasonsList = () => {
@@ -25,6 +37,7 @@ export const useSeasonsList = () => {
     gcTime: 1000 * 60 * 60 * 48,
     refetchOnWindowFocus: false,
     retry: 2,
+    initialData: DEFAULT_SEASONS,
   });
 };
 
@@ -35,9 +48,21 @@ const fetchSeasonAnime = async ({ pageParam = 1, queryKey, signal }) => {
 
   const search = new URLSearchParams();
   search.set("page", String(pageParam));
+  search.set("limit", "24");
   if (sfw !== undefined) search.set("sfw", String(sfw));
 
-  const json = await jikanFetch(`/seasons/${year}/${season}?${search}`, { signal });
+  let endpoint = "";
+  if (season === "upcoming" || year === "upcoming") {
+    endpoint = `/seasons/upcoming?${search}`;
+  } else if (season === "now" || year === "now") {
+    endpoint = `/seasons/now?${search}`;
+  } else if (year && season) {
+    endpoint = `/seasons/${year}/${season}?${search}`;
+  } else {
+    endpoint = `/seasons/now?${search}`;
+  }
+
+  const json = await jikanFetch(endpoint, { signal });
   return json;
 };
 
@@ -46,10 +71,11 @@ export const useInfiniteSeasonAnime = (params) => {
     queryKey: ["seasonAnimeInfinite", params],
     queryFn: fetchSeasonAnime,
     getNextPageParam: (lastPage, allPages) => {
-      if (allPages.length >= MAX_PAGES) return undefined;
-      return lastPage?.pagination?.has_next_page
-        ? lastPage.pagination.current_page + 1
-        : undefined;
+      const pagination = lastPage?.pagination;
+      if (pagination?.has_next_page) {
+        return (pagination.current_page || allPages.length) + 1;
+      }
+      return undefined;
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60,

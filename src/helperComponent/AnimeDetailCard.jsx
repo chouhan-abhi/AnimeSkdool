@@ -32,7 +32,7 @@ const AnimeDetailCard = ({ anime }) => {
   return (
     <>
       <div
-        className="relative w-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#14141d]/90 flex cursor-pointer h-[190px] transition-all duration-300 hover:border-white/25 hover:shadow-[0_20px_45px_rgba(0,0,0,0.85),0_0_25px_-5px_var(--glow-color)] hover:scale-[1.02] group select-none"
+        className="relative w-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#08080c] flex cursor-pointer h-[210px] transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] hover:scale-[1.02] group select-none"
         onClick={() => setExpanded(true)}
         role="button"
         tabIndex={0}
@@ -43,7 +43,7 @@ const AnimeDetailCard = ({ anime }) => {
         <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
 
         {/* Poster Image */}
-        <div className="relative w-[130px] sm:w-[145px] h-full flex-shrink-0 overflow-hidden bg-black/50">
+        <div className="relative w-[145px] sm:w-[160px] h-full flex-shrink-0 overflow-hidden bg-black/60">
           {imgUrl && (
             <img
               src={imgUrl}
@@ -57,7 +57,7 @@ const AnimeDetailCard = ({ anime }) => {
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-[#14141d]/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-[#08080c]" />
 
           {score && (
             <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/70 backdrop-blur-md text-yellow-400 px-2 py-0.5 rounded-full border border-white/10 text-[11px] font-bold">

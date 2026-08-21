@@ -16,23 +16,23 @@ import SectionHeader from "./ui/SectionHeader";
 import { useToast } from "../utils/toast";
 
 const THEMES = [
-  { key: "theme-dark", label: "Apple OLED Dark", desc: "Pure deep blacks & frosted glass" },
-  { key: "theme-midnight", label: "Apple Midnight", desc: "Deep indigo & cinematic mood" },
-  { key: "theme-saint", label: "Apple Graphite", desc: "Space grey & slate metallic" },
-  { key: "theme-light", label: "Apple Frost Light", desc: "Clean macOS translucent white" },
+  { key: "theme-dark", label: "Obsidian Dark", desc: "Pure deep blacks & frosted glass" },
+  { key: "theme-midnight", label: "Midnight Navy", desc: "Deep indigo & cinematic mood" },
+  { key: "theme-saint", label: "Graphite Slate", desc: "Space grey & slate metallic" },
+  { key: "theme-light", label: "Frost Light", desc: "Clean translucent light aesthetic" },
 ];
 
 const FONTS = [
-  { key: "font-basic", label: "Inter / SF Pro", desc: "Apple standard clean sans-serif" },
+  { key: "font-basic", label: "Inter Clean", desc: "Modern crisp sans-serif" },
   { key: "font-modern", label: "Jakarta Display", desc: "Geometric contemporary typography" },
   { key: "font-techy", label: "Orbitron Tech", desc: "Futuristic digital interface" },
   { key: "font-cute", label: "Rajdhani Sharp", desc: "Condensed dynamic anime font" },
 ];
 
 const ACCENTS = [
-  { key: "primary-blue", color: "#0071e3", label: "Apple Blue" },
+  { key: "primary-blue", color: "#0071e3", label: "Cobalt Blue" },
   { key: "primary-purple", color: "#af52de", label: "Electric Purple" },
-  { key: "primary-red", color: "#ff375f", label: "Apple Crimson" },
+  { key: "primary-red", color: "#ff375f", label: "Crimson Red" },
   { key: "primary-green", color: "#30d158", label: "Neon Emerald" },
   { key: "primary-orange", color: "#ff9f0a", label: "Amber Glow" },
   { key: "primary-pink", color: "#ff2d55", label: "Cyber Pink" },
@@ -103,7 +103,7 @@ const SettingsPage = () => {
     setFont("font-basic");
     setPrimaryColor("primary-blue");
     setCalendarView("week");
-    showToast?.("Settings reset to Apple TV defaults", "info");
+    showToast?.("Settings reset to defaults", "info");
   };
 
   return (
@@ -111,7 +111,7 @@ const SettingsPage = () => {
       {/* Header */}
       <div className="pt-8 pb-6 flex items-center justify-between">
         <SectionHeader
-          title="tvOS Settings"
+          title="App Settings"
           subtitle="Customize visual presentation, themes, typography, and display preferences"
           badge="Preferences"
         />
@@ -130,7 +130,7 @@ const SettingsPage = () => {
         {/* Settings Group Controls */}
         <div className="space-y-6">
           {/* Theme Selection */}
-          <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-4">
+          <div className="p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Palette size={16} className="text-[var(--primary-color)]" />
               <h3 className="text-base font-bold text-white">Display Theme</h3>
@@ -166,10 +166,10 @@ const SettingsPage = () => {
           </div>
 
           {/* Accent Color Selection */}
-          <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-4">
+          <div className="p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles size={16} className="text-[var(--primary-color)]" />
-              <h3 className="text-base font-bold text-white">Apple Accent Tint</h3>
+              <h3 className="text-base font-bold text-white">Accent Tint</h3>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -198,7 +198,7 @@ const SettingsPage = () => {
           </div>
 
           {/* Typography Selection */}
-          <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-4">
+          <div className="p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Type size={16} className="text-[var(--primary-color)]" />
               <h3 className="text-base font-bold text-white">Typography Style</h3>
@@ -234,7 +234,7 @@ const SettingsPage = () => {
           </div>
 
           {/* Calendar Display Mode */}
-          <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl space-y-4">
+          <div className="p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Calendar size={16} className="text-[var(--primary-color)]" />
               <h3 className="text-base font-bold text-white">Default Schedule Layout</h3>
@@ -273,14 +273,14 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* Live Apple TV UI Specimen Preview */}
+        {/* Live UI Specimen Preview */}
         <aside className="space-y-6">
-          <div className="p-6 rounded-3xl bg-white/[0.05] border border-white/10 backdrop-blur-2xl space-y-6 sticky top-24">
+          <div className="p-6 rounded-3xl bg-[#08080c] border border-white/[0.06] space-y-6 sticky top-24">
             <div>
               <p className="text-xs uppercase font-bold tracking-wider text-white/50 mb-1">
                 Live Specimen
               </p>
-              <h3 className="text-lg font-bold text-white">Apple TV Interface Preview</h3>
+              <h3 className="text-lg font-bold text-white">Live Interface Preview</h3>
             </div>
 
             {/* Specimen Hero Mini Card */}

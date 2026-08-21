@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bookmark, Search, Settings, Play, Sparkles } from "lucide-react";
+import { Bookmark, Search, Settings, Play } from "lucide-react";
 import IconButton from "../ui/IconButton";
 import SpotlightModal from "./SpotlightModal";
 
@@ -42,6 +42,40 @@ const TopNav = ({ activeView, onNavigate, onSelectAnime }) => {
 
   return (
     <>
+      {/* Mobile Top App Bar */}
+      <header
+        className={`md:hidden sticky top-0 left-0 right-0 z-40 px-4 py-3 transition-all duration-300 ${
+          scrolled
+            ? "bg-[#060608]/90 backdrop-blur-2xl border-b border-white/[0.08] shadow-lg"
+            : "bg-gradient-to-b from-black/90 to-transparent"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => onNavigate?.("home")}
+            className="flex items-center gap-2 text-white focus:outline-none"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--primary-color)] to-white/30 text-white shadow-[0_0_16px_var(--glow-color)]">
+              <Play size={14} className="fill-white translate-x-0.5" />
+            </span>
+            <span className="text-lg font-bold tracking-tight text-white">
+              Anime<span className="text-[var(--primary-color)] font-black">Skdool</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSpotlightOpen(true)}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] py-1.5 px-3.5 text-xs text-white/80 active:scale-95 transition-transform"
+          >
+            <Search size={14} />
+            <span>Search</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop Navigation Header */}
       <header
         className={`hidden md:block fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
           scrolled
@@ -61,12 +95,12 @@ const TopNav = ({ activeView, onNavigate, onSelectAnime }) => {
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--primary-color)] to-white/30 text-white shadow-[0_0_24px_var(--glow-color)] transition-transform duration-300 group-hover:scale-105">
                   <Play size={16} className="fill-white translate-x-0.5" />
                 </span>
-                <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1">
-                  Ani<span className="text-[var(--primary-color)] font-black">tv</span>
+                <span className="text-xl font-bold tracking-tight text-white flex items-center">
+                  Anime<span className="text-[var(--primary-color)] font-black">Skdool</span>
                 </span>
               </button>
 
-              {/* Apple TV Segmented Nav Pill Container */}
+              {/* Segmented Nav Pill Container */}
               <nav className="flex items-center p-1 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] shadow-inner">
                 {navItems.map((item) => {
                   const active = activeView === item.key;
@@ -90,7 +124,7 @@ const TopNav = ({ activeView, onNavigate, onSelectAnime }) => {
 
             {/* Right Action Icons & Spotlight Search Button */}
             <div className="flex items-center gap-3">
-              {/* Apple TV Spotlight Search Trigger Button */}
+              {/* Spotlight Search Trigger Button */}
               <button
                 type="button"
                 onClick={() => setIsSpotlightOpen(true)}

@@ -279,11 +279,12 @@ export const FALLBACK_REVIEWS = [
     mal_id: 1001,
     score: 10,
     review: "An absolute masterpiece that redefines modern fantasy anime. The pacing, emotional weight, and musical score by Evan Call create an unforgettable experience.",
+    date: "2025-01-15T10:00:00Z",
     user: {
       username: "AnimeCritic",
       images: {
         jpg: {
-          image_url: "https://cdn.myanimelist.net/images/userimages/12345.jpg"
+          image_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
         }
       }
     },
@@ -293,14 +294,105 @@ export const FALLBACK_REVIEWS = [
     mal_id: 1002,
     score: 9,
     review: "Superb animation quality and stellar fight choreography. MAPPA delivered some of the greatest combat episodes in shonen history.",
+    date: "2025-02-01T14:30:00Z",
     user: {
       username: "SakugaFan",
       images: {
         jpg: {
-          image_url: "https://cdn.myanimelist.net/images/userimages/67890.jpg"
+          image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
         }
       }
     },
     entry: FALLBACK_TOP_AIRING[3]
+  },
+  {
+    mal_id: 1003,
+    score: 10,
+    review: "The character progression of Sung Jin-woo is exhilarating. A-1 Pictures elevated the manhwa source material with incredible sound design and visceral battle animation.",
+    date: "2025-02-10T18:45:00Z",
+    user: {
+      username: "ShadowMonarch",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[1]
+  },
+  {
+    mal_id: 1004,
+    score: 9,
+    review: "Ufotable continues to set the gold standard for visual effects, sound mixing, and emotional climaxes. Every season feels like a big-budget theatrical movie.",
+    date: "2025-02-14T09:20:00Z",
+    user: {
+      username: "HashiraWatcher",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[4]
+  },
+  {
+    mal_id: 1005,
+    score: 10,
+    review: "The narrative depth, political tension, and high-stakes philosophical clashes make Attack on Titan a monumental triumph in storytelling.",
+    date: "2025-02-16T12:00:00Z",
+    user: {
+      username: "EldianHistorian",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[7]
+  },
+  {
+    mal_id: 1006,
+    score: 9,
+    review: "Bleach's Thousand-Year Blood War arc brought modern cinematic fidelity and breathtaking direction back to the classic Big 3 franchise.",
+    date: "2025-02-18T16:10:00Z",
+    user: {
+      username: "BankaiMaster",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[5]
+  },
+  {
+    mal_id: 1007,
+    score: 8,
+    review: "The worldbuilding in One Piece is unmatched. The Egghead arc brings unbelievable lore revelations and breathtaking new animation styles.",
+    date: "2025-02-19T20:00:00Z",
+    user: {
+      username: "StrawHatVoyager",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[6]
+  },
+  {
+    mal_id: 1008,
+    score: 9,
+    review: "A refreshing fantasy with deep character interactions, mature themes of grief, and gentle humor. One of the best anime of the decade.",
+    date: "2025-02-20T11:15:00Z",
+    user: {
+      username: "MageJourney",
+      images: {
+        jpg: {
+          image_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80"
+        }
+      }
+    },
+    entry: FALLBACK_TOP_AIRING[0]
   }
 ];

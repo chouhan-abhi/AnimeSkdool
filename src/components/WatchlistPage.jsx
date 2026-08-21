@@ -153,7 +153,7 @@ const WatchlistPage = ({ onSelectAnime }) => {
     "";
 
   return (
-    <div className="min-h-screen px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto pb-24 text-white">
+    <div className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-18 max-w-[1800px] mx-auto pb-24 text-white">
       {/* Header */}
       <div className="pt-8 pb-6">
         <SectionHeader
@@ -163,27 +163,27 @@ const WatchlistPage = ({ onSelectAnime }) => {
         />
       </div>
 
-      {/* Apple TV Stats Metrics Ribbon */}
+      {/* Stats Metrics Ribbon */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl">
+        <div className="p-5 rounded-3xl bg-[#08080c] border border-white/[0.06]">
           <p className="text-xs uppercase font-bold tracking-wider text-white/50">Total in Library</p>
           <p className="mt-2 text-3xl font-black text-white tracking-tight">{stats.total}</p>
           <p className="text-xs text-white/40 mt-1">Saved shows & series</p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl">
+        <div className="p-5 rounded-3xl bg-[#08080c] border border-white/[0.06]">
           <p className="text-xs uppercase font-bold tracking-wider text-[var(--primary-color)]">Watching</p>
           <p className="mt-2 text-3xl font-black text-white tracking-tight">{stats.watching}</p>
           <p className="text-xs text-white/40 mt-1">Shows currently in progress</p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl">
+        <div className="p-5 rounded-3xl bg-[#08080c] border border-white/[0.06]">
           <p className="text-xs uppercase font-bold tracking-wider text-green-400">Completed</p>
           <p className="mt-2 text-3xl font-black text-white tracking-tight">{stats.completed}</p>
           <p className="text-xs text-white/40 mt-1">Finished full anime series</p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl">
+        <div className="p-5 rounded-3xl bg-[#08080c] border border-white/[0.06]">
           <p className="text-xs uppercase font-bold tracking-wider text-yellow-400">Episodes Watched</p>
           <p className="mt-2 text-3xl font-black text-white tracking-tight">{stats.totalWatchedEps}</p>
           <p className="text-xs text-white/40 mt-1">Total logged anime episodes</p>
@@ -191,7 +191,7 @@ const WatchlistPage = ({ onSelectAnime }) => {
       </div>
 
       {/* Segmented Filter Pills */}
-      <div className="flex flex-wrap items-center gap-2 mb-8 p-1.5 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/10 max-w-fit">
+      <div className="flex flex-wrap items-center gap-2 mb-8 p-1.5 rounded-full bg-[#08080c] border border-white/[0.06] max-w-fit">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -225,7 +225,7 @@ const WatchlistPage = ({ onSelectAnime }) => {
                 <div
                   key={anime.mal_id}
                   onClick={() => onSelectAnime?.(anime)}
-                  className="group relative rounded-3xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/25 backdrop-blur-2xl p-4 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_-5px_var(--glow-color)] hover:scale-[1.02] cursor-pointer select-none flex flex-col justify-between"
+                  className="group relative rounded-3xl bg-[#08080c] hover:bg-[#0e0e14] border border-white/[0.06] hover:border-white/20 p-4 sm:p-5 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.95)] hover:scale-[1.02] cursor-pointer select-none flex flex-col justify-between"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -237,7 +237,7 @@ const WatchlistPage = ({ onSelectAnime }) => {
                   <div>
                     {/* Top Row: Thumbnail + Info */}
                     <div className="flex gap-4">
-                      <div className="relative w-24 sm:w-28 aspect-[2/3] rounded-2xl overflow-hidden bg-black/50 flex-shrink-0 border border-white/10">
+                      <div className="relative w-28 sm:w-32 aspect-[2/3] rounded-2xl overflow-hidden bg-black/60 flex-shrink-0 border border-white/10">
                         <img
                           src={getImage(anime)}
                           alt={anime.title}

@@ -268,8 +268,8 @@ const SpotlightModal = ({ isOpen, onClose, onSelectAnime }) => {
             <span>↵ Select</span>
             <span>ESC Close</span>
           </div>
-          <span className="flex items-center gap-1 text-[var(--primary-color)]">
-            <Sparkles size={12} /> Apple Spotlight
+          <span className="flex items-center gap-1 text-[var(--primary-color)] font-medium">
+            <Sparkles size={12} /> Spotlight Search
           </span>
         </div>
       </div>

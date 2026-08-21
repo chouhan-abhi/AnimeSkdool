@@ -12,7 +12,7 @@ const BottomNav = ({ activeView, onNavigate }) => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pt-1 pointer-events-none">
-      <div className="mx-auto max-w-md rounded-full border border-white/[0.12] bg-[#121218]/85 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] pointer-events-auto p-1.5">
+      <div className="mx-auto max-w-md rounded-full border border-white/[0.08] bg-[#060608]/90 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.9)] pointer-events-auto p-1.5">
         <div className="flex items-center justify-around">
           {items.map((item) => {
             const Icon = item.icon;

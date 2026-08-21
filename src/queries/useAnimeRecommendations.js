@@ -1,25 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { jikanFetch } from "../utils/jikanClient";
+import { FALLBACK_TOP_AIRING } from "../utils/fallbackData";
 
 /**
- * Fetches recent anime recommendations from Jikan API.
- * GET /recommendations/anime?page=1
- * Response: { data: [{ mal_id, entry: [{ mal_id, url, images, title }], content, user }], pagination }
- * Returns a flat, deduped list of anime entries (minimal: mal_id, url, images, title).
+ * Fetches curated anime recommendations with heavy rate-limiting protection.
+ * Enriches lightweight recommendation entries with offline seed data and cache to avoid secondary API calls.
  */
 export const fetchAnimeRecommendations = async ({ page = 1, signal } = {}) => {
-  const json = await jikanFetch(`/recommendations/anime?page=${page}`, { signal });
-  const data = json?.data ?? [];
-  const entries = data.flatMap((rec) => rec?.entry ?? []).filter(Boolean);
+  try {
+    const json = await jikanFetch(`/recommendations/anime?page=${page}`, { signal });
+    const data = json?.data ?? [];
+    const entries = data.flatMap((rec) => rec?.entry ?? []).filter(Boolean);
 
-  // Dedupe by mal_id (same anime can appear in multiple recommendations)
-  const seen = new Set();
-  return entries.filter((e) => {
-    const id = e.mal_id;
-    if (seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
+    // Dedupe by mal_id
+    const seen = new Set();
+    const deduped = entries.filter((e) => {
+      const id = e.mal_id;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+
+    // Enrich with fallback top airing catalog where available
+    const enriched = deduped.map((item) => {
+      const match = FALLBACK_TOP_AIRING.find((f) => f.mal_id === item.mal_id);
+      return match ? { ...match, ...item } : item;
+    });
+
+    if (enriched.length > 0) return enriched;
+    return FALLBACK_TOP_AIRING;
+  } catch (err) {
+    console.warn("[Recommendations] Fetch failed, using curated catalog:", err);
+    return FALLBACK_TOP_AIRING;
+  }
 };
 
 export const useAnimeRecommendations = (maxItems = 24) => {
@@ -29,9 +42,11 @@ export const useAnimeRecommendations = (maxItems = 24) => {
       const list = await fetchAnimeRecommendations({ page: 1, signal });
       return list.slice(0, maxItems);
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60,
-    retry: 2,
+    staleTime: 1000 * 60 * 60, // 1 hour cache to prevent rate-limiting
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    initialData: FALLBACK_TOP_AIRING.slice(0, maxItems),
   });
 };
 

@@ -9,8 +9,8 @@ const Footer = () => {
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white border border-white/15">
             <Play size={12} className="fill-white translate-x-0.5" />
           </span>
-          <span className="font-semibold text-white tracking-tight">AniSkdool</span>
-          <span className="text-xs text-[var(--text-dim)]">· Inspired by Apple TV Design</span>
+          <span className="font-semibold text-white tracking-tight">AnimeSkdool</span>
+          <span className="text-xs text-[var(--text-dim)]">· Cinematic Anime Experience</span>
         </div>
 
         <p className="text-xs text-[var(--text-dim)] text-center md:text-right">

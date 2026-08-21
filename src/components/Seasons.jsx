@@ -56,29 +56,39 @@ const SeasonsExplorer = () => {
       <h2 className="text-2xl font-bold text-[var(--text-color)] mb-4">
         Explore Seasons
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {seasons.map(({ year, season, url }) => (
-          <div
-            key={`${year}-${season}`}
-            onClick={() => setSelectedSeason({ year, season })}
-            className="cursor-pointer bg-[var(--primary-color)] text-white rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform"
-          >
-            <h3 className="text-xl font-bold capitalize">
-              {season} {year}
-            </h3>
-            {url && (
-              <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 text-xs underline opacity-80 hover:opacity-100"
-                onClick={(e) => e.stopPropagation()}
-              >
-                View on MAL
-              </a>
-            )}
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {seasons.map(({ year, season, url }) => {
+          const isSelected =
+            selectedSeason?.year === year && selectedSeason?.season === season;
+          return (
+            <div
+              key={`${year}-${season}`}
+              onClick={() => setSelectedSeason({ year, season })}
+              className={`cursor-pointer rounded-3xl p-6 flex flex-col items-center justify-center transition-all duration-200 border ${
+                isSelected
+                  ? "bg-white text-black border-white shadow-xl scale-[1.02]"
+                  : "bg-[#08080c] text-white border-white/[0.06] hover:border-white/25 hover:bg-[#0f0f14]"
+              }`}
+            >
+              <h3 className="text-xl font-bold capitalize tracking-tight">
+                {season} {year}
+              </h3>
+              {url && (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`mt-2 text-xs font-medium underline transition-opacity ${
+                    isSelected ? "text-black/70 hover:text-black" : "text-white/50 hover:text-white"
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View on MAL
+                </a>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Selected Season Anime */}

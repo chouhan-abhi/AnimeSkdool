@@ -4,7 +4,7 @@ import Pill from "./ui/Pill";
 import PrimaryButton from "./ui/PrimaryButton";
 
 const AUTO_ADVANCE_MS = 8000;
-const HERO_CLASS = "relative h-[74vh] min-h-[540px] max-h-[920px] w-full overflow-hidden select-none";
+const HERO_CLASS = "relative h-[65vh] sm:h-[74vh] min-h-[460px] sm:min-h-[540px] max-h-[920px] w-full overflow-hidden select-none";
 
 const buildSrcSet = (urls, widths) => {
   const entries = urls
@@ -85,7 +85,7 @@ const HeroCarousel = memo(
       return (
         <section className={`${HERO_CLASS} bg-[#060608]`}>
           <div className="absolute inset-0 animate-shimmer" />
-          <div className="relative h-full flex flex-col justify-end px-6 sm:px-10 md:px-16 lg:px-20 pb-20 md:pb-24 max-w-[1800px] mx-auto">
+          <div className="relative h-full flex flex-col justify-end px-4 sm:px-10 md:px-16 lg:px-20 pb-16 sm:pb-20 md:pb-24 max-w-[1800px] mx-auto">
             <div className="h-5 w-28 rounded-full bg-white/10 mb-4" />
             <div className="h-14 w-3/4 max-w-2xl rounded-2xl bg-white/10" />
             <div className="mt-4 h-5 w-full max-w-xl rounded-lg bg-white/5" />
@@ -157,11 +157,11 @@ const HeroCarousel = memo(
                 <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/80 to-transparent" />
 
                 {/* Hero Info Container */}
-                <div className="relative h-full flex flex-col justify-end px-6 sm:px-10 md:px-16 lg:px-20 pb-20 md:pb-24 max-w-[1800px] mx-auto z-10">
-                  {/* Apple TV Badges Strip */}
+                <div className="relative h-full flex flex-col justify-end px-4 sm:px-10 md:px-16 lg:px-20 pb-16 sm:pb-20 md:pb-24 max-w-[1800px] mx-auto z-10">
+                  {/* Badges Strip */}
                   <div className="flex flex-wrap items-center gap-2.5 mb-3">
                     <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl text-white text-[11px] font-bold tracking-wider uppercase border border-white/25 shadow-sm">
-                      Apple TV Showcase
+                      AnimeSkdool Spotlight
                     </span>
 
                     {anime.rating && (
@@ -211,7 +211,7 @@ const HeroCarousel = memo(
                     </p>
                   )}
 
-                  {/* Apple TV Action Buttons */}
+                  {/* Action Buttons */}
                   <div className="mt-6 flex flex-wrap items-center gap-3.5">
                     <PrimaryButton
                       variant="white"
@@ -225,24 +225,20 @@ const HeroCarousel = memo(
                     <button
                       type="button"
                       onClick={() => onAddToWatchlist?.(anime)}
-                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold backdrop-blur-2xl transition-all duration-200 active:scale-95 border ${
-                        inWatchlist
-                          ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_24px_var(--glow-color)]"
-                          : "bg-white/12 text-white border-white/20 hover:bg-white/20 hover:border-white/30"
-                      }`}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-xs sm:text-sm font-semibold text-white backdrop-blur-2xl transition-all duration-300 hover:bg-white/20 hover:scale-105"
                     >
-                      {inWatchlist ? <Check size={18} /> : <Plus size={18} />}
-                      {inWatchlist ? "In Up Next" : "Add to Up Next"}
+                      {inWatchlist ? (
+                        <>
+                          <Check size={16} />
+                          <span>In Up Next</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          <span>Add to Up Next</span>
+                        </>
+                      )}
                     </button>
-
-                    <PrimaryButton
-                      variant="glass"
-                      size="lg"
-                      onClick={() => onSelectAnime?.(anime)}
-                    >
-                      <Info size={18} />
-                      Details & Stills
-                    </PrimaryButton>
                   </div>
                 </div>
               </div>
@@ -250,14 +246,14 @@ const HeroCarousel = memo(
           })}
         </div>
 
-        {/* Carousel Navigation Chevron Arrows */}
+        {/* Carousel Navigation Arrows */}
         {heroList.length > 1 && (
           <>
             <button
               type="button"
               onClick={() => goToHeroSlide((heroIndex - 1 + heroList.length) % heroList.length)}
-              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/75 border border-white/15 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-95"
-              aria-label="Previous Slide"
+              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-black/40 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-black/60 hover:scale-110"
+              aria-label="Previous featured anime"
             >
               <ChevronLeft size={22} />
             </button>
@@ -265,15 +261,15 @@ const HeroCarousel = memo(
             <button
               type="button"
               onClick={() => goToHeroSlide((heroIndex + 1) % heroList.length)}
-              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/75 border border-white/15 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all hover:scale-110 active:scale-95"
-              aria-label="Next Slide"
+              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-black/40 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-black/60 hover:scale-110"
+              aria-label="Next featured anime"
             >
               <ChevronRight size={22} />
             </button>
           </>
         )}
 
-        {/* Apple TV Segmented Slide Indicator Bars */}
+        {/* Segmented Slide Indicator Bars */}
         {heroList.length > 1 && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur-2xl border border-white/10">
             {heroList.slice(0, 10).map((_, idx) => {

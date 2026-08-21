@@ -52,7 +52,7 @@ const AnimeCard = memo(({ anime, isOngoing, onSelect, onToggleStar }) => {
   return (
     <div
       onClick={() => onSelect?.(anime)}
-      className={`relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#12121a]/85 backdrop-blur-xl p-3 flex gap-3.5 transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:shadow-[0_16px_36px_rgba(0,0,0,0.8)] cursor-pointer group select-none ${
+      className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080c] hover:bg-[#0c0c12] p-3 flex gap-3.5 transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:shadow-[0_16px_36px_rgba(0,0,0,0.9)] cursor-pointer group select-none ${
         isOngoing ? "ring-1 ring-red-500/80" : ""
       }`}
       role="button"

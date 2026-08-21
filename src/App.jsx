@@ -80,6 +80,7 @@ const App = () => {
           <AnimeDetailsPanel
             anime={selectedAnime}
             onClose={() => setSelectedAnime(null)}
+            onSelectAnime={setSelectedAnime}
           />
         </Suspense>
       )}

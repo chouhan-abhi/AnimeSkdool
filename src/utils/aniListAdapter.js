@@ -17,6 +17,18 @@ export const mapAniListToJikan = (media) => {
     ? new Date(media.nextAiringEpisode.airingAt * 1000)
     : null;
 
+  // Compute realistic rating label based on adult status and genre tags
+  let derivedRating = "PG-13 - Teens 13 or older";
+  if (media.isAdult) {
+    derivedRating = "Rx - Hentai";
+  } else if (media.genres?.includes("Ecchi")) {
+    derivedRating = "R+ - Mild Nudity";
+  } else if (media.genres?.includes("Horror") || media.genres?.includes("Gore") || media.genres?.includes("Psychological")) {
+    derivedRating = "R - 17+ (violence & profanity)";
+  } else if (media.genres?.includes("Kids")) {
+    derivedRating = "PG - Children";
+  }
+
   return {
     mal_id: media.idMal || media.id,
     id: media.id,
@@ -60,7 +72,7 @@ export const mapAniListToJikan = (media) => {
     scored_by: media.popularity || 10000,
     rank: media.rank || null,
     popularity: media.popularity || null,
-    rating: media.isAdult ? "Rx - Hentai" : "PG-13 - Teens 13 or older",
+    rating: derivedRating,
     genres: (media.genres || []).map((g, idx) => ({ mal_id: idx + 1, name: g })),
     studios: (media.studios?.nodes || []).map((s) => ({ mal_id: s.id, name: s.name })),
     broadcast: airingTime
@@ -143,56 +155,141 @@ export async function queryAniList(query, variables = {}, signal) {
   return json?.data;
 }
 
-export async function fetchAniListCatalog({ filter = "airing", limit = 20, page = 1, search = "", signal } = {}) {
-  let query = "";
-  const variables = { page, perPage: limit };
+export async function fetchAniListCatalog({
+  filter = "airing",
+  limit = 24,
+  page = 1,
+  search = "",
+  genre = "",
+  genres = [],
+  format = "",
+  status = "",
+  rating = "",
+  sfw = "true",
+  season = "",
+  seasonYear = null,
+  sort = null,
+  signal,
+} = {}) {
+  const variables = {
+    page: Number(page) || 1,
+    perPage: Number(limit) || 24,
+  };
 
-  if (search) {
-    query = `
-      query ($page: Int, $perPage: Int, $search: String) {
-        Page(page: $page, perPage: $perPage) {
-          media(search: $search, type: ANIME, isAdult: false, sort: [POPULARITY_DESC]) {
-            ${MEDIA_FIELDS}
-          }
-        }
-      }
-    `;
-    variables.search = search;
-  } else if (filter === "airing") {
-    query = `
-      query ($page: Int, $perPage: Int) {
-        Page(page: $page, perPage: $perPage) {
-          media(status: RELEASING, type: ANIME, isAdult: false, sort: [POPULARITY_DESC]) {
-            ${MEDIA_FIELDS}
-          }
-        }
-      }
-    `;
-  } else if (filter === "upcoming") {
-    query = `
-      query ($page: Int, $perPage: Int) {
-        Page(page: $page, perPage: $perPage) {
-          media(status: NOT_YET_RELEASED, type: ANIME, isAdult: false, sort: [POPULARITY_DESC]) {
-            ${MEDIA_FIELDS}
-          }
-        }
-      }
-    `;
-  } else {
-    query = `
-      query ($page: Int, $perPage: Int) {
-        Page(page: $page, perPage: $perPage) {
-          media(type: ANIME, isAdult: false, sort: [SCORE_DESC, POPULARITY_DESC]) {
-            ${MEDIA_FIELDS}
-          }
-        }
-      }
-    `;
+  const isAdultQuery = rating === "rx" || (sfw === "false" && rating === "rx");
+  const conditions = ["type: ANIME"];
+  if (!isAdultQuery && sfw === "true") {
+    conditions.push("isAdult: false");
+  } else if (isAdultQuery) {
+    conditions.push("isAdult: true");
   }
 
-  const data = await queryAniList(query, variables, signal);
-  const mediaList = data?.Page?.media || [];
-  return mediaList.map(mapAniListToJikan);
+  if (search) {
+    variables.search = search;
+    conditions.push("search: $search");
+  }
+
+  if (genre) {
+    variables.genre = genre;
+    conditions.push("genre: $genre");
+  } else if (Array.isArray(genres) && genres.length > 0) {
+    variables.genre_in = genres;
+    conditions.push("genre_in: $genre_in");
+  }
+
+  if (format) {
+    const formatUpper = format.toUpperCase();
+    if (["TV", "MOVIE", "OVA", "SPECIAL", "ONA", "MUSIC"].includes(formatUpper)) {
+      variables.format = formatUpper;
+      conditions.push("format: $format");
+    }
+  }
+
+  if (status) {
+    const statusUpper = status.toUpperCase();
+    if (statusUpper === "AIRING" || statusUpper === "RELEASING") {
+      conditions.push("status: RELEASING");
+    } else if (statusUpper === "UPCOMING" || statusUpper === "NOT_YET_RELEASED") {
+      conditions.push("status: NOT_YET_RELEASED");
+    } else if (statusUpper === "FINISHED" || statusUpper === "COMPLETE") {
+      conditions.push("status: FINISHED");
+    }
+  } else if (!search && filter === "airing") {
+    conditions.push("status: RELEASING");
+  } else if (!search && filter === "upcoming") {
+    conditions.push("status: NOT_YET_RELEASED");
+  }
+
+  if (season) {
+    variables.season = season.toUpperCase();
+    conditions.push("season: $season");
+  }
+
+  if (seasonYear) {
+    variables.seasonYear = Number(seasonYear);
+    conditions.push("seasonYear: $seasonYear");
+  }
+
+  // Sorting
+  let sortField = "[POPULARITY_DESC]";
+  if (sort) {
+    sortField = Array.isArray(sort) ? JSON.stringify(sort).replace(/"/g, "") : `[${sort}]`;
+  } else if (filter === "top" || filter === "favorite") {
+    sortField = "[SCORE_DESC, POPULARITY_DESC]";
+  } else if (filter === "upcoming") {
+    sortField = "[POPULARITY_DESC]";
+  }
+
+  const varDefs = [
+    "$page: Int",
+    "$perPage: Int",
+    search ? "$search: String" : null,
+    genre ? "$genre: String" : null,
+    Array.isArray(genres) && genres.length > 0 ? "$genre_in: [String]" : null,
+    format ? "$format: MediaFormat" : null,
+    season ? "$season: MediaSeason" : null,
+    seasonYear ? "$seasonYear: Int" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const query = `
+    query (${varDefs}) {
+      Page(page: $page, perPage: $perPage) {
+        pageInfo {
+          total
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        media(${conditions.join(", ")}, sort: ${sortField}) {
+          ${MEDIA_FIELDS}
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await queryAniList(query, variables, signal);
+    const mediaList = data?.Page?.media || [];
+    const pageInfo = data?.Page?.pageInfo || {};
+    return {
+      data: mediaList.map(mapAniListToJikan),
+      pagination: {
+        has_next_page: Boolean(pageInfo.hasNextPage),
+        current_page: pageInfo.currentPage || page,
+        last_visible_page: pageInfo.lastPage || 1,
+        items: {
+          total: pageInfo.total || mediaList.length,
+          count: mediaList.length,
+          per_page: limit,
+        },
+      },
+    };
+  } catch (err) {
+    console.warn("[AniList Adapter] GraphQL query failed:", err);
+    throw err;
+  }
 }
 
 export async function fetchAniListSingle(idMal, signal) {
@@ -203,6 +300,10 @@ export async function fetchAniListSingle(idMal, signal) {
       }
     }
   `;
-  const data = await queryAniList(query, { idMal }, signal);
-  return data?.Media ? mapAniListToJikan(data.Media) : null;
+  try {
+    const data = await queryAniList(query, { idMal }, signal);
+    return data?.Media ? mapAniListToJikan(data.Media) : null;
+  } catch {
+    return null;
+  }
 }

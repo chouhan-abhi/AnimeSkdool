@@ -218,7 +218,7 @@ const CalendarView = ({ onSelectAnime }) => {
   const currentDay = weekDays[currentDayIndex];
 
   return (
-    <div className="min-h-screen px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto pb-24 text-white">
+    <div className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-18 max-w-[1800px] mx-auto pb-24 text-white">
       {/* Header */}
       <div className="pt-8 pb-6">
         <SectionHeader
@@ -228,7 +228,7 @@ const CalendarView = ({ onSelectAnime }) => {
         />
       </div>
 
-      {/* Apple TV Day Switcher Pill Bar */}
+      {/* Day Switcher Pill Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 scrollbar-hide">
         {weekDays.map((day, idx) => {
           const active = currentDayIndex === idx;
@@ -240,10 +240,10 @@ const CalendarView = ({ onSelectAnime }) => {
               key={day}
               type="button"
               onClick={() => setCurrentDayIndex(idx)}
-              className={`flex-1 min-w-[100px] sm:min-w-[120px] p-3.5 rounded-2xl backdrop-blur-2xl border transition-all duration-200 select-none text-center ${
+              className={`flex-1 min-w-[100px] sm:min-w-[120px] p-3.5 rounded-2xl border transition-all duration-200 select-none text-center ${
                 active
                   ? "bg-white text-black border-white shadow-[0_4px_24px_rgba(255,255,255,0.2)] scale-[1.03]"
-                  : "bg-white/[0.05] text-white/80 border-white/10 hover:bg-white/10 hover:text-white"
+                  : "bg-[#08080c] text-white/80 border-white/[0.06] hover:border-white/20 hover:bg-[#0c0c12] hover:text-white"
               }`}
             >
               <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -269,7 +269,7 @@ const CalendarView = ({ onSelectAnime }) => {
       </div>
 
       {/* Filters Toolbar */}
-      <div className="p-4 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 rounded-3xl bg-[#08080c] border border-white/[0.06] mb-8 flex flex-wrap items-center justify-between gap-4">
         <FiltersBar
           search={search}
           setSearch={setSearch}
@@ -328,6 +328,7 @@ const CalendarView = ({ onSelectAnime }) => {
           <AnimeDetailsPanel
             anime={selectedAnime}
             onClose={handleClosePanel}
+            onSelectAnime={handleSelect}
           />
         </Suspense>
       )}

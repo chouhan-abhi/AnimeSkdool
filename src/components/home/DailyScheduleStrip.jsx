@@ -70,10 +70,10 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
   const visible = items.slice(0, 8);
 
   return (
-    <GlassCard className="relative overflow-hidden border-white/[0.1] bg-gradient-to-r from-[#121422]/90 via-[#0e101c]/80 to-[#14101e]/90 p-6 sm:p-7">
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-[#08080c] p-4 sm:p-7">
       {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[var(--primary-color)]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -left-12 -bottom-12 h-48 w-48 rounded-full bg-purple-600/15 blur-3xl" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[var(--primary-color)]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-12 -bottom-12 h-48 w-48 rounded-full bg-purple-600/10 blur-3xl" />
 
       {/* Header & Segmented Controls */}
       <div className="relative flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -90,8 +90,8 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Apple TV Segmented Switcher */}
-          <div className="flex items-center p-1 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/10">
+          {/* Segmented Day Switcher */}
+          <div className="flex items-center p-1 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/10">
             <button
               type="button"
               onClick={() => setMode("today")}
@@ -131,7 +131,7 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
       {isLoading ? (
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="min-w-[200px] flex-1 rounded-xl bg-white/[0.05] h-28 animate-shimmer" />
+            <div key={i} className="min-w-[240px] flex-1 rounded-2xl bg-white/[0.03] h-28 animate-shimmer" />
           ))}
         </div>
       ) : isError ? (
@@ -146,7 +146,7 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
               <div
                 key={anime.mal_id}
                 onClick={() => onSelectAnime?.(anime)}
-                className="min-w-[240px] sm:min-w-[270px] flex-shrink-0 flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/20 transition-all duration-200 cursor-pointer group shadow-sm hover:scale-[1.02]"
+                className="min-w-[260px] sm:min-w-[290px] flex-shrink-0 flex items-center gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/20 transition-all duration-200 cursor-pointer group shadow-sm hover:scale-[1.02]"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -154,7 +154,7 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
                 }}
               >
                 {/* Thumbnail */}
-                <div className="relative w-14 h-20 rounded-xl overflow-hidden bg-black/40 flex-shrink-0 border border-white/10">
+                <div className="relative w-16 h-22 rounded-xl overflow-hidden bg-black/60 flex-shrink-0 border border-white/10">
                   {img && (
                     <img
                       src={img}
@@ -194,7 +194,7 @@ const DailyScheduleStrip = ({ onNavigate, onSelectAnime }) => {
       ) : (
         <p className="text-sm text-white/60 py-6 text-center">No major broadcasts scheduled.</p>
       )}
-    </GlassCard>
+    </div>
   );
 };
 

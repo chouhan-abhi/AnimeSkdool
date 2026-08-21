@@ -1,5 +1,6 @@
 import React, {
   useState,
+  useMemo,
   Suspense,
   lazy,
   useEffect,
@@ -51,7 +52,7 @@ const buildSrcSet = (urls, widths) => {
 };
 
 // ----------------------------------------------------
-// Apple TV Standard 2:3 Portrait Poster Card
+// Standard 2:3 Portrait Poster Card
 // ----------------------------------------------------
 const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) => {
   if (!anime) return null;
@@ -60,19 +61,19 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
   const jpg = anime.images?.jpg || {};
   const webpSrcSet = buildSrcSet(
     [webp.small_image_url, webp.image_url, webp.large_image_url],
-    [150, 300, 480]
+    [200, 360, 600]
   );
   const jpgSrcSet = buildSrcSet(
     [jpg.small_image_url, jpg.image_url, jpg.large_image_url],
-    [150, 300, 480]
+    [200, 360, 600]
   );
   const imgUrl =
-    webp.image_url || jpg.image_url || webp.small_image_url || jpg.small_image_url;
+    webp.large_image_url || jpg.large_image_url || webp.image_url || jpg.image_url;
 
   const inWatchlist = isInWatchlist?.(anime.mal_id);
 
   return (
-    <div className="flex-shrink-0 w-[155px] sm:w-[175px] md:w-[195px] lg:w-[210px] group relative select-none">
+    <div className="flex-shrink-0 w-[185px] sm:w-[215px] md:w-[245px] lg:w-[265px] group relative select-none">
       <div
         onClick={() => onSelect(anime)}
         className="relative cursor-pointer focus:outline-none"
@@ -83,9 +84,9 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
         }}
       >
         {/* Card Frame */}
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-[#14141d] border border-white/[0.08] transition-all duration-300 group-hover:scale-[1.04] group-hover:-translate-y-1.5 group-hover:border-white/25 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.9),0_0_30px_-5px_var(--glow-color)]">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-[#08080c] border border-white/[0.06] transition-all duration-300 group-hover:scale-[1.03] group-hover:-translate-y-1.5 group-hover:border-white/20 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.95)]">
           {/* Specular Highlight Line */}
-          <div className="specular-highlight opacity-40 group-hover:opacity-100 transition-opacity" />
+          <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
 
           {imgUrl ? (
             <picture>
@@ -93,14 +94,14 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
                 <source
                   type="image/webp"
                   srcSet={webpSrcSet}
-                  sizes="(min-width: 1024px) 210px, (min-width: 768px) 195px, 155px"
+                  sizes="(min-width: 1024px) 265px, (min-width: 768px) 245px, 185px"
                 />
               )}
               {jpgSrcSet && (
                 <source
                   type="image/jpeg"
                   srcSet={jpgSrcSet}
-                  sizes="(min-width: 1024px) 210px, (min-width: 768px) 195px, 155px"
+                  sizes="(min-width: 1024px) 265px, (min-width: 768px) 245px, 185px"
                 />
               )}
               <img
@@ -120,9 +121,9 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
             </div>
           )}
 
-          {/* Apple TV Score Pill */}
+          {/* Score Pill */}
           {anime.score && (
-            <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/70 backdrop-blur-md text-yellow-400 text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/10 shadow-md">
+            <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/75 backdrop-blur-md text-yellow-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/10 shadow-md">
               <Star size={10} fill="currentColor" />
               <span>{anime.score}</span>
             </div>
@@ -130,7 +131,7 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
 
           {/* Airing / Type Badge */}
           {anime.type && (
-            <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-semibold tracking-wider border border-white/10 uppercase">
+            <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-white/90 text-[10px] font-semibold tracking-wider border border-white/10 uppercase">
               {anime.type}
             </div>
           )}
@@ -138,7 +139,7 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
           {/* Dark Vignette Overlay on Hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Apple TV Play Trigger Button */}
+          {/* Play Trigger Button */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
             <span className="rounded-full bg-white text-black p-3.5 shadow-[0_4px_24px_rgba(255,255,255,0.4)]">
               <Play size={20} className="fill-black translate-x-0.5" />
@@ -158,7 +159,7 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
           className={`absolute top-2.5 left-2.5 z-10 p-1.5 rounded-full backdrop-blur-xl border transition-all duration-200 opacity-0 group-hover:opacity-100 ${
             inWatchlist
               ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_12px_var(--glow-color)]"
-              : "bg-black/60 text-white/80 border-white/15 hover:bg-white/30 hover:text-white"
+              : "bg-black/70 text-white/80 border-white/15 hover:bg-white/30 hover:text-white"
           }`}
           aria-label={inWatchlist ? "Remove from Up Next" : "Add to Up Next"}
         >
@@ -166,12 +167,12 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
         </button>
       )}
 
-      {/* Title & Metadata under Card */}
-      <div className="mt-2.5 px-0.5">
+      {/* Title & Metadata */}
+      <div className="mt-3 px-0.5">
         <h3 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight group-hover:text-[var(--primary-color)] transition-colors">
           {anime.title}
         </h3>
-        <p className="text-[11px] text-[var(--text-muted)] mt-0.5 truncate">
+        <p className="text-[11px] text-[var(--text-muted)] mt-1 truncate">
           {[
             anime.genres?.[0]?.name,
             anime.episodes ? `${anime.episodes} eps` : null,
@@ -186,7 +187,7 @@ const PosterCard = memo(({ anime, onSelect, onWatchlistToggle, isInWatchlist }) 
 });
 
 // ----------------------------------------------------
-// Apple TV 16:9 Widescreen Landscape Card (Up Next)
+// 16:9 Widescreen Landscape Card (Up Next)
 // ----------------------------------------------------
 const UpNextCard = memo(({ anime, onSelect }) => {
   if (!anime) return null;
@@ -197,7 +198,7 @@ const UpNextCard = memo(({ anime, onSelect }) => {
     webp.large_image_url || webp.image_url || jpg.large_image_url || jpg.image_url;
 
   return (
-    <div className="flex-shrink-0 w-[260px] sm:w-[300px] md:w-[340px] group relative select-none">
+    <div className="flex-shrink-0 w-[300px] sm:w-[360px] md:w-[410px] group relative select-none">
       <div
         onClick={() => onSelect(anime)}
         className="relative cursor-pointer focus:outline-none"
@@ -207,8 +208,8 @@ const UpNextCard = memo(({ anime, onSelect }) => {
           if (e.key === "Enter" || e.key === " ") onSelect(anime);
         }}
       >
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-[#14141d] border border-white/[0.08] transition-all duration-300 group-hover:scale-[1.03] group-hover:-translate-y-1 group-hover:border-white/25 group-hover:shadow-[0_20px_45px_rgba(0,0,0,0.9),0_0_25px_-5px_var(--glow-color)]">
-          <div className="specular-highlight opacity-40 group-hover:opacity-100 transition-opacity" />
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-[#08080c] border border-white/[0.06] transition-all duration-300 group-hover:scale-[1.025] group-hover:-translate-y-1 group-hover:border-white/20 group-hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)]">
+          <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
 
           {imgUrl && (
             <img
@@ -223,25 +224,25 @@ const UpNextCard = memo(({ anime, onSelect }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
           {/* Episode Tag */}
-          <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-bold tracking-wider uppercase border border-white/10">
+          <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-bold tracking-wider uppercase border border-white/10">
             {anime.episodes ? `Episode 1 of ${anime.episodes}` : "New Episode"}
           </div>
 
           {/* Center Play Icon */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
-            <span className="rounded-full bg-white text-black p-3 shadow-lg">
+            <span className="rounded-full bg-white text-black p-3.5 shadow-lg">
               <Play size={18} className="fill-black translate-x-0.5" />
             </span>
           </div>
 
-          {/* Apple TV Progress Bar */}
+          {/* Progress Bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
             <div className="h-full bg-[var(--primary-color)] w-2/5 rounded-full" />
           </div>
         </div>
       </div>
 
-      <div className="mt-2.5 px-0.5 flex justify-between items-start">
+      <div className="mt-3 px-0.5 flex justify-between items-start">
         <div className="min-w-0 pr-2">
           <h3 className="text-sm font-semibold text-white truncate leading-tight group-hover:text-[var(--primary-color)] transition-colors">
             {anime.title}
@@ -256,7 +257,7 @@ const UpNextCard = memo(({ anime, onSelect }) => {
 });
 
 // ----------------------------------------------------
-// Apple TV Top 10 Chart Card with Big Rank Numbers
+// Top 10 Chart Card with Big Rank Numbers
 // ----------------------------------------------------
 const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatchlist }) => {
   if (!anime) return null;
@@ -265,22 +266,22 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
   const jpg = anime.images?.jpg || {};
   const webpSrcSet = buildSrcSet(
     [webp.small_image_url, webp.image_url, webp.large_image_url],
-    [150, 300, 480]
+    [200, 360, 600]
   );
   const jpgSrcSet = buildSrcSet(
     [jpg.small_image_url, jpg.image_url, jpg.large_image_url],
-    [150, 300, 480]
+    [200, 360, 600]
   );
   const imgUrl =
-    webp.image_url || jpg.image_url || webp.small_image_url || jpg.small_image_url;
+    webp.large_image_url || jpg.large_image_url || webp.image_url || jpg.image_url;
 
   const inWatchlist = isInWatchlist?.(anime.mal_id);
 
   return (
-    <div className="flex-shrink-0 relative pl-10 sm:pl-12 md:pl-14 w-[195px] sm:w-[225px] md:w-[250px] lg:w-[265px] group select-none">
-      {/* Big Apple TV Typographic Rank Number */}
+    <div className="flex-shrink-0 relative pl-12 sm:pl-14 md:pl-16 w-[235px] sm:w-[275px] md:w-[310px] lg:w-[335px] group select-none">
+      {/* Big Typographic Rank Number */}
       <span
-        className="rank-number absolute left-0 bottom-7 sm:bottom-8 md:bottom-9 text-7xl sm:text-8xl md:text-9xl tracking-tighter leading-none select-none z-0 pointer-events-none"
+        className="rank-number absolute left-0 bottom-7 sm:bottom-8 md:bottom-9 text-8xl sm:text-9xl md:text-[10rem] tracking-tighter leading-none select-none z-0 pointer-events-none"
         aria-hidden="true"
       >
         {rank}
@@ -297,8 +298,8 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
             if (e.key === "Enter" || e.key === " ") onSelect(anime);
           }}
         >
-          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-[#14141d] border border-white/[0.08] transition-all duration-300 group-hover:scale-[1.04] group-hover:-translate-y-1.5 group-hover:border-white/25 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.9),0_0_30px_-5px_var(--glow-color)]">
-            <div className="specular-highlight opacity-40 group-hover:opacity-100 transition-opacity" />
+          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-[#08080c] border border-white/[0.06] transition-all duration-300 group-hover:scale-[1.03] group-hover:-translate-y-1.5 group-hover:border-white/20 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.95)]">
+            <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
 
             {imgUrl ? (
               <picture>
@@ -306,14 +307,14 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
                   <source
                     type="image/webp"
                     srcSet={webpSrcSet}
-                    sizes="(min-width: 1024px) 210px, (min-width: 768px) 195px, 155px"
+                    sizes="(min-width: 1024px) 265px, (min-width: 768px) 245px, 185px"
                   />
                 )}
                 {jpgSrcSet && (
                   <source
                     type="image/jpeg"
                     srcSet={jpgSrcSet}
-                    sizes="(min-width: 1024px) 210px, (min-width: 768px) 195px, 155px"
+                    sizes="(min-width: 1024px) 265px, (min-width: 768px) 245px, 185px"
                   />
                 )}
                 <img
@@ -334,7 +335,7 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
             )}
 
             {anime.score && (
-              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/70 backdrop-blur-md text-yellow-400 text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/10 shadow-md">
+              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/75 backdrop-blur-md text-yellow-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/10 shadow-md">
                 <Star size={10} fill="currentColor" />
                 <span>{anime.score}</span>
               </div>
@@ -358,10 +359,10 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
               e.stopPropagation();
               onWatchlistToggle(anime);
             }}
-            className={`absolute top-2 left-2 z-20 p-2 rounded-full backdrop-blur-xl border transition-all duration-200 opacity-0 group-hover:opacity-100 shadow-md active:scale-90 ${
+            className={`absolute top-2.5 left-2.5 z-20 p-1.5 rounded-full backdrop-blur-xl border transition-all duration-200 opacity-0 group-hover:opacity-100 shadow-md active:scale-90 ${
               inWatchlist
                 ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-[0_0_12px_var(--glow-color)] !opacity-100"
-                : "bg-black/60 text-white/80 hover:text-white border-white/15 hover:bg-black/80"
+                : "bg-black/70 text-white/80 hover:text-white border-white/15 hover:bg-black/90"
             }`}
             title={inWatchlist ? "In Up Next" : "Add to Up Next"}
           >
@@ -370,7 +371,7 @@ const TopChartCard = memo(({ anime, rank, onSelect, onWatchlistToggle, isInWatch
         )}
 
         {/* Title */}
-        <div className="mt-2.5 px-0.5">
+        <div className="mt-3 px-0.5">
           <h3 className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-[var(--primary-color)] transition-colors">
             {anime.title}
           </h3>
@@ -393,17 +394,17 @@ const RowSkeleton = memo(({ count = 6, wide = false }) => (
         key={i}
         className={`flex-shrink-0 ${
           wide
-            ? "w-[260px] sm:w-[300px] md:w-[340px]"
-            : "w-[155px] sm:w-[175px] md:w-[195px] lg:w-[210px]"
+            ? "w-[300px] sm:w-[360px] md:w-[410px]"
+            : "w-[185px] sm:w-[215px] md:w-[245px] lg:w-[265px]"
         }`}
       >
         <div
           className={`${
             wide ? "aspect-[16/9]" : "aspect-[2/3]"
-          } w-full rounded-2xl bg-white/[0.05] animate-shimmer border border-white/[0.05]`}
+          } w-full rounded-2xl bg-white/[0.04] animate-shimmer border border-white/[0.04]`}
         />
-        <div className="mt-3 h-4 bg-white/[0.06] rounded-md w-full" />
-        <div className="mt-1.5 h-3 bg-white/[0.04] rounded-md w-2/3" />
+        <div className="mt-3 h-4 bg-white/[0.05] rounded-md w-full" />
+        <div className="mt-1.5 h-3 bg-white/[0.03] rounded-md w-2/3" />
       </div>
     ))}
   </div>
@@ -443,7 +444,7 @@ const Row = memo(({ title, subtitle, badge, children, className = "", actionLabe
 
   return (
     <section className={`relative ${className}`}>
-      <div className="flex items-end justify-between px-6 sm:px-10 md:px-14 lg:px-18 mb-4 max-w-[1800px] mx-auto">
+      <div className="flex items-end justify-between px-4 sm:px-8 md:px-12 lg:px-18 mb-4 max-w-[1800px] mx-auto">
         <SectionHeader
           title={title}
           subtitle={subtitle}
@@ -475,7 +476,7 @@ const Row = memo(({ title, subtitle, badge, children, className = "", actionLabe
 
       <div
         ref={scrollRef}
-        className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-4 pt-1 pl-6 sm:pl-10 md:pl-14 lg:pl-18 pr-6 sm:pr-10 md:pr-14 lg:pr-18 scroll-smooth snap-row scrollbar-hide"
+        className="flex gap-4 sm:gap-5 overflow-x-auto overflow-y-hidden pb-4 pt-1 pl-4 sm:pl-8 md:pl-12 lg:pl-18 pr-4 sm:pr-8 md:pr-12 lg:pr-18 scroll-smooth snap-row scrollbar-hide"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {children}
@@ -483,6 +484,256 @@ const Row = memo(({ title, subtitle, badge, children, className = "", actionLabe
     </section>
   );
 });
+
+// ----------------------------------------------------
+// Curated Dual-Pane Recommendations Showcase
+// ----------------------------------------------------
+const RecommendedShowcase = memo(
+  ({
+    items = [],
+    isLoading,
+    isError,
+    onRefresh,
+    isRefreshing,
+    onSelect,
+    onWatchlistToggle,
+    isInWatchlist,
+  }) => {
+    const [activeCategory, setActiveCategory] = useState("all");
+
+    const categories = [
+      { key: "all", label: "For You" },
+      { key: "action", label: "Action & Fantasy" },
+      { key: "top", label: "Critically Acclaimed" },
+      { key: "supernatural", label: "Supernatural & Sci-Fi" },
+    ];
+
+    const filteredItems = useMemo(() => {
+      if (!items.length) return [];
+      if (activeCategory === "action") {
+        return items.filter((a) =>
+          a.genres?.some((g) =>
+            ["Action", "Fantasy", "Adventure"].includes(g.name)
+          )
+        );
+      }
+      if (activeCategory === "top") {
+        return items.filter((a) => (a.score || 0) >= 8.5);
+      }
+      if (activeCategory === "supernatural") {
+        return items.filter((a) =>
+          a.genres?.some((g) =>
+            ["Supernatural", "Sci-Fi", "Mystery", "Drama"].includes(g.name)
+          )
+        );
+      }
+      return items;
+    }, [items, activeCategory]);
+
+    const displayList = filteredItems.length > 0 ? filteredItems : items;
+    const spotlightAnime = displayList[0] || null;
+    const gridAnime = displayList.slice(1, 5);
+
+    return (
+      <section className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <SectionHeader
+            title="Recommended For You"
+            subtitle="Curated picks personalized for your taste"
+            badge="Curated"
+          />
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Category Chips - Zero network calls on switch */}
+            <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/[0.06] overflow-x-auto">
+              {categories.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setActiveCategory(c.key)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                    activeCategory === c.key
+                      ? "bg-white text-black shadow-md scale-[1.02]"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading || isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] border border-white/10 text-white/80 hover:text-white hover:bg-white/15 disabled:opacity-40 transition-all text-xs font-semibold backdrop-blur-xl"
+              aria-label="Refresh recommendations"
+            >
+              <RefreshCw
+                size={13}
+                className={isRefreshing ? "animate-spin" : ""}
+              />
+              <span className="hidden sm:inline">
+                {isRefreshing ? "Refreshing..." : "Refresh"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {isLoading && !items.length ? (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-6">
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[2/3] rounded-2xl bg-[#08080c] border border-white/[0.04] animate-shimmer"
+                />
+              ))}
+            </div>
+            <div className="aspect-[16/9] rounded-3xl bg-[#08080c] border border-white/[0.04] animate-shimmer" />
+          </div>
+        ) : isError && !items.length ? (
+          <div className="p-12 rounded-3xl bg-[#08080c] border border-white/[0.06] text-center text-white/50 text-sm">
+            Could not load recommendations.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-6 items-stretch">
+            {/* Left Curated 4-Tile Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {gridAnime.map((anime) => (
+                <div
+                  key={anime.mal_id}
+                  onClick={() => onSelect(anime)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") onSelect(anime);
+                  }}
+                  className="group/card relative rounded-2xl overflow-hidden bg-[#08080c] border border-white/[0.06] hover:border-white/20 transition-all duration-300 cursor-pointer flex flex-col justify-between p-3 select-none"
+                >
+                  <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-black/60 mb-2.5">
+                    <img
+                      src={
+                        anime.images?.webp?.large_image_url ||
+                        anime.images?.jpg?.large_image_url ||
+                        anime.images?.webp?.image_url
+                      }
+                      alt={anime.title}
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    {anime.score && (
+                      <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-black/75 backdrop-blur-md text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/10">
+                        <Star size={9} fill="currentColor" /> {anime.score}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity">
+                      <span className="rounded-full bg-white text-black p-2 shadow-lg">
+                        <Play size={13} className="fill-black translate-x-0.5" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover/card:text-[var(--primary-color)] transition-colors">
+                      {anime.title}
+                    </h4>
+                    <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+                      {anime.genres?.[0]?.name || "Series"} ·{" "}
+                      {anime.episodes ? `${anime.episodes} eps` : "Airing"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Spotlight Right Feature Card */}
+            {spotlightAnime && (
+              <div
+                onClick={() => onSelect(spotlightAnime)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ")
+                    onSelect(spotlightAnime);
+                }}
+                className="relative rounded-3xl overflow-hidden bg-[#08080c] border border-white/[0.06] hover:border-white/20 transition-all duration-300 group cursor-pointer flex flex-col justify-end p-6 sm:p-8 min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.95)] select-none"
+              >
+                <img
+                  src={
+                    spotlightAnime.banner_image ||
+                    spotlightAnime.images?.webp?.large_image_url ||
+                    spotlightAnime.images?.jpg?.large_image_url ||
+                    spotlightAnime.images?.webp?.image_url
+                  }
+                  alt={spotlightAnime.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-[0.75] contrast-[1.05]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#08080c] via-[#08080c]/60 to-transparent" />
+                <div className="specular-highlight opacity-30 group-hover:opacity-100 transition-opacity" />
+
+                <div className="relative z-10 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[var(--primary-color)]/20 text-[var(--primary-color)] border border-[var(--primary-color)]/30 text-[10px] font-bold uppercase tracking-wider">
+                      Featured Pick
+                    </span>
+                    {spotlightAnime.score && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-xs font-bold border border-yellow-500/25">
+                        <Star size={10} fill="currentColor" />
+                        {spotlightAnime.score}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md leading-tight group-hover:text-[var(--primary-color)] transition-colors">
+                    {spotlightAnime.title}
+                  </h3>
+
+                  {spotlightAnime.synopsis && (
+                    <p className="text-xs sm:text-sm text-white/80 line-clamp-2 max-w-xl leading-relaxed">
+                      {spotlightAnime.synopsis
+                        .replace(/\[Written by.*?\]/gi, "")
+                        .trim()}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 text-xs font-bold shadow-md group-hover:scale-105 transition-transform">
+                      <Play size={14} className="fill-black" />
+                      Watch Show
+                    </span>
+                    {onWatchlistToggle && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onWatchlistToggle(spotlightAnime);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 text-xs font-semibold backdrop-blur-xl border border-white/15 transition-all"
+                      >
+                        {isInWatchlist?.(spotlightAnime.mal_id) ? (
+                          <Check size={14} />
+                        ) : (
+                          <Plus size={14} />
+                        )}
+                        <span>
+                          {isInWatchlist?.(spotlightAnime.mal_id)
+                            ? "In Up Next"
+                            : "Add to Up Next"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
+);
 
 // ----------------------------------------------------
 // Main AppHome Component
@@ -514,8 +765,6 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
     refetch: refetchRecommendations,
     isRefetching: recommendationsRefetching,
   } = useAnimeRecommendations(24);
-
-  const recommendedRow = recommendedList.slice(0, 10);
 
   const {
     data: upcomingData,
@@ -596,7 +845,7 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
   return (
     <div className="min-h-screen text-white bg-[var(--bg-color)]">
       <main className="pb-16">
-        {/* Apple TV Full-Bleed Hero */}
+        {/* Full-Bleed Hero */}
         <HeroCarousel
           heroList={heroList?.slice(0, 8)}
           heroLoading={heroLoading}
@@ -623,8 +872,8 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
           </div>
         </div>
 
-        {/* Apple TV Daily Release Radar Strip */}
-        <div className="mt-8 px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto">
+        {/* Daily Release Radar Strip */}
+        <div className="mt-8 px-4 sm:px-8 md:px-12 lg:px-18 max-w-[1800px] mx-auto">
           <DailyScheduleStrip
             onNavigate={onNavigate}
             onSelectAnime={handleSelectAnime}
@@ -659,7 +908,7 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
           </Row>
         )}
 
-        {/* Apple TV "Up Next" Row (Continue Watching) */}
+        {/* "Up Next" Row (Continue Watching) */}
         {startedList.length > 0 && !debouncedSearch && (
           <Row
             title="Up Next"
@@ -677,10 +926,10 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
           </Row>
         )}
 
-        {/* Apple TV Top 10 Trending Airing Row */}
+        {/* Top 10 Trending Airing Row */}
         {heroList.length > 0 && !debouncedSearch && (
           <Row
-            title="Top 10 on AniSkdool"
+            title="Top 10 on AnimeSkdool"
             subtitle="Most watched series today"
             badge="Live Chart"
             className="mt-14"
@@ -740,68 +989,29 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
 
         {/* Curated Recommendations & Community Reviews Section */}
         {!debouncedSearch && (
-          <div className="mt-16 px-6 sm:px-10 md:px-14 lg:px-18 max-w-[1800px] mx-auto space-y-14">
-            {/* Recommended for You Shelf */}
-            <section>
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <SectionHeader
-                  title="Recommended For You"
-                  subtitle="Curated daily selections based on trending anime"
-                  badge="For You"
-                />
-                <button
-                  type="button"
-                  onClick={handleRefreshRecommendations}
-                  disabled={recommendedLoading || recommendationsRefetching}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.07] border border-white/10 text-white/80 hover:text-white hover:bg-white/15 disabled:opacity-40 transition-all text-xs font-semibold backdrop-blur-xl"
-                  aria-label="Refresh recommendations"
-                >
-                  <RefreshCw
-                    size={14}
-                    className={recommendationsRefetching ? "animate-spin" : ""}
-                  />
-                  <span>{recommendationsRefetching ? "Refreshing..." : "Refresh"}</span>
-                </button>
-              </div>
+          <div className="mt-16 px-4 sm:px-8 md:px-12 lg:px-18 max-w-[1800px] mx-auto space-y-16">
+            {/* Recommended for You Curated Showcase */}
+            <RecommendedShowcase
+              items={recommendedList}
+              isLoading={recommendedLoading}
+              isError={recommendedError}
+              onRefresh={handleRefreshRecommendations}
+              isRefreshing={recommendationsRefetching}
+              onSelect={handleSelectAnime}
+              onWatchlistToggle={handleAddToWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
 
-              <GlassCard className="p-6">
-                {recommendedLoading ? (
-                  <RowSkeleton count={4} wide />
-                ) : recommendedError ? (
-                  <p className="text-[var(--text-muted)] py-8 text-center">
-                    Could not load recommendations.
-                  </p>
-                ) : recommendedRow.length > 0 ? (
-                  <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-thin snap-row">
-                    {recommendedRow.map((anime) => (
-                      <div
-                        key={anime.mal_id}
-                        className="min-w-[320px] sm:min-w-[360px] flex-shrink-0"
-                      >
-                        <AnimeDetailCard anime={anime} />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[var(--text-muted)] py-8 text-center">
-                    No recommendations yet.
-                  </p>
-                )}
-              </GlassCard>
-            </section>
-
-            {/* Apple TV Critic & Community Reviews */}
-            <section>
+            {/* Critic & Community Reviews */}
+            <section className="space-y-6">
               <SectionHeader
-                title="Viewer Insights & Reviews"
-                subtitle="What the anime community is saying"
-                className="mb-5"
+                title="Viewer Insights & Community Reviews"
+                subtitle="In-depth reactions, analysis, and scores from verified anime fans"
+                badge="Community Voices"
               />
-              <GlassCard className="overflow-hidden min-h-[300px] p-2 sm:p-4" hover>
-                <Suspense fallback={<MiniLoader text="Loading reviews..." />}>
-                  <AnimeReview onSelectAnime={handleSelectAnime} />
-                </Suspense>
-              </GlassCard>
+              <Suspense fallback={<MiniLoader text="Loading reviews..." />}>
+                <AnimeReview onSelectAnime={handleSelectAnime} />
+              </Suspense>
             </section>
           </div>
         )}
@@ -830,7 +1040,7 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
         )}
       </main>
 
-      {/* Apple TV Cinematic Show/Movie Sheet Modal */}
+      {/* Cinematic Show/Movie Sheet Modal */}
       {selectedAnime && (
         <Suspense
           fallback={
@@ -842,6 +1052,7 @@ const AppHome = ({ searchQuery = "", onSearchChange, onNavigate, onSelectAnime }
           <AnimeDetailsPanel
             anime={selectedAnime}
             onClose={handleClosePanel}
+            onSelectAnime={handleSelectAnime}
           />
         </Suspense>
       )}
